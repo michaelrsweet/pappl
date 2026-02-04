@@ -1,7 +1,7 @@
 //
 // System accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -28,13 +28,15 @@
 //
 
 static bool		add_listeners(pappl_system_t *system, const char *name, int port, int family);
-static int		compare_filters(_pappl_mime_filter_t *a, _pappl_mime_filter_t *b);
-static int		compare_inspectors(_pappl_mime_inspector_t *a, _pappl_mime_inspector_t *b);
-static int		compare_timers(_pappl_timer_t *a, _pappl_timer_t *b);
-static _pappl_mime_filter_t *copy_filter(_pappl_mime_filter_t *f);
-static _pappl_mime_inspector_t *copy_inspector(_pappl_mime_inspector_t *i);
-static void		free_filter(_pappl_mime_filter_t *f);
-static void		free_inspector(_pappl_mime_inspector_t *i);
+static int		compare_filters(_pappl_mime_filter_t *a, _pappl_mime_filter_t *b, void *cbdata);
+static int		compare_inspectors(_pappl_mime_inspector_t *a, _pappl_mime_inspector_t *b, void *cbdata);
+static int		compare_timers(_pappl_timer_t *a, _pappl_timer_t *b, void *cbdata);
+static _pappl_mime_filter_t *copy_filter(_pappl_mime_filter_t *f, void *cbdata);
+static _pappl_mime_inspector_t *copy_inspector(_pappl_mime_inspector_t *i, void *cbdata);
+static void		free_filter(_pappl_mime_filter_t *f, void *cbdata);
+static void		free_inspector(_pappl_mime_inspector_t *i, void *cbdata);
+static void		free_provider(_pappl_infrap_t *p, void *cbdata);
+static void		free_timer(_pappl_timer_t *t, void *cbdata);
 
 
 //
@@ -66,6 +68,52 @@ papplSystemAddHostAlias(
     system->host_aliases = cupsArrayNewStrings(/*s*/NULL, /*delim*/'\0');
 
   cupsArrayAdd(system->host_aliases, (void *)name);
+}
+
+
+//
+// 'papplSystemAddInfraProvider()' - Add a cloud printing provider.
+//
+// This function adds a cloud (IPP Shared Infrastructure Extensions) printing
+// provider to the list of pre-configured cloud printing services in the web
+// interface.
+//
+// Cloud printing providers cannot be added after @link papplSystemRun@ is
+// called.
+//
+
+void
+papplSystemAddInfraProvider(
+    pappl_system_t *system,		// I - Sytem
+    const char     *name,		// I - The human-readable provider name
+    const char     *uri)		// I - The registration URI
+{
+  _pappl_infrap_t	*p;		// Provider
+
+
+  if (!system || !name || !uri)
+  {
+    return;
+  }
+  else if (system->is_running)
+  {
+    papplLog(system, PAPPL_LOGLEVEL_FATAL, "Tried to add a cloud printing provider while the system is running.");
+    return;
+  }
+
+  if (!system->infra_providers)
+    system->infra_providers = cupsArrayNew(/*cb*/NULL, /*cbdata*/NULL, /*hash_cb*/NULL, /*hashsize*/0, /*copy_cb*/NULL, (cups_afree_cb_t)free_provider);
+
+  if ((p = (_pappl_infrap_t *)calloc(1, sizeof(_pappl_infrap_t))) != NULL)
+  {
+    p->name = strdup(name);
+    p->uri  = strdup(uri);
+
+    if (p->name && p->uri)
+      cupsArrayAdd(system->infra_providers, p);
+    else
+      free_provider(p, /*cbdata*/NULL);
+  }
 }
 
 
@@ -375,7 +423,7 @@ papplSystemAddTimerCallback(
   _papplRWLockWrite(system);
 
   if (!system->timers)
-    system->timers = cupsArrayNew((cups_array_cb_t)compare_timers, NULL, NULL, 0, NULL, NULL);
+    system->timers = cupsArrayNew((cups_array_cb_t)compare_timers, /*cbdata*/NULL, /*hash_cb*/NULL, /*hash_size*/0, /*copy_cb*/NULL, (cups_afree_cb_t)free_timer);
 
   newt->cb       = cb;
   newt->cb_data  = cb_data;
@@ -2868,10 +2916,14 @@ add_listeners(
 //
 
 static int				// O - Result of comparison
-compare_filters(_pappl_mime_filter_t *a,// I - First filter
-                _pappl_mime_filter_t *b)// I - Second filter
+compare_filters(
+    _pappl_mime_filter_t *a,		// I - First filter
+    _pappl_mime_filter_t *b,		// I - Second filter
+    void                 *cbdata)	// I - Callback data (unused)
 {
   int	result = strcmp(a->src, b->src);
+
+  (void)cbdata;
 
   if (!result)
     result = strcmp(a->dst, b->dst);
@@ -2887,8 +2939,11 @@ compare_filters(_pappl_mime_filter_t *a,// I - First filter
 static int				// O - Result of comparison
 compare_inspectors(
     _pappl_mime_inspector_t *a,		// I - First inspector
-    _pappl_mime_inspector_t *b)		// I - Second inspector
+    _pappl_mime_inspector_t *b,		// I - Second inspector
+    void                    *cbdata)	// I - Callback data (unused)
 {
+  (void)cbdata;
+
   return (strcmp(a->type, b->type));
 }
 
@@ -2899,8 +2954,11 @@ compare_inspectors(
 
 static int				// O - Result of comparison
 compare_timers(_pappl_timer_t *a,	// I - First timer
-               _pappl_timer_t *b)	// I - Second timer
+               _pappl_timer_t *b,	// I - Second timer
+               void           *cbdata)	// I - Callback data (unused)
 {
+  (void)cbdata;
+
   if (a->next < b->next)
     return (-1);
   else if (a->next > b->next)
@@ -2919,11 +2977,15 @@ compare_timers(_pappl_timer_t *a,	// I - First timer
 //
 
 static _pappl_mime_filter_t *		// O - New filter
-copy_filter(_pappl_mime_filter_t *f)	// I - Filter definition
+copy_filter(
+    _pappl_mime_filter_t *f,		// I - Filter definition
+    void                 *cbdata)	// I - Callback data (unused)
 {
   _pappl_mime_filter_t	*newf = calloc(1, sizeof(_pappl_mime_filter_t));
 					// New filter
 
+
+  (void)cbdata;
 
   if (newf)
   {
@@ -2942,11 +3004,14 @@ copy_filter(_pappl_mime_filter_t *f)	// I - Filter definition
 
 static _pappl_mime_inspector_t *	// O - New inspector
 copy_inspector(
-    _pappl_mime_inspector_t *i)		// I - Inspector definition
+    _pappl_mime_inspector_t *i,		// I - Inspector definition
+    void                    *cbdata)	// I - Callback data (unused)
 {
   _pappl_mime_inspector_t *newi = calloc(1, sizeof(_pappl_mime_inspector_t));
 					// New inspector
 
+
+  (void)cbdata;
 
   if (newi)
   {
@@ -2963,8 +3028,12 @@ copy_inspector(
 //
 
 static void
-free_filter(_pappl_mime_filter_t *f)	// I - Filter definition
+free_filter(
+    _pappl_mime_filter_t *f,		// I - Filter definition
+    void                 *cbdata)	// I - Callback data (unused)
 {
+  (void)cbdata;
+
   free(f->src);
   free(f->dst);
   free(f);
@@ -2977,8 +3046,41 @@ free_filter(_pappl_mime_filter_t *f)	// I - Filter definition
 
 static void
 free_inspector(
-    _pappl_mime_inspector_t *i)		// I - Inspector definition
+    _pappl_mime_inspector_t *i,		// I - Inspector definition
+    void                    *cbdata)	// I - Callback data (unused)
 {
+  (void)cbdata;
+
   free(i->type);
   free(i);
+}
+
+
+//
+// 'free_provider()' - Free a cloud provider.
+//
+
+static void
+free_provider(_pappl_infrap_t *p,	// I - Cloud provider
+              void            *cbdata)	// I - Callback data (unused)
+{
+  (void)cbdata;
+
+  free(p->name);
+  free(p->uri);
+  free(p);
+}
+
+
+//
+// 'free_timer()' - Free a timer.
+//
+
+static void
+free_timer(_pappl_timer_t *t,		// I - Timer
+           void           *cbdata)	// I - Callback data (unused)
+{
+  (void)cbdata;
+
+  free(t);
 }

@@ -1,7 +1,7 @@
 //
 // Private system header file for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -38,6 +38,12 @@ typedef struct _pappl_mime_inspector_s	// MIME inspectors
   pappl_mime_inspect_cb_t cb;			// Inspector callback function
   void			*cbdata;		// Callback data
 } _pappl_mime_inspector_t;
+
+typedef struct _pappl_infrap_s		// Cloud/INFRA Provider
+{
+  char			*name,			// Provider name
+			*uri;			// Provider (registration) URI
+} _pappl_infrap_t;
 
 typedef struct _pappl_resource_s	// Resource
 {
@@ -161,6 +167,8 @@ struct _pappl_system_s			// System data
   size_t		max_image_size;		// Maximum image file size (uncompressed)
   int			max_image_width,	// Maximum image file width
 			max_image_height;	// Maximum image file height
+
+  cups_array_t		*infra_providers;	// Cloud/INFRA print providers
 
   char			*ipptransform;		// Path to ipptransform command, if any
 

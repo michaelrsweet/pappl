@@ -1,7 +1,7 @@
 //
 // System object for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -340,7 +340,6 @@ papplSystemDelete(
     pappl_system_t *system)		// I - System object
 {
   size_t	i;			// Looping var
-  _pappl_timer_t *t;			// Current timer
 
 
   if (!system || system->is_running)
@@ -369,11 +368,7 @@ papplSystemDelete(
     close(system->log_fd);
 
   for (i = 0; i < system->num_listeners; i ++)
-#if _WIN32
-    closesocket(system->listeners[i].fd);
-#else
-    close(system->listeners[i].fd);
-#endif // _WIN32
+    httpAddrClose(/*addr*/NULL, system->listeners[i].fd);
 
   cupsArrayDelete(system->host_aliases);
   cupsArrayDelete(system->filters);
@@ -387,12 +382,9 @@ papplSystemDelete(
   cupsCondDestroy(&system->subscription_cond);
   cupsMutexDestroy(&system->subscription_mutex);
 
-  for (t = (_pappl_timer_t *)cupsArrayGetFirst(system->timers); t; t = (_pappl_timer_t *)cupsArrayGetNext(system->timers))
-  {
-    cupsArrayRemove(system->timers, t);
-    free(t);
-  }
   cupsArrayDelete(system->timers);
+
+  cupsArrayDelete(system->infra_providers);
 
   cupsMutexDestroy(&system->ext_mutex);
   cupsArrayDelete(system->ext_commands);

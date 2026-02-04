@@ -1,7 +1,7 @@
 //
 // Private printer header file for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -111,6 +111,7 @@ struct _pappl_printer_s			// Printer data
   time_t		proxy_token_expires;	// Proxy access token expiration date/time
   cups_mutex_t		proxy_token_mutex;	// Mutex for access token
   char			*proxy_token_url,	// Proxy device token URL value
+			*proxy_info,		// Proxy provider information
 			*proxy_uri,		// Proxy printer-uri value
 			*proxy_uuid;		// Proxy printer-uuid value
 };
@@ -186,6 +187,7 @@ extern void		_papplPrinterWebConfigFinalize(pappl_printer_t *printer, size_t num
 extern void		_papplPrinterWebDefaults(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebDelete(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebHome(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplPrinterWebInfra(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebIteratorCallback(pappl_printer_t *printer, pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebJobs(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterWebMedia(pappl_client_t *client, pappl_printer_t *printer) _PAPPL_PRIVATE;

@@ -1,7 +1,7 @@
 //
 // Printer web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -15,6 +15,7 @@
 // Local functions...
 //
 
+static void	infra_status(pappl_client_t  *client, pappl_printer_t *printer);
 static void	job_cb(pappl_job_t *job, pappl_client_t *client);
 static void	job_pager(pappl_client_t *client, pappl_printer_t *printer, size_t job_index, size_t limit);
 static char	*localize_keyword(pappl_client_t *client, const char *attrname, const char *keyword, char *buffer, size_t bufsize);
@@ -910,6 +911,34 @@ _papplPrinterWebHome(
 
 
 //
+// '_papplPrinterWebInfra()' - Show the cloud (INFRA/proxy) state/controls.
+//
+
+void
+_papplPrinterWebInfra(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  // TODO: Handle form stuff
+
+  // Show cloud printing status...
+  papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Cloud Printing"), /*refresh*/0, /*label*/NULL, /*path_or_url*/NULL);
+
+  papplClientHTMLPuts(client,
+                      "      <div class=\"row\">\n"
+                      "        <div class=\"col-12\">\n");
+
+  infra_status(client, printer);
+
+  papplClientHTMLPuts(client,
+                      "        </div>\n"
+                      "      </div>\n");
+
+  papplClientHTMLPrinterFooter(client);
+}
+
+
+//
 // '_papplPrinterWebIteratorCallback()' - Show the printer status.
 //
 
@@ -1452,6 +1481,41 @@ _papplPrinterWebSupplies(
                       "          </table>\n");
 
   papplClientHTMLPrinterFooter(client);
+}
+
+
+//
+// 'infra_status()' - Show the cloud (INFRA/proxy) status/controls.
+//
+
+static void
+infra_status(
+    pappl_client_t  *client,		// I - Client
+    pappl_printer_t *printer)		// I - Printer
+{
+  const char	*status;		// Current status
+
+
+  if (!printer->proxy_uri)
+    status = _PAPPL_LOC("Not Connected");
+  else if (!printer->proxy_token)
+    status = _PAPPL_LOC("Authorization Required");
+  else if (cupsArrayGetCount(printer->proxy_jobs) > 0)
+    status = _PAPPL_LOC("Printing");
+  else
+    status = _PAPPL_LOC("Idle");
+
+  papplClientHTMLPrintf(client, "          <h1 class=\"title\">%s (%s)</h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Cloud Printing")), papplClientGetLocString(client, status));
+
+  if (!printer->proxy_uri)
+  {
+  }
+  else if (!printer->proxy_token)
+  {
+  }
+  else
+  {
+  }
 }
 
 

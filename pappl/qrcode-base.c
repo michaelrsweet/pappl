@@ -1,5 +1,5 @@
 //
-// Code for generating QR Code (_pappl_qrcode_t) bitmaps.
+// Code for generating a QR Code (_pappl_qrcode_t) bitmap.
 //
 // The MIT License (MIT)
 //
@@ -112,14 +112,14 @@ static void	set_function_module(_pappl_bb_t *modules, _pappl_bb_t *isFunction, u
 
 
 //
-// '_papplMakeQRCode()' - .
+// '_papplMakeQRCode()' - Make a byte-mode QR code.
 //
 
-_pappl_bb_t *
+_pappl_bb_t *				// O - QR code bitmap or `NULL` on error
 _papplMakeQRCode(
-    const char *s,
-    uint8_t    version,
-    uint8_t    ecc)
+    const char *s,			// I - String to be encoded
+    uint8_t    version,			// I - QR version or `_PAPPL_QRVERSION_AUTO` for optimal
+    uint8_t    ecc)			// I - Error correction level
 {
   _pappl_bb_t	*qrcode = NULL;		// QR code bitmap
   _pappl_bb_t	*isFunctionGrid = NULL;	// Pattern
@@ -299,9 +299,9 @@ _papplMakeQRCode(
 //
 
 static void
-apply_mask(_pappl_bb_t *modules,		// I - Bitmap container
-          _pappl_bb_t *isFunction,	// I - Pattern
-          uint8_t     mask)		// I - Mask function
+apply_mask(_pappl_bb_t *modules,	// I - Bitmap container
+           _pappl_bb_t *isFunction,	// I - Pattern
+            uint8_t     mask)		// I - Mask function
 {
   uint8_t size = modules->width;	// Length of a line
 
@@ -360,8 +360,8 @@ static void
 draw_alignment_pattern(
     _pappl_bb_t *modules,		// I - Bitmap container
     _pappl_bb_t *isFunction,		// I - Pattern
-    uint8_t       x,			// I - X position
-    uint8_t       y)			// I - Y position
+    uint8_t     x,			// I - X position
+    uint8_t     y)			// I - Y position
 {
   for (int8_t i = -2; i <= 2; i ++)
   {
@@ -437,8 +437,7 @@ draw_finder_pattern(
     uint8_t     x,			// I - X position
     uint8_t     y)			// I - Y position
 {
-  uint8_t size = modules->width;
-					// Width of bitmap
+  uint8_t size = modules->width;	// Width of bitmap
 
 
   for (int8_t i = -4; i <= 4; i ++)
@@ -617,15 +616,15 @@ draw_version(
 
 
 //
-// 'encode_data_codewords()' -
+// 'encode_data_codewords()' - Encode the data string.
 //
 
-static int8_t
+static int8_t				// O - Encoding mode
 encode_data_codewords(
-    _pappl_bb_t   *dataCodewords,
-    const uint8_t *text,
-    uint16_t      length,
-    uint8_t       version)
+    _pappl_bb_t   *dataCodewords,	// I - Bit buffer for data
+    const uint8_t *text,		// I - Text to encode
+    uint16_t      length,		// I - Length of text
+    uint8_t       version)		// I - QR version/size
 {
   _papplBBAppendBits(dataCodewords, 1 << _PAPPL_QRMODE_BYTE, 4);
   _papplBBAppendBits(dataCodewords, length, version < 10 ? 8 : 16);
@@ -789,9 +788,9 @@ get_penalty_score(_pappl_bb_t *modules)	// I - Bitmap
 
 static void
 perform_error_correction(
-    uint8_t     version,
-    uint8_t     ecc,
-    _pappl_bb_t *data)
+    uint8_t     version,		// I - QR code version/size
+    uint8_t     ecc,			// I - Error correction level
+    _pappl_bb_t *data)			// I - Data buffer
 {
   // See: http://www.thonky.com/qr-code-tutorial/structure-final-message
   uint8_t numBlocks = NUM_ERROR_CORRECTION_BLOCKS[ecc][version - 1];
@@ -866,11 +865,11 @@ perform_error_correction(
 
 static void
 rs_get_remainder(uint8_t degree,
-                uint8_t *coeff,
-                uint8_t *data,
-                uint8_t length,
-                uint8_t *result,
-                uint8_t stride)
+                 uint8_t *coeff,
+                 uint8_t *data,
+                 uint8_t length,
+                 uint8_t *result,
+                 uint8_t stride)
 {
   // Compute the remainder by performing polynomial division
   for (uint8_t i = 0; i < length; i ++)

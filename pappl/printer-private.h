@@ -106,14 +106,16 @@ struct _pappl_printer_s			// Printer data
 			*proxy_device_uuid;	// Proxy output-device-uuid value
   cups_array_t		*proxy_jobs;		// Proxy jobs
   cups_mutex_t		proxy_jobs_mutex;	// Mutex for proxy jobs array
-  char			*proxy_name,		// Proxy common_name value
+  char			*proxy_common_name,	// Proxy common_name value
 			*proxy_token;		// Proxy access token
   time_t		proxy_token_expires;	// Proxy access token expiration date/time
   cups_mutex_t		proxy_token_mutex;	// Mutex for access token
   char			*proxy_token_url,	// Proxy device token URL value
-			*proxy_info,		// Proxy provider information
+			*proxy_provider_name,	// Proxy provider name value
+			*proxy_provider_uri,	// Proxy provider URI value
 			*proxy_uri,		// Proxy printer-uri value
 			*proxy_uuid;		// Proxy printer-uuid value
+  cups_json_t		*proxy_device_grant;	// Proxy OAuth device grant
 };
 
 

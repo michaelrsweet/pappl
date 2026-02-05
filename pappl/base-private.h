@@ -14,6 +14,7 @@
 #  include <limits.h>
 #  include <sys/stat.h>
 #  include <cups/dnssd.h>
+#  include <cups/oauth.h>
 #  include <cups/thread.h>
 #  if _WIN32
 #    include <winreg.h>

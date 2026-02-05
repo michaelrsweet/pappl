@@ -750,6 +750,32 @@ papplPrinterGetProxyClientID(
 
 
 //
+// 'papplPrinterGetProxyCommonName()' - Get the proxy printer common name.
+//
+
+char *					// O - Proxy printer common name or `NULL` on error
+papplPrinterGetProxyCommonName(
+    pappl_printer_t *printer,		// I - Printer
+    char            *buffer,		// I - String buffer
+    size_t          bufsize)		// I - Size of buffer
+{
+  if (!printer || !printer->proxy_common_name || !buffer || bufsize == 0)
+  {
+    if (buffer)
+      *buffer = '\0';
+
+    return (NULL);
+  }
+
+  _papplRWLockRead(printer);
+  cupsCopyString(buffer, printer->proxy_common_name, bufsize);
+  _papplRWUnlock(printer);
+
+  return (buffer);
+}
+
+
+//
 // 'papplPrinterGetProxyDeviceUUID()' - Get the proxy printer output device UUID.
 //
 
@@ -776,16 +802,16 @@ papplPrinterGetProxyDeviceUUID(
 
 
 //
-// 'papplPrinterGetProxyName()' - Get the proxy printer common name.
+// 'papplPrinterGetProxyProviderName()' - Get the proxy printer provider name.
 //
 
-char *					// O - Proxy printer common name or `NULL` on error
-papplPrinterGetProxyName(
+char *					// O - Proxy printer provider name or `NULL` on error
+papplPrinterGetProxyProviderName(
     pappl_printer_t *printer,		// I - Printer
     char            *buffer,		// I - String buffer
     size_t          bufsize)		// I - Size of buffer
 {
-  if (!printer || !printer->proxy_name || !buffer || bufsize == 0)
+  if (!printer || !printer->proxy_provider_name || !buffer || bufsize == 0)
   {
     if (buffer)
       *buffer = '\0';
@@ -794,7 +820,33 @@ papplPrinterGetProxyName(
   }
 
   _papplRWLockRead(printer);
-  cupsCopyString(buffer, printer->proxy_name, bufsize);
+  cupsCopyString(buffer, printer->proxy_provider_name, bufsize);
+  _papplRWUnlock(printer);
+
+  return (buffer);
+}
+
+
+//
+// 'papplPrinterGetProxyProviderURI()' - Get the proxy printer provider URI.
+//
+
+char *					// O - Proxy printer provider URI or `NULL` on error
+papplPrinterGetProxyProviderURI(
+    pappl_printer_t *printer,		// I - Printer
+    char            *buffer,		// I - String buffer
+    size_t          bufsize)		// I - Size of buffer
+{
+  if (!printer || !printer->proxy_provider_uri || !buffer || bufsize == 0)
+  {
+    if (buffer)
+      *buffer = '\0';
+
+    return (NULL);
+  }
+
+  _papplRWLockRead(printer);
+  cupsCopyString(buffer, printer->proxy_provider_uri, bufsize);
   _papplRWUnlock(printer);
 
   return (buffer);
@@ -1866,8 +1918,10 @@ void
 papplPrinterSetProxy(
     pappl_printer_t *printer,		// I - Printer
     const char      *client_id,		// I - Proxy printer client_id or `NULL` if none
+    const char      *common_name,		// I - Proxy printer common name
     const char      *device_uuid,	// I - Proxy printer device (local) UUID
-    const char      *name,		// I - Proxy printer common name
+    const char      *provider_name,	// I - Provider name
+    const char      *provider_uri,	// I - Provider URI
     const char      *token_url,		// I - Proxy printer device token URL or `NULL` if none
     const char      *uri,		// I - Proxy printer (cloud/remote) URI
     const char      *uuid)		// I - Proxy printer (cloud/remote) UUID
@@ -1896,26 +1950,30 @@ papplPrinterSetProxy(
 
   // Update the proxy information...
   free(printer->proxy_client_id);
+  free(printer->proxy_common_name);
   free(printer->proxy_device_uuid);
-  free(printer->proxy_name);
+  free(printer->proxy_provider_name);
+  free(printer->proxy_provider_uri);
   free(printer->proxy_token_url);
   free(printer->proxy_uri);
   free(printer->proxy_uuid);
 
-  printer->proxy_client_id    = client_id ? strdup(client_id) : NULL;
-  printer->proxy_device_uuid  = device_uuid ? strdup(device_uuid) : NULL;
-  printer->proxy_name         = name ? strdup(name) : NULL;
-  printer->proxy_token_url    = token_url ? strdup(token_url) : NULL;
-  printer->proxy_uri          = uri ? strdup(uri) : NULL;
-  printer->proxy_uuid         = uuid ? strdup(uuid) : NULL;
-  printer->config_time        = time(NULL);
+  printer->proxy_client_id     = client_id ? strdup(client_id) : NULL;
+  printer->proxy_common_name   = common_name ? strdup(common_name) : NULL;
+  printer->proxy_device_uuid   = device_uuid ? strdup(device_uuid) : NULL;
+  printer->proxy_provider_name = provider_name ? strdup(provider_name) : NULL;
+  printer->proxy_provider_uri  = provider_uri ? strdup(provider_uri) : NULL;
+  printer->proxy_token_url     = token_url ? strdup(token_url) : NULL;
+  printer->proxy_uri           = uri ? strdup(uri) : NULL;
+  printer->proxy_uuid          = uuid ? strdup(uuid) : NULL;
+  printer->config_time         = time(NULL);
 
   _papplRWUnlock(printer);
 
   _papplSystemConfigChanged(printer->system);
 
   // If the system is running, start the proxy...
-  if (printer->system->is_running && printer->proxy_name)
+  if (printer->system->is_running && printer->proxy_common_name)
   {
     cups_thread_t	tid;		// Thread ID
 

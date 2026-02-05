@@ -4327,7 +4327,7 @@ test_infra(pappl_system_t *system)	// I - System
     testEnd(false);
 
   testBegin("infra: papplPrinterSetProxy(ptest pointing to itest)");
-  papplPrinterSetProxy(ptest, /*client_id*/NULL, proxy_device_uuid, proxy_name, /*token_url*/NULL, proxy_uri, proxy_uuid);
+  papplPrinterSetProxy(ptest, /*client_id*/NULL, proxy_name, proxy_device_uuid, "Test Provider", /*provider_uri*/NULL, /*token_url*/NULL, proxy_uri, proxy_uuid);
   testEnd(true);
 
   // Connect to system...

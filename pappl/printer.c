@@ -240,13 +240,17 @@ _papplPrinterDelete(
 
   free(printer->proxy_client_id);
   free(printer->proxy_device_uuid);
-  free(printer->proxy_name);
+  free(printer->proxy_common_name);
   free(printer->proxy_token);
   free(printer->proxy_token_url);
+  free(printer->proxy_provider_name);
+  free(printer->proxy_provider_uri);
   free(printer->proxy_uri);
   free(printer->proxy_uuid);
 
   cupsArrayDelete(printer->proxy_jobs);
+
+  cupsJSONDelete(printer->proxy_device_grant);
 
   cupsRWDestroy(&printer->output_rwlock);
   cupsRWDestroy(&printer->rwlock);

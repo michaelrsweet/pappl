@@ -92,4 +92,4 @@ extern _pappl_bb_t *_papplMakeQRCode(const char *s, uint8_t version, uint8_t ecc
 extern char	*_papplMakeDataURL(_pappl_bb_t *qrcode) _PAPPL_INTERNAL;
 
 
-#endif  // _PAPPL_QRCODE_H_
+#endif  // _PAPPL_QRCODE_PRIVATE_H_

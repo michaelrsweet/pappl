@@ -890,13 +890,10 @@ papplSystemRun(pappl_system_t *system)	// I - System
       if (timer->next > curtime.tv_sec)
         break;
 
-      cupsArrayRemove(system->timers, timer);
-
       if ((timer->cb)(system, timer->cb_data) && timer->interval)
-      {
 	timer->next += timer->interval;
-	cupsArrayAdd(system->timers, timer);
-      }
+      else
+        cupsArrayRemove(system->timers, timer);
     }
     _papplRWUnlock(system);
 

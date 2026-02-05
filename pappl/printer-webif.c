@@ -9,6 +9,7 @@
 //
 
 #include "pappl-private.h"
+#include "qrcode-private.h"
 
 
 //
@@ -868,6 +869,9 @@ _papplPrinterWebHome(
   if (!(printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     _papplSystemWebSettings(client);
 
+  if (printer->system->options & PAPPL_SOPTIONS_INFRA_PROXY)
+    infra_status(client, printer);
+
   papplClientHTMLPrintf(client,
 			"        </div>\n"
 			"        <div class=\"col-6\">\n"
@@ -1494,6 +1498,7 @@ infra_status(
     pappl_printer_t *printer)		// I - Printer
 {
   const char	*status;		// Current status
+  char		cloudpath[1024];	// Path for cloud controls
 
 
   if (!printer->proxy_uri)
@@ -1507,14 +1512,84 @@ infra_status(
 
   papplClientHTMLPrintf(client, "          <h1 class=\"title\">%s (%s)</h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Cloud Printing")), papplClientGetLocString(client, status));
 
+  papplPrinterGetPath(printer, "cloud", cloudpath, sizeof(cloudpath));
+
   if (!printer->proxy_uri)
   {
-  }
-  else if (!printer->proxy_token)
-  {
+    cups_len_t	i,			// Current provider
+		count = cupsArrayGetCount(printer->system->infra_providers);
+					// Number of providers
+
+    papplClientHTMLStartForm(client, cloudpath, /*multipart*/false);
+    if (count == 0)
+    {
+      // Just show "other" provider field...
+      papplClientHTMLPuts(client, "          <input type=\"hidden\" name=\"infra_provider\" value=\"other\">\n");
+      papplClientHTMLPuts(client, "          <input type=\"text\" name=\"other_host\" placeholder=\"host.domain.com\">\n");
+    }
+    else
+    {
+      // Show a list of providers...
+      papplClientHTMLPuts(client,
+                          "          <script>\n"
+                          "function show_hide_other_provider() {\n"
+                          "  let other_provider = document.getElementById(\"other_provider\");\n"
+                          "  let provider = document.forms[\"form\"][\"infra_provider\"];\n"
+                          "  if (provider.options[provider.selectedIndex].value == \"other\") {\n"
+                          "    other_provider.style.display = \"inline\";\n"
+                          "  } else {\n"
+                          "    other_provider.style.display = \"none\";\n"
+                          "  }\n"
+                          "}\n"
+                          "          </script>\n"
+                          "          <select name=\"infra_provider\" onChange=\"show_hide_other_provider();\">\n");
+      for (i = 0; i < count; i ++)
+      {
+        _pappl_infrap_t *p = (_pappl_infrap_t *)cupsArrayGetElement(printer->system->infra_providers, i);
+
+        papplClientHTMLPrintf(client, "            <option value=\"%s\">%s</option>\n", p->uri, p->name);
+      }
+      papplClientHTMLPrintf(client, "            <option value=\"other\">%s</option>\n", papplClientGetLocString(client, _PAPPL_LOC("Other Provider")));
+      papplClientHTMLPuts(client, "          </select><span id=\"other_provider\" style=\"display: none;\"><input type=\"text\" name=\"other_host\" placeholder=\"host.domain.com\"></span>\n");
+    }
+
+    papplClientHTMLPrintf(client, "          <input type=\"submit\" name=\"connect\" value=\"%s\">\n", papplClientGetLocString(client, _PAPPL_LOC("Connect")));
+    papplClientHTMLPuts(client, "          </form>\n");
   }
   else
   {
+    papplClientHTMLStartForm(client, cloudpath, /*multipart*/false);
+    papplClientHTMLPrintf(client, "          <p>%s <input type=\"submit\" name=\"disconnect\" value=\"%s\"></p>\n", printer->proxy_provider_name, papplClientGetLocString(client, _PAPPL_LOC("Disconnect")));
+    papplClientHTMLPuts(client, "          </form>\n");
+
+    if (printer->proxy_device_grant)
+    {
+      const char *user_code = cupsJSONGetString(cupsJSONFind(printer->proxy_device_grant, CUPS_ODEVGRANT_USER_CODE)),
+		*verification_uri = cupsJSONGetString(cupsJSONFind(printer->proxy_device_grant, CUPS_ODEVGRANT_VERIFICATION_URI)),
+		*verification_uri_complete = cupsJSONGetString(cupsJSONFind(printer->proxy_device_grant, CUPS_ODEVGRANT_VERIFICATION_URI_COMPLETE));
+					// Device grant values...
+      _pappl_bb_t *qrcode = _papplMakeQRCode(verification_uri_complete, _PAPPL_QRVERSION_AUTO, _PAPPL_QRECC_LOW);
+					// QR code
+      char	*qrcode_data = _papplMakeDataURL(qrcode);
+					// QR code "data:" URL
+
+      papplClientHTMLPrintf(client, "          <h3>%s</h3>\n", papplClientGetLocString(client, _PAPPL_LOC("Authorization Required")));
+      papplClientHTMLPrintf(client, "          <p>%s <a class=\"copy\" href=\"#\" onClick=\"return copy_text(this);\">%s</a></p>\n", papplClientGetLocString(client, _PAPPL_LOC("Copy the following code:")), user_code);
+      papplClientHTMLPrintf(client, "          <p>%s <a href=\"%s\" target=\"_blank\">%s</a></p>\n", papplClientGetLocString(client, _PAPPL_LOC("and go to the following URL:")), verification_uri, verification_uri);
+      papplClientHTMLPrintf(client, "          <p>%s</p>\n", papplClientGetLocString(client, _PAPPL_LOC("or scan/tap the QR code below:")));
+      papplClientHTMLPrintf(client, "          <p><a href=\"%s\" target=\"_blank\"><img src=\"%s\"></a></p>\n", verification_uri_complete, qrcode_data);
+
+      _papplBBDelete(qrcode);
+      free(qrcode_data);
+    }
+
+    if (printer->proxy_uri)
+    {
+      papplClientHTMLPuts(client, "          <div class=\"info\">\n");
+      papplClientHTMLPrintf(client, "            <p>%s</p>\n", papplClientGetLocString(client, _PAPPL_LOC("Cloud Printer URI:")));
+      papplClientHTMLPrintf(client, "            <p><a class=\"copy\" href=\"#\" onClick=\"return copy_text(this);\">%s</a></p>\n", printer->proxy_uri);
+      papplClientHTMLPuts(client, "          </div>\n");
+    }
   }
 }
 

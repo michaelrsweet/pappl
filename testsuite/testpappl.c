@@ -378,7 +378,7 @@ main(int  argc,				// I - Number of command-line arguments
     else if (!strcmp(argv[i], "--get-supplies"))
     {
       pappl_device_t	*device;	// Device
-      int		j,		// Looping var
+      size_t		j,		// Looping var
 			num_supplies;	// Number of supplies
       pappl_supply_t	supplies[32];	// Supplies
       static const char * const supply_colors[] =
@@ -449,7 +449,7 @@ main(int  argc,				// I - Number of command-line arguments
         goto done;
       }
 
-      if ((num_supplies = papplDeviceGetSupplies(device, (int)(sizeof(supplies) / sizeof(supplies[0])), supplies)) > 0)
+      if ((num_supplies = papplDeviceGetSupplies(device, sizeof(supplies) / sizeof(supplies[0]), supplies)) > 0)
       {
         for (j = 0; j < num_supplies; j ++)
         {

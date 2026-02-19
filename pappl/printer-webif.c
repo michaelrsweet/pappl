@@ -16,7 +16,7 @@
 // Local functions...
 //
 
-static void	infra_status(pappl_client_t  *client, pappl_printer_t *printer);
+static void	infra_status(pappl_client_t  *client, pappl_printer_t *printer, const char *form_status, bool full_page);
 static void	job_cb(pappl_job_t *job, pappl_client_t *client);
 static void	job_pager(pappl_client_t *client, pappl_printer_t *printer, size_t job_index, size_t limit);
 static char	*localize_keyword(pappl_client_t *client, const char *attrname, const char *keyword, char *buffer, size_t bufsize);
@@ -49,7 +49,7 @@ _papplPrinterWebCancelAllJobs(
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -60,11 +60,11 @@ _papplPrinterWebCancelAllJobs(
       papplPrinterCancelAllJobs(printer);
       snprintf(path, sizeof(path), "%s/jobs", printer->uriname);
       papplClientRespondRedirect(client, HTTP_STATUS_FOUND, path);
-      cupsFreeOptions(num_form, form);
+      cupsFreeOptions((cups_len_t)num_form, form);
       return;
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Cancel All Jobs"), 0, NULL, NULL);
@@ -127,7 +127,7 @@ _papplPrinterWebConfig(
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -138,7 +138,7 @@ _papplPrinterWebConfig(
       status = _PAPPL_LOC("Changes saved.");
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Configuration"), 0, NULL, NULL);
@@ -169,14 +169,14 @@ _papplPrinterWebConfigFinalize(
 		*contact_tel;		// Contact telephone number
 
 
-  if ((value = cupsGetOption("dns_sd_name", num_form, form)) != NULL)
+  if ((value = cupsGetOption("dns_sd_name", (cups_len_t)num_form, form)) != NULL)
     papplPrinterSetDNSSDName(printer, *value ? value : NULL);
 
-  if ((value = cupsGetOption("location", num_form, form)) != NULL)
+  if ((value = cupsGetOption("location", (cups_len_t)num_form, form)) != NULL)
     papplPrinterSetLocation(printer, *value ? value : NULL);
 
-  geo_lat = cupsGetOption("geo_location_lat", num_form, form);
-  geo_lon = cupsGetOption("geo_location_lon", num_form, form);
+  geo_lat = cupsGetOption("geo_location_lat", (cups_len_t)num_form, form);
+  geo_lon = cupsGetOption("geo_location_lon", (cups_len_t)num_form, form);
   if (geo_lat && geo_lon)
   {
     char	uri[1024];		// "geo:" URI
@@ -190,15 +190,15 @@ _papplPrinterWebConfigFinalize(
       papplPrinterSetGeoLocation(printer, NULL);
   }
 
-  if ((value = cupsGetOption("organization", num_form, form)) != NULL)
+  if ((value = cupsGetOption("organization", (cups_len_t)num_form, form)) != NULL)
     papplPrinterSetOrganization(printer, *value ? value : NULL);
 
-  if ((value = cupsGetOption("organizational_unit", num_form, form)) != NULL)
+  if ((value = cupsGetOption("organizational_unit", (cups_len_t)num_form, form)) != NULL)
     papplPrinterSetOrganizationalUnit(printer, *value ? value : NULL);
 
-  contact_name  = cupsGetOption("contact_name", num_form, form);
-  contact_email = cupsGetOption("contact_email", num_form, form);
-  contact_tel   = cupsGetOption("contact_telephone", num_form, form);
+  contact_name  = cupsGetOption("contact_name", (cups_len_t)num_form, form);
+  contact_email = cupsGetOption("contact_email", (cups_len_t)num_form, form);
+  contact_tel   = cupsGetOption("contact_telephone", (cups_len_t)num_form, form);
   if (contact_name || contact_email || contact_tel)
   {
     pappl_contact_t	contact;	// Contact info
@@ -267,7 +267,7 @@ _papplPrinterWebDefaults(
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -276,7 +276,7 @@ _papplPrinterWebDefaults(
       const char	*value;		// Value of form variable
       char		*end;			// End of value
 
-      if ((value = cupsGetOption("orientation-requested", num_form, form)) != NULL)
+      if ((value = cupsGetOption("orientation-requested", (cups_len_t)num_form, form)) != NULL)
       {
         data.orient_default = (ipp_orient_t)strtol(value, &end, 10);
 
@@ -284,7 +284,7 @@ _papplPrinterWebDefaults(
           data.orient_default = IPP_ORIENT_PORTRAIT;
       }
 
-      if ((value = cupsGetOption("output-bin", num_form, form)) != NULL)
+      if ((value = cupsGetOption("output-bin", (cups_len_t)num_form, form)) != NULL)
       {
         for (i = 0; i < data.num_bin; i ++)
         {
@@ -296,13 +296,13 @@ _papplPrinterWebDefaults(
 	}
       }
 
-      if ((value = cupsGetOption("print-color-mode", num_form, form)) != NULL)
+      if ((value = cupsGetOption("print-color-mode", (cups_len_t)num_form, form)) != NULL)
         data.color_default = _papplColorModeValue(value);
 
-      if ((value = cupsGetOption("print-content-optimize", num_form, form)) != NULL)
+      if ((value = cupsGetOption("print-content-optimize", (cups_len_t)num_form, form)) != NULL)
         data.content_default = _papplContentValue(value);
 
-      if ((value = cupsGetOption("print-darkness", num_form, form)) != NULL)
+      if ((value = cupsGetOption("print-darkness", (cups_len_t)num_form, form)) != NULL)
       {
         data.darkness_configured = (int)strtol(value, &end, 10);
 
@@ -310,13 +310,13 @@ _papplPrinterWebDefaults(
           data.darkness_configured = 50;
       }
 
-      if ((value = cupsGetOption("print-quality", num_form, form)) != NULL)
+      if ((value = cupsGetOption("print-quality", (cups_len_t)num_form, form)) != NULL)
         data.quality_default = (ipp_quality_t)ippEnumValue("print-quality", value);
 
-      if ((value = cupsGetOption("print-scaling", num_form, form)) != NULL)
+      if ((value = cupsGetOption("print-scaling", (cups_len_t)num_form, form)) != NULL)
         data.scaling_default = _papplScalingValue(value);
 
-      if ((value = cupsGetOption("print-speed", num_form, form)) != NULL)
+      if ((value = cupsGetOption("print-speed", (cups_len_t)num_form, form)) != NULL)
       {
         data.speed_default = (int)strtol(value, &end, 10) * 2540;
 
@@ -324,16 +324,16 @@ _papplPrinterWebDefaults(
           data.speed_default = 0;
       }
 
-      if ((value = cupsGetOption("sides", num_form, form)) != NULL)
+      if ((value = cupsGetOption("sides", (cups_len_t)num_form, form)) != NULL)
         data.sides_default = _papplSidesValue(value);
 
-      if ((value = cupsGetOption("printer-resolution", num_form, form)) != NULL)
+      if ((value = cupsGetOption("printer-resolution", (cups_len_t)num_form, form)) != NULL)
       {
         if (sscanf(value, "%dx%ddpi", &data.x_default, &data.y_default) == 1)
           data.y_default = data.x_default;
       }
 
-      if ((value = cupsGetOption("media-source", num_form, form)) != NULL)
+      if ((value = cupsGetOption("media-source", (cups_len_t)num_form, form)) != NULL)
       {
         for (i = 0; i < data.num_source; i ++)
 	{
@@ -351,10 +351,10 @@ _papplPrinterWebDefaults(
 
         snprintf(supattr, sizeof(supattr), "%s-supported", data.vendor[i]);
 
-        if ((value = cupsGetOption(data.vendor[i], num_form, form)) != NULL)
-	  num_vendor = cupsAddOption(data.vendor[i], value, num_vendor, &vendor);
+        if ((value = cupsGetOption(data.vendor[i], (cups_len_t)num_form, form)) != NULL)
+	  num_vendor = (size_t)cupsAddOption(data.vendor[i], value, (cups_len_t)num_vendor, &vendor);
 	else if (ippFindAttribute(printer->driver_attrs, supattr, IPP_TAG_BOOLEAN))
-	  num_vendor = cupsAddOption(data.vendor[i], "false", num_vendor, &vendor);
+	  num_vendor = (size_t)cupsAddOption(data.vendor[i], "false", (cups_len_t)num_vendor, &vendor);
       }
 
       if (papplPrinterSetDriverDefaults(printer, &data, num_vendor, vendor))
@@ -362,10 +362,10 @@ _papplPrinterWebDefaults(
       else
         status = _PAPPL_LOC("Bad printer defaults.");
 
-      cupsFreeOptions((size_t)num_vendor, vendor);
+      cupsFreeOptions((cups_len_t)num_vendor, vendor);
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Printing Defaults"), 0, NULL, NULL);
@@ -675,7 +675,7 @@ _papplPrinterWebDelete(
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -693,11 +693,11 @@ _papplPrinterWebDelete(
       }
 
       papplClientRespondRedirect(client, HTTP_STATUS_FOUND, "/");
-      cupsFreeOptions(num_form, form);
+      cupsFreeOptions((cups_len_t)num_form, form);
       return;
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Delete Printer"), 0, NULL, NULL);
@@ -744,15 +744,15 @@ _papplPrinterWebHome(
     cups_option_t	*form = NULL;	// Form variables
     const char		*action;	// Form action
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
-    else if ((action = cupsGetOption("action", num_form, form)) == NULL)
+    else if ((action = cupsGetOption("action", (cups_len_t)num_form, form)) == NULL)
     {
       status = _PAPPL_LOC("Missing action.");
     }
@@ -844,7 +844,7 @@ _papplPrinterWebHome(
     else
       status = _PAPPL_LOC("Unknown action.");
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   // Show status...
@@ -870,7 +870,7 @@ _papplPrinterWebHome(
     _papplSystemWebSettings(client);
 
   if (printer->system->options & PAPPL_SOPTIONS_INFRA_PROXY)
-    infra_status(client, printer);
+    infra_status(client, printer, /*form_status*/NULL, /*fullpage*/false);
 
   papplClientHTMLPrintf(client,
 			"        </div>\n"
@@ -923,22 +923,39 @@ _papplPrinterWebInfra(
     pappl_client_t  *client,		// I - Client
     pappl_printer_t *printer)		// I - Printer
 {
-  // TODO: Handle form stuff
+  const char	*status = NULL;		// Form status message, if any
+
+
+  if (!papplClientHTMLAuthorize(client))
+    return;
+
+  if (client->operation == HTTP_STATE_POST)
+  {
+    size_t		num_form = 0;	// Number of form variable
+    cups_option_t	*form = NULL;	// Form variables
+
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
+    {
+      status = _PAPPL_LOC("Invalid form data.");
+    }
+    else if (!papplClientIsValidForm(client, num_form, form))
+    {
+      status = _PAPPL_LOC("Invalid form submission.");
+    }
+    else
+    {
+//      _papplPrinterWebConfigFinalize(printer, num_form, form);
+
+      status = _PAPPL_LOC("Form accepted.");
+    }
+
+    cupsFreeOptions((cups_len_t)num_form, form);
+  }
+
 
   // Show cloud printing status...
-  papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Cloud Printing"), /*refresh*/0, /*label*/NULL, /*path_or_url*/NULL);
 
-  papplClientHTMLPuts(client,
-                      "      <div class=\"row\">\n"
-                      "        <div class=\"col-12\">\n");
-
-  infra_status(client, printer);
-
-  papplClientHTMLPuts(client,
-                      "        </div>\n"
-                      "      </div>\n");
-
-  papplClientHTMLPrinterFooter(client);
+  infra_status(client, printer, status, /*full_page*/true);
 }
 
 
@@ -1075,10 +1092,10 @@ _papplPrinterWebJobs(
 					// Number of form variables
     const char		*value = NULL;	// Value of form variable
 
-    if ((value = cupsGetOption("job-index", num_form, form)) != NULL)
+    if ((value = cupsGetOption("job-index", (cups_len_t)num_form, form)) != NULL)
       job_index = (size_t)strtol(value, NULL, 10);
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
   else if (client->operation == HTTP_STATE_POST)
   {
@@ -1089,15 +1106,15 @@ _papplPrinterWebJobs(
     pappl_job_t		*job;		// Job to cancel
     const char		*action;	// Form action
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
-    else if ((value = cupsGetOption("job-id", num_form, form)) != NULL)
+    else if ((value = cupsGetOption("job-id", (cups_len_t)num_form, form)) != NULL)
     {
       char *end;			// End of value
 
@@ -1116,7 +1133,7 @@ _papplPrinterWebJobs(
         else
           username = "guest";
 
-	if ((action = cupsGetOption("action", num_form, form)) == NULL)
+	if ((action = cupsGetOption("action", (cups_len_t)num_form, form)) == NULL)
 	{
 	  status = _PAPPL_LOC("Missing action.");
 	}
@@ -1209,7 +1226,7 @@ _papplPrinterWebJobs(
       status = _PAPPL_LOC("Missing job ID.");
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   if (cupsArrayGetCount(printer->active_jobs) > 0)
@@ -1289,7 +1306,7 @@ _papplPrinterWebMedia(
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1307,18 +1324,18 @@ _papplPrinterWebMedia(
       {
         // size
         snprintf(name, sizeof(name), "ready%u-size", (unsigned)i);
-        if ((value = cupsGetOption(name, num_form, form)) == NULL)
+        if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) == NULL)
           continue;
 
         if (!strcmp(value, "custom"))
         {
           // Custom size...
           snprintf(name, sizeof(name), "ready%u-custom-width", (unsigned)i);
-          custom_width = cupsGetOption(name, num_form, form);
+          custom_width = cupsGetOption(name, (cups_len_t)num_form, form);
           snprintf(name, sizeof(name), "ready%u-custom-length", (unsigned)i);
-          custom_length = cupsGetOption(name, num_form, form);
+          custom_length = cupsGetOption(name, (cups_len_t)num_form, form);
           snprintf(name, sizeof(name), "ready%u-custom-units", (unsigned)i);
-          custom_units = cupsGetOption(name, num_form, form);
+          custom_units = cupsGetOption(name, (cups_len_t)num_form, form);
 
           if (custom_width && custom_length && custom_units)
           {
@@ -1348,7 +1365,7 @@ _papplPrinterWebMedia(
 
         // margins
         snprintf(name, sizeof(name), "ready%u-borderless", (unsigned)i);
-        if (cupsGetOption(name, num_form, form))
+        if (cupsGetOption(name, (cups_len_t)num_form, form))
 	{
 	  ready->bottom_margin = ready->top_margin = 0;
 	  ready->left_margin = ready->right_margin = 0;
@@ -1361,22 +1378,22 @@ _papplPrinterWebMedia(
 
         // left-offset
         snprintf(name, sizeof(name), "ready%u-left-offset", (unsigned)i);
-        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+        if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           ready->left_offset = (int)(100.0 * strtod(value, NULL));
 
         // top-offset
         snprintf(name, sizeof(name), "ready%u-top-offset", (unsigned)i);
-        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+        if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           ready->top_offset = (int)(100.0 * strtod(value, NULL));
 
         // tracking
         snprintf(name, sizeof(name), "ready%u-tracking", (unsigned)i);
-        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+        if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           ready->tracking = _papplMediaTrackingValue(value);
 
         // type
         snprintf(name, sizeof(name), "ready%u-type", (unsigned)i);
-        if ((value = cupsGetOption(name, num_form, form)) != NULL)
+        if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           cupsCopyString(ready->type, value, sizeof(ready->type));
       }
 
@@ -1385,7 +1402,7 @@ _papplPrinterWebMedia(
       status = _PAPPL_LOC("Changes saved.");
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   papplClientHTMLPrinterHeader(client, printer, _PAPPL_LOC("Media"), 0, NULL, NULL);
@@ -1495,10 +1512,13 @@ _papplPrinterWebSupplies(
 static void
 infra_status(
     pappl_client_t  *client,		// I - Client
-    pappl_printer_t *printer)		// I - Printer
+    pappl_printer_t *printer,		// I - Printer
+    const char      *form_status,	// I - Form status message, if any
+    bool            full_page)		// I - Show the full page?
 {
   const char	*status;		// Current status
-  char		cloudpath[1024];	// Path for cloud controls
+  char		title[1024],		// Localized title
+		path[1024];		// Path for cloud controls
 
 
   if (!printer->proxy_uri)
@@ -1510,9 +1530,26 @@ infra_status(
   else
     status = _PAPPL_LOC("Idle");
 
-  papplClientHTMLPrintf(client, "          <h1 class=\"title\">%s (%s)</h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Cloud Printing")), papplClientGetLocString(client, status));
+  snprintf(title, sizeof(title), "%s (%s)", papplClientGetLocString(client, _PAPPL_LOC("Cloud Printing")), papplClientGetLocString(client, status));
 
-  papplPrinterGetPath(printer, "cloud", cloudpath, sizeof(cloudpath));
+  if (full_page)
+  {
+    // Show the full page with header...
+    papplClientHTMLPrinterHeader(client, printer, title, /*refresh*/0, /*label*/NULL, /*path_or_url*/NULL);
+    papplClientHTMLPuts(client,
+                        "      <div class=\"row\">\n"
+                        "        <div class=\"col-12\">\n");
+  }
+  else
+  {
+    // Just show the sub-heading...
+    papplClientHTMLPrintf(client, "          <h1 class=\"title\">%s</h1>\n", title);
+  }
+
+  if (form_status)
+    papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, form_status));
+
+  papplPrinterGetPath(printer, "cloud", path, sizeof(path));
 
   if (!printer->proxy_uri)
   {
@@ -1520,12 +1557,12 @@ infra_status(
 		count = cupsArrayGetCount(printer->system->infra_providers);
 					// Number of providers
 
-    papplClientHTMLStartForm(client, cloudpath, /*multipart*/false);
+    papplClientHTMLStartForm(client, path, /*multipart*/false);
     if (count == 0)
     {
       // Just show "other" provider field...
       papplClientHTMLPuts(client, "          <input type=\"hidden\" name=\"infra_provider\" value=\"other\">\n");
-      papplClientHTMLPuts(client, "          <input type=\"text\" name=\"other_host\" placeholder=\"host.domain.com\">\n");
+      papplClientHTMLPuts(client, "          <input type=\"text\" name=\"other_host\" placeholder=\"host.domain.com[:port]\">\n");
     }
     else
     {
@@ -1550,7 +1587,7 @@ infra_status(
         papplClientHTMLPrintf(client, "            <option value=\"%s\">%s</option>\n", p->uri, p->name);
       }
       papplClientHTMLPrintf(client, "            <option value=\"other\">%s</option>\n", papplClientGetLocString(client, _PAPPL_LOC("Other Provider")));
-      papplClientHTMLPuts(client, "          </select><span id=\"other_provider\" style=\"display: none;\"><input type=\"text\" name=\"other_host\" placeholder=\"host.domain.com\"></span>\n");
+      papplClientHTMLPuts(client, "          </select><span id=\"other_provider\" style=\"display: none;\"><input type=\"text\" name=\"other_host\" placeholder=\"host.domain.com[:port]\"></span>\n");
     }
 
     papplClientHTMLPrintf(client, "          <input type=\"submit\" name=\"connect\" value=\"%s\">\n", papplClientGetLocString(client, _PAPPL_LOC("Connect")));
@@ -1558,7 +1595,7 @@ infra_status(
   }
   else
   {
-    papplClientHTMLStartForm(client, cloudpath, /*multipart*/false);
+    papplClientHTMLStartForm(client, path, /*multipart*/false);
     papplClientHTMLPrintf(client, "          <p>%s <input type=\"submit\" name=\"disconnect\" value=\"%s\"></p>\n", printer->proxy_provider_name, papplClientGetLocString(client, _PAPPL_LOC("Disconnect")));
     papplClientHTMLPuts(client, "          </form>\n");
 
@@ -1590,6 +1627,15 @@ infra_status(
       papplClientHTMLPrintf(client, "            <p><a class=\"copy\" href=\"#\" onClick=\"return copy_text(this);\">%s</a></p>\n", printer->proxy_uri);
       papplClientHTMLPuts(client, "          </div>\n");
     }
+  }
+
+  if (full_page)
+  {
+    // Show the page footer...
+    papplClientHTMLPuts(client,
+                        "        </div>\n"
+                        "      </div>\n");
+    papplClientHTMLPrinterFooter(client);
   }
 }
 

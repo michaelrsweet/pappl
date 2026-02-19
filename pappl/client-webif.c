@@ -1,7 +1,7 @@
 //
 // Core client web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -127,7 +127,7 @@ papplClientGetCookie(
 // > function can only be called once per request.
 //
 
-int					// O - Number of form variables read
+size_t					// O - Number of form variables read
 papplClientGetForm(
     pappl_client_t *client,		// I - Client
     cups_option_t  **form)		// O - Form variables
@@ -298,7 +298,7 @@ papplClientGetForm(
 	bodyptr ++;
 
       // Add the name + value to the option array...
-      num_form = cupsAddOption(name, value, num_form, form);
+      num_form = (size_t)cupsAddOption(name, value, (cups_len_t)num_form, form);
     }
   }
   else if (!strncmp(content_type, "multipart/form-data; ", 21) && (boundary = strstr(content_type, "boundary=")) != NULL)
@@ -375,14 +375,14 @@ papplClientGetForm(
 	  if ((tempfile = _papplClientCreateTempFile(client, ptr, (size_t)(bend - ptr))) == NULL)
 	    break;
 
-          num_form = cupsAddOption(name, tempfile, num_form, form);
+          num_form = (size_t)cupsAddOption(name, tempfile, (cups_len_t)num_form, form);
 	}
 	else
 	{
 	  // Save the form variable...
 	  *bend = '\0';
 
-          num_form = cupsAddOption(name, ptr, num_form, form);
+          num_form = (size_t)cupsAddOption(name, ptr, (cups_len_t)num_form, form);
 	}
 
 	name[0]     = '\0';
@@ -415,7 +415,7 @@ papplClientGetForm(
   free(body);
 
   // Return whatever we got...
-  return ((int)num_form);
+  return (num_form);
 }
 
 
@@ -508,11 +508,11 @@ papplClientHTMLAuthorize(
     {
       status = "Invalid form data.";
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = "Invalid form submission.";
     }
-    else if ((password = cupsGetOption("password", num_form, form)) == NULL)
+    else if ((password = cupsGetOption("password", (cups_len_t)num_form, form)) == NULL)
     {
       status = "Login password required.";
     }
@@ -1366,14 +1366,14 @@ papplClientHTMLStartForm(
 bool					// O - `true` if the CSRF token is valid, `false` otherwise
 papplClientIsValidForm(
     pappl_client_t *client,		// I - Client
-    int            num_form,		// I - Number of form variables
+    size_t         num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
 {
   char		token[256];		// Expected CSRF token
   const char	*session;		// Form variable
 
 
-  if ((session = cupsGetOption("session", (size_t)num_form, form)) == NULL)
+  if ((session = cupsGetOption("session", (cups_len_t)num_form, form)) == NULL)
     return (false);
 
   return (!strcmp(session, papplClientGetCSRFToken(client, token, sizeof(token))));

@@ -1,15 +1,11 @@
 //
 // HTTP monitor unit tests for the Printer Application Framework
 //
-// Copyright © 2021-2022 by Michael R Sweet.
+// Copyright © 2021-2026 by Michael R Sweet.
 // Copyright © 2012 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
-//
-
-//
-// Include necessary headers...
 //
 
 #include <pappl/httpmon-private.h>

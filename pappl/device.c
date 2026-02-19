@@ -540,10 +540,10 @@ papplDeviceGetStatus(
 // > information.
 //
 
-int					// O - Number of supplies
+size_t					// O - Number of supplies
 papplDeviceGetSupplies(
     pappl_device_t *device,		// I - Device
-    int            max_supplies,	// I - Maximum supplies
+    size_t         max_supplies,	// I - Maximum supplies
     pappl_supply_t *supplies)		// I - Supplies
 {
   if (device && device->supplies_cb)

@@ -1,7 +1,7 @@
 //
 // Device communication functions for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -64,7 +64,7 @@ typedef ssize_t (*pappl_devread_cb_t)(pappl_device_t *device, void *buffer, size
 					// Device read callback
 typedef pappl_preason_t (*pappl_devstatus_cb_t)(pappl_device_t *device);
 					// Device status callback
-typedef int (*pappl_devsupplies_cb_t)(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
+typedef size_t (*pappl_devsupplies_cb_t)(pappl_device_t *device, size_t max_supplies, pappl_supply_t *supplies);
 					// Device supplies callback
 typedef ssize_t (*pappl_devwrite_cb_t)(pappl_device_t *device, const void *buffer, size_t bytes);
 					// Device write callback
@@ -83,7 +83,7 @@ extern void		*papplDeviceGetData(pappl_device_t *device) _PAPPL_PUBLIC;
 extern char		*papplDeviceGetID(pappl_device_t *device, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern pappl_devmetrics_t *papplDeviceGetMetrics(pappl_device_t *device, pappl_devmetrics_t *metrics) _PAPPL_PUBLIC;
 extern pappl_preason_t	papplDeviceGetStatus(pappl_device_t *device) _PAPPL_PUBLIC;
-extern int		papplDeviceGetSupplies(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
+extern size_t		papplDeviceGetSupplies(pappl_device_t *device, size_t max_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;
 extern bool		papplDeviceIsSupported(const char *uri) _PAPPL_PUBLIC;
 extern bool		papplDeviceList(pappl_devtype_t types, pappl_device_cb_t cb, void *data, pappl_deverror_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;
 extern pappl_device_t	*papplDeviceOpen(const char *device_uri, pappl_job_t *job, pappl_deverror_cb_t err_cb, void *err_data) _PAPPL_PUBLIC;

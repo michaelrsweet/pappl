@@ -1075,6 +1075,12 @@ create_printer(
       papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebDelete, printer);
     }
 
+    if (system->options & PAPPL_SOPTIONS_INFRA_PROXY)
+    {
+      snprintf(path, sizeof(path), "%s/cloud", printer->uriname);
+      papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebInfra, printer);
+    }
+
     snprintf(path, sizeof(path), "%s/config", printer->uriname);
     papplSystemAddResourceCallback(system, path, "text/html", (pappl_resource_cb_t)_papplPrinterWebConfig, printer);
 

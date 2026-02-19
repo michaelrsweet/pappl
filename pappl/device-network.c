@@ -1,7 +1,7 @@
 //
 // Network device support code for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -81,8 +81,8 @@ typedef struct _pappl_socket_s		// Socket device data
   http_addrlist_t	*list,			// Address list
 			*addr;			// Connected address
   int			snmp_fd,		// SNMP socket
-			charset,		// Character set
-			num_supplies;		// Number of supplies
+			charset;		// Character set
+  size_t		num_supplies;		// Number of supplies
   pappl_supply_t	supplies[_PAPPL_MAX_SNMP_SUPPLY];
 						// Supplies
   int			colorants[_PAPPL_MAX_SNMP_SUPPLY],
@@ -199,7 +199,7 @@ static void		pappl_ipp_close(pappl_device_t *device);
 static char		*pappl_ipp_getid(pappl_device_t *device, char *buffer, size_t bufsize);
 static bool		pappl_ipp_open(pappl_device_t *device, const char *device_uri, pappl_job_t *job);
 static pappl_preason_t	pappl_ipp_status(pappl_device_t *device);
-static int		pappl_ipp_supplies(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
+static size_t		pappl_ipp_supplies(pappl_device_t *device, size_t max_supplies, pappl_supply_t *supplies);
 static ssize_t		pappl_ipp_write(pappl_device_t *device, const void *buffer, size_t bytes);
 
 static int		pappl_snmp_compare_devices(_pappl_snmp_dev_t *a, _pappl_snmp_dev_t *b);
@@ -216,7 +216,7 @@ static char		*pappl_socket_getid(pappl_device_t *device, char *buffer, size_t bu
 static bool		pappl_socket_open(pappl_device_t *device, const char *device_uri, pappl_job_t *job);
 static ssize_t		pappl_socket_read(pappl_device_t *device, void *buffer, size_t bytes);
 static pappl_preason_t	pappl_socket_status(pappl_device_t *device);
-static int		pappl_socket_supplies(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
+static size_t		pappl_socket_supplies(pappl_device_t *device, size_t max_supplies, pappl_supply_t *supplies);
 static ssize_t		pappl_socket_write(pappl_device_t *device, const void *buffer, size_t bytes);
 
 static void		utf16_to_utf8(char *dst, const unsigned char *src, size_t srcsize, size_t dstsize, bool le);
@@ -862,14 +862,13 @@ pappl_ipp_status(pappl_device_t *device)// I - Device
 // 'pappl_ipp_supplies()' - Get the current supply levels for an IPP printer.
 //
 
-static int				// O - Number of supplies
+static size_t				// O - Number of supplies
 pappl_ipp_supplies(
     pappl_device_t *device,		// I - Device
-    int            max_supplies,	// I - Maximum number of supplies
+    size_t         max_supplies,	// I - Maximum number of supplies
     pappl_supply_t *supplies)		// I - Supplies
 {
   // TODO: Implement pappl_ipp_supplies
-  // TODO: Change supply API to use size_t
   (void)device;
   (void)max_supplies;
   (void)supplies;
@@ -1341,9 +1340,10 @@ pappl_snmp_walk_cb(
     _pappl_snmp_t   *packet,		// I - SNMP packet
     _pappl_socket_t *sock)		// I - Socket device
 {
-  int	i, j,				// Looping vars
-	element;			// Element in supply table
-  char	*ptr;				// Pointer into colorant name
+  int		i,			// Looping var
+		element;		// Element in supply table
+  size_t	j;			// Looping var
+  char		*ptr;			// Pointer into colorant name
   static const pappl_supply_type_t types[] =
   {					// Supply types mapped from SNMP TC values
     PAPPL_SUPPLY_TYPE_OTHER,
@@ -1415,8 +1415,8 @@ pappl_snmp_walk_cb(
     if (element < 1 || i < 1 || i > _PAPPL_MAX_SNMP_SUPPLY)
       return;
 
-    if (i > sock->num_supplies)
-      sock->num_supplies = i;
+    if ((size_t)i > sock->num_supplies)
+      sock->num_supplies = (size_t)i;
 
     i --;
 
@@ -1622,9 +1622,8 @@ pappl_socket_open(
     return (false);
   }
 
-  sock->snmp_fd      = -1;
-  sock->charset      = -1;
-  sock->num_supplies = -1;
+  sock->snmp_fd = -1;
+  sock->charset = -1;
 
   // Split apart the URI...
   httpSeparateURI(HTTP_URI_CODING_ALL, device_uri, scheme, sizeof(scheme), userpass, sizeof(userpass), host, sizeof(host), &port, resource, sizeof(resource));
@@ -1828,14 +1827,14 @@ pappl_socket_status(
 // 'pappl_socket_supplies()' - Query supply levels via SNMP.
 //
 
-static int				// O - Number of supplies
+static size_t				// O - Number of supplies
 pappl_socket_supplies(
     pappl_device_t *device,		// I - Device
-    int            max_supplies,	// I - Maximum number of supply levels
+    size_t         max_supplies,	// I - Maximum number of supply levels
     pappl_supply_t *supplies)		// I - Supply levels
 {
   _pappl_socket_t	*sock;		// Socket device
-  int			i;		// Looping var
+  size_t		i;		// Looping var
 #ifdef DEBUG
   char			temp[1024];	// OID string
 #endif // DEBUG
@@ -1924,9 +1923,9 @@ pappl_socket_supplies(
   if (sock->num_supplies > 0)
   {
     if (sock->num_supplies > max_supplies)
-      memcpy(supplies, sock->supplies, (size_t)max_supplies * sizeof(pappl_supply_t));
+      memcpy(supplies, sock->supplies, max_supplies * sizeof(pappl_supply_t));
     else
-      memcpy(supplies, sock->supplies, (size_t)sock->num_supplies * sizeof(pappl_supply_t));
+      memcpy(supplies, sock->supplies, sock->num_supplies * sizeof(pappl_supply_t));
   }
 
   return (sock->num_supplies);

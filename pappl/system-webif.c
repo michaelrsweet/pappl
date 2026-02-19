@@ -360,11 +360,11 @@ _papplSystemWebAddPrinter(
     size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -372,11 +372,11 @@ _papplSystemWebAddPrinter(
     {
       http_addrlist_t	*list;		// Address list
 
-      if ((value = cupsGetOption("printer_name", num_form, form)) != NULL)
+      if ((value = cupsGetOption("printer_name", (cups_len_t)num_form, form)) != NULL)
         cupsCopyString(printer_name, value, sizeof(printer_name));
-      if ((value = cupsGetOption("driver_name", num_form, form)) != NULL)
+      if ((value = cupsGetOption("driver_name", (cups_len_t)num_form, form)) != NULL)
         cupsCopyString(driver_name, value, sizeof(driver_name));
-      if ((value = cupsGetOption("device_uri", num_form, form)) != NULL)
+      if ((value = cupsGetOption("device_uri", (cups_len_t)num_form, form)) != NULL)
       {
         cupsCopyString(device_uri, value, sizeof(device_uri));
         if ((device_id = strchr(device_uri, '|')) != NULL)
@@ -386,7 +386,7 @@ _papplSystemWebAddPrinter(
       if (!strcmp(device_uri, "socket"))
       {
         // Make URI using hostname
-        if ((value = cupsGetOption("hostname", num_form, form)) == NULL)
+        if ((value = cupsGetOption("hostname", (cups_len_t)num_form, form)) == NULL)
         {
           status        = _PAPPL_LOC("Please enter a hostname or IP address for the printer.");
           device_uri[0] = '\0';
@@ -452,7 +452,7 @@ _papplSystemWebAddPrinter(
 
 	  // Redirect the client to the printer's status page...
           papplClientRespondRedirect(client, HTTP_STATUS_FOUND, printer->uriname);
-          cupsFreeOptions(num_form, form);
+          cupsFreeOptions((cups_len_t)num_form, form);
           return;
 	}
 
@@ -474,7 +474,7 @@ _papplSystemWebAddPrinter(
       }
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   system_header(client, _PAPPL_LOC("Add Printer"));
@@ -560,9 +560,9 @@ _papplSystemWebConfig(
     size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
       status = _PAPPL_LOC("Invalid form data.");
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
       status = _PAPPL_LOC("Invalid form submission.");
     else
     {
@@ -571,7 +571,7 @@ _papplSystemWebConfig(
       status = _PAPPL_LOC("Changes saved.");
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   system_header(client, _PAPPL_LOC("Configuration"));
@@ -595,7 +595,7 @@ _papplSystemWebConfig(
 void
 _papplSystemWebConfigFinalize(
     pappl_system_t *system,		// I - System
-    size_t     num_form,		// I - Number of form variables
+    size_t         num_form,		// I - Number of form variables
     cups_option_t  *form)		// I - Form variables
 {
   const char	*value,			// Form value
@@ -606,14 +606,14 @@ _papplSystemWebConfigFinalize(
 		*contact_tel;		// Contact telephone number
 
 
-  if ((value = cupsGetOption("dns_sd_name", num_form, form)) != NULL)
+  if ((value = cupsGetOption("dns_sd_name", (cups_len_t)num_form, form)) != NULL)
     papplSystemSetDNSSDName(system, *value ? value : NULL);
 
-  if ((value = cupsGetOption("location", num_form, form)) != NULL)
+  if ((value = cupsGetOption("location", (cups_len_t)num_form, form)) != NULL)
     papplSystemSetLocation(system, *value ? value : NULL);
 
-  geo_lat = cupsGetOption("geo_location_lat", num_form, form);
-  geo_lon = cupsGetOption("geo_location_lon", num_form, form);
+  geo_lat = cupsGetOption("geo_location_lat", (cups_len_t)num_form, form);
+  geo_lon = cupsGetOption("geo_location_lon", (cups_len_t)num_form, form);
   if (geo_lat && geo_lon)
   {
     char	uri[1024];		// "geo:" URI
@@ -627,15 +627,15 @@ _papplSystemWebConfigFinalize(
       papplSystemSetGeoLocation(system, NULL);
   }
 
-  if ((value = cupsGetOption("organization", num_form, form)) != NULL)
+  if ((value = cupsGetOption("organization", (cups_len_t)num_form, form)) != NULL)
     papplSystemSetOrganization(system, *value ? value : NULL);
 
-  if ((value = cupsGetOption("organizational_unit", num_form, form)) != NULL)
+  if ((value = cupsGetOption("organizational_unit", (cups_len_t)num_form, form)) != NULL)
     papplSystemSetOrganizationalUnit(system, *value ? value : NULL);
 
-  contact_name  = cupsGetOption("contact_name", num_form, form);
-  contact_email = cupsGetOption("contact_email", num_form, form);
-  contact_tel   = cupsGetOption("contact_telephone", num_form, form);
+  contact_name  = cupsGetOption("contact_name", (cups_len_t)num_form, form);
+  contact_email = cupsGetOption("contact_email", (cups_len_t)num_form, form);
+  contact_tel   = cupsGetOption("contact_telephone", (cups_len_t)num_form, form);
   if (contact_name || contact_email || contact_tel)
   {
     pappl_contact_t	contact;	// Contact info
@@ -842,17 +842,17 @@ _papplSystemWebLogs(
     size_t		num_form = 0;	// Number of form variables
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
     else
     {
-      if ((value = cupsGetOption("log_level", num_form, form)) != NULL)
+      if ((value = cupsGetOption("log_level", (cups_len_t)num_form, form)) != NULL)
       {
         // Get log level and save it...
 	for (loglevel = PAPPL_LOGLEVEL_DEBUG; loglevel <= PAPPL_LOGLEVEL_FATAL; loglevel ++)
@@ -875,7 +875,7 @@ _papplSystemWebLogs(
       }
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   system_header(client, _PAPPL_LOC("Logs"));
@@ -967,15 +967,15 @@ _papplSystemWebNetwork(
     const char		*value;		// Form variable value
     _pappl_redirect_t	data;		// Redirection data
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
-    else if ((value = cupsGetOption("hostname", num_form, form)) != NULL)
+    else if ((value = cupsGetOption("hostname", (cups_len_t)num_form, form)) != NULL)
     {
       // Set hostname and save it...
       papplSystemSetHostName(client->system, value);
@@ -986,11 +986,11 @@ _papplSystemWebNetwork(
         for (i = num_networks, network = networks; i > 0; i --, network ++)
         {
           snprintf(name, sizeof(name), "%s.domain", network->ident);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
             cupsCopyString(network->domain, value, sizeof(network->domain));
 
           snprintf(name, sizeof(name), "%s.config4", network->ident);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           {
             pappl_netconf_t config = (pappl_netconf_t)atoi(value);
 					// Configuration value
@@ -1005,7 +1005,7 @@ _papplSystemWebNetwork(
 	  }
 
           snprintf(name, sizeof(name), "%s.addr4", network->ident);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           {
             if (inet_pton(AF_INET, value, &network->addr4.ipv4.sin_addr) <= 0)
             {
@@ -1015,7 +1015,7 @@ _papplSystemWebNetwork(
           }
 
           snprintf(name, sizeof(name), "%s.mask4", network->ident);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           {
             if (inet_pton(AF_INET, value, &network->mask4.ipv4.sin_addr) <= 0)
             {
@@ -1025,7 +1025,7 @@ _papplSystemWebNetwork(
           }
 
           snprintf(name, sizeof(name), "%s.gateway4", network->ident);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           {
             if (*value)
               inet_pton(AF_INET, value, &network->gateway4.ipv4.sin_addr);
@@ -1039,7 +1039,7 @@ _papplSystemWebNetwork(
 	    network->dns[j].ipv4.sin_addr.s_addr = 0;
 
 	    snprintf(name, sizeof(name), "%s.dns_%d", network->ident, j + 1);
-	    if ((value = cupsGetOption(name, num_form, form)) != NULL)
+	    if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
 	    {
 	      if (*value)
 	      {
@@ -1058,7 +1058,7 @@ _papplSystemWebNetwork(
 	  }
 
           snprintf(name, sizeof(name), "%s.config6", network->ident);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           {
             pappl_netconf_t config = (pappl_netconf_t)atoi(value);
 					// Configuration value
@@ -1073,7 +1073,7 @@ _papplSystemWebNetwork(
 	  }
 
           snprintf(name, sizeof(name), "%s.addr6", network->ident);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           {
             network->addr6.ipv6.sin6_family = AF_INET6;
 
@@ -1094,7 +1094,7 @@ _papplSystemWebNetwork(
 	  }
 
           snprintf(name, sizeof(name), "%s.prefix6", network->ident);
-          if ((value = cupsGetOption(name, num_form, form)) != NULL)
+          if ((value = cupsGetOption(name, (cups_len_t)num_form, form)) != NULL)
           {
             int intvalue = atoi(value);
 
@@ -1114,7 +1114,7 @@ _papplSystemWebNetwork(
         memcpy(data.networks, networks, num_networks * sizeof(pappl_network_t));
 
         system_redirect(client, _PAPPL_LOC("Updating Network Configuration"), "/network", 10, (pappl_timer_cb_t)system_redirect_network_cb, &data);
-        cupsFreeOptions(num_form, form);
+        cupsFreeOptions((cups_len_t)num_form, form);
         return;
       }
 
@@ -1128,7 +1128,7 @@ _papplSystemWebNetwork(
 
     post_done:
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   system_header(client, _PAPPL_LOC("Networking"));
@@ -1338,11 +1338,11 @@ _papplSystemWebSecurity(
     size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1353,9 +1353,9 @@ _papplSystemWebSecurity(
 			*new_password2;	// New password again
       char		hash[1024];	// Hash of password
 
-      old_password  = cupsGetOption("old_password", num_form, form);
-      new_password  = cupsGetOption("new_password", num_form, form);
-      new_password2 = cupsGetOption("new_password2", num_form, form);
+      old_password  = cupsGetOption("old_password", (cups_len_t)num_form, form);
+      new_password  = cupsGetOption("new_password", (cups_len_t)num_form, form);
+      new_password2 = cupsGetOption("new_password2", (cups_len_t)num_form, form);
 
       if (system->password_hash[0] && (!old_password || !_papplIsEqual(system->password_hash, papplSystemHashPassword(system, system->password_hash, old_password, hash, sizeof(hash)))))
       {
@@ -1397,13 +1397,13 @@ _papplSystemWebSecurity(
 #if !_WIN32
     else
     {
-      const char	 *group;	// Current group
+      const char	*group;		// Current group
       char		buffer[8192];	// Buffer for strings
       struct group	grpbuf;		// Group buffer
 
       grp = NULL;
 
-      if ((group = cupsGetOption("admin_group", num_form, form)) != NULL)
+      if ((group = cupsGetOption("admin_group", (cups_len_t)num_form, form)) != NULL)
       {
         if (strcmp(group, "") && (getgrnam_r(group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp))
           status = _PAPPL_LOC("Bad administration group.");
@@ -1411,7 +1411,7 @@ _papplSystemWebSecurity(
 	  papplSystemSetAdminGroup(system, group);
       }
 
-      if ((group = cupsGetOption("print_group", num_form, form)) != NULL)
+      if ((group = cupsGetOption("print_group", (cups_len_t)num_form, form)) != NULL)
       {
         if (strcmp(group, "") && (getgrnam_r(group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp))
         {
@@ -1429,7 +1429,7 @@ _papplSystemWebSecurity(
     }
 #endif // !_WIN32
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   system_header(client, _PAPPL_LOC("Security"));
@@ -1602,11 +1602,11 @@ _papplSystemWebTLSInstall(
     size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1616,8 +1616,8 @@ _papplSystemWebTLSInstall(
 			*credentials,	// Certificate and public key
 			*key;		// Private key
 
-      credentials = tls_get_file(cupsGetOption("certificate", num_form, form));
-      key         = tls_get_file(cupsGetOption("privatekey", num_form, form));
+      credentials = tls_get_file(cupsGetOption("certificate", (cups_len_t)num_form, form));
+      key         = tls_get_file(cupsGetOption("privatekey", (cups_len_t)num_form, form));
 
       papplSystemGetHostName(system, hostname, sizeof(hostname));
 
@@ -1651,7 +1651,7 @@ _papplSystemWebTLSInstall(
       free(key);
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   system_header(client, _PAPPL_LOC("Install TLS Certificate"));
@@ -1712,11 +1712,11 @@ _papplSystemWebTLSNew(
     size_t		num_form = 0;	// Number of form variable
     cups_option_t	*form = NULL;	// Form variables
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
@@ -1741,7 +1741,7 @@ _papplSystemWebTLSNew(
         status = _PAPPL_LOC("Unable to create certificate request.");
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   if (!strcmp(client->uri, "/tls-new-crt"))
@@ -1880,20 +1880,20 @@ _papplSystemWebWiFi(
     const char		*ssid,		// Wi-Fi network name
 			*psk;		// Wi-Fi password
 
-    if ((num_form = (size_t)papplClientGetForm(client, &form)) == 0)
+    if ((num_form = papplClientGetForm(client, &form)) == 0)
     {
       status = _PAPPL_LOC("Invalid form data.");
     }
-    else if (!papplClientIsValidForm(client, (int)num_form, form))
+    else if (!papplClientIsValidForm(client, num_form, form))
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
-    else if ((ssid = cupsGetOption("ssid", num_form, form)) != NULL && (psk = cupsGetOption("psk", num_form, form)) != NULL)
+    else if ((ssid = cupsGetOption("ssid", (cups_len_t)num_form, form)) != NULL && (psk = cupsGetOption("psk", num_form, form)) != NULL)
     {
       _pappl_redirect_t	data;		// Redirection data
 
       if (!strcmp(ssid, "__hidden__"))
-        ssid = cupsGetOption("ssid_hidden", num_form, form);
+        ssid = cupsGetOption("ssid_hidden", (cups_len_t)num_form, form);
 
       if (ssid && *ssid)
       {
@@ -1902,7 +1902,7 @@ _papplSystemWebWiFi(
 	cupsCopyString(data.psk, psk, sizeof(data.psk));
 
 	system_redirect(client, _PAPPL_LOC("Joining Wi-Fi Network"), "/network", 30, (pappl_timer_cb_t)system_redirect_wifi_cb, &data);
-	cupsFreeOptions(num_form, form);
+	cupsFreeOptions((cups_len_t)num_form, form);
 	return;
       }
 
@@ -1913,7 +1913,7 @@ _papplSystemWebWiFi(
       status = _PAPPL_LOC("Unknown form action.");
     }
 
-    cupsFreeOptions(num_form, form);
+    cupsFreeOptions((cups_len_t)num_form, form);
   }
 
   // Show the Wi-Fi configuration
@@ -2387,7 +2387,7 @@ tls_make_certificate(
 
 
   // Verify that we have all of the required form variables...
-  if ((value = cupsGetOption("duration", num_form, form)) == NULL)
+  if ((value = cupsGetOption("duration", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'duration' form field.");
     return (false);
@@ -2398,7 +2398,7 @@ tls_make_certificate(
     return (false);
   }
 
-  if ((level = cupsGetOption("level", num_form, form)) == NULL)
+  if ((level = cupsGetOption("level", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'level' form field.");
     return (false);
@@ -2433,37 +2433,37 @@ tls_make_certificate(
     return (false);
   }
 
-  if ((email = cupsGetOption("email", num_form, form)) == NULL)
+  if ((email = cupsGetOption("email", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'email' form field.");
     return (false);
   }
 
-  if ((organization = cupsGetOption("organization", num_form, form)) == NULL)
+  if ((organization = cupsGetOption("organization", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'organization' form field.");
     return (false);
   }
 
-  if ((org_unit = cupsGetOption("organizational_unit", num_form, form)) == NULL)
+  if ((org_unit = cupsGetOption("organizational_unit", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'organizational_unit' form field.");
     return (false);
   }
 
-  if ((city = cupsGetOption("city", num_form, form)) == NULL)
+  if ((city = cupsGetOption("city", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'city' form field.");
     return (false);
   }
 
-  if ((state = cupsGetOption("state", num_form, form)) == NULL)
+  if ((state = cupsGetOption("state", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'state' form field.");
     return (false);
   }
 
-  if ((country = cupsGetOption("country", num_form, form)) == NULL)
+  if ((country = cupsGetOption("country", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'country' form field.");
     return (false);
@@ -2534,7 +2534,7 @@ tls_make_certsignreq(
   *crqpath = '\0';
 
   // Verify that we have all of the required form variables...
-  if ((level = cupsGetOption("level", num_form, form)) == NULL)
+  if ((level = cupsGetOption("level", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'level' form field.");
     return (false);
@@ -2569,37 +2569,37 @@ tls_make_certsignreq(
     return (false);
   }
 
-  if ((email = cupsGetOption("email", num_form, form)) == NULL)
+  if ((email = cupsGetOption("email", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'email' form field.");
     return (false);
   }
 
-  if ((organization = cupsGetOption("organization", num_form, form)) == NULL)
+  if ((organization = cupsGetOption("organization", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'organization' form field.");
     return (false);
   }
 
-  if ((org_unit = cupsGetOption("organizational_unit", num_form, form)) == NULL)
+  if ((org_unit = cupsGetOption("organizational_unit", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'organizational_unit' form field.");
     return (false);
   }
 
-  if ((city = cupsGetOption("city", num_form, form)) == NULL)
+  if ((city = cupsGetOption("city", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'city' form field.");
     return (false);
   }
 
-  if ((state = cupsGetOption("state", num_form, form)) == NULL)
+  if ((state = cupsGetOption("state", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'state' form field.");
     return (false);
   }
 
-  if ((country = cupsGetOption("country", num_form, form)) == NULL)
+  if ((country = cupsGetOption("country", (cups_len_t)num_form, form)) == NULL)
   {
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Missing 'country' form field.");
     return (false);

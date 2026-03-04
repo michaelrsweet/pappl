@@ -632,11 +632,11 @@ papplSystemRun(pappl_system_t *system)	// I - System
       }
     }
 
-    if (printer->proxy_uri)
+    if (printer->proxy_infra_uri)
     {
       cups_thread_t	tid;		// Thread ID
 
-      papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Starting proxy thread for '%s'.", printer->proxy_uri);
+      papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Starting proxy thread for '%s'.", printer->proxy_infra_uri);
 
       if ((tid = cupsThreadCreate((void *(*)(void *))_papplPrinterRunProxy, printer)) == CUPS_THREAD_INVALID)
       {

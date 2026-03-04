@@ -510,7 +510,7 @@ extern void		papplPrinterSetNextJobID(pappl_printer_t *printer, int next_job_id)
 extern void		papplPrinterSetOrganization(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetOrganizationalUnit(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
 extern void		papplPrinterSetPrintGroup(pappl_printer_t *printer, const char *value) _PAPPL_PUBLIC;
-extern void		papplPrinterSetProxy(pappl_printer_t *printer, const char *client_id, const char *common_name, const char *device_uuid, const char *provider_name, const char *provider_uri, const char *token_url, const char *uri, const char *uuid) _PAPPL_PUBLIC;
+extern void		papplPrinterSetProxy(pappl_printer_t *printer, const char *client_id, const char *common_name, const char *device_uuid, const char *provider_uri, const char *token_url, const char *infra_uri, const char *infra_uuid) _PAPPL_PUBLIC;
 extern bool		papplPrinterSetReadyMedia(pappl_printer_t *printer, size_t num_ready, pappl_media_col_t *ready) _PAPPL_PUBLIC;
 extern void		papplPrinterSetReasons(pappl_printer_t *printer, pappl_preason_t add, pappl_preason_t remove) _PAPPL_PUBLIC;
 extern void		papplPrinterSetSupplies(pappl_printer_t *printer, size_t num_supplies, pappl_supply_t *supplies) _PAPPL_PUBLIC;

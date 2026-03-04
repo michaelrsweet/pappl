@@ -102,20 +102,26 @@ struct _pappl_printer_s			// Printer data
 
   bool			proxy_active,		// Proxy active?
 			proxy_terminate;	// Terminate proxy?
-  char			*proxy_client_id,	// Proxy client_id value
-			*proxy_device_uuid;	// Proxy output-device-uuid value
+  const char		*proxy_state_message;	// Most recent proxy state message
   cups_array_t		*proxy_jobs;		// Proxy jobs
   cups_mutex_t		proxy_jobs_mutex;	// Mutex for proxy jobs array
-  char			*proxy_common_name,	// Proxy common_name value
-			*proxy_token;		// Proxy access token
-  time_t		proxy_token_expires;	// Proxy access token expiration date/time
-  cups_mutex_t		proxy_token_mutex;	// Mutex for access token
-  char			*proxy_token_url,	// Proxy device token URL value
-			*proxy_provider_name,	// Proxy provider name value
-			*proxy_provider_uri,	// Proxy provider URI value
-			*proxy_uri,		// Proxy printer-uri value
-			*proxy_uuid;		// Proxy printer-uuid value
-  cups_json_t		*proxy_device_grant;	// Proxy OAuth device grant
+  cups_mutex_t		proxy_config_mutex;	// Mutex for proxy config values
+  char			*proxy_provider_uri,	// Proxy provider (system) URI value
+			*proxy_device_uuid,	// Proxy output-device-uuid value
+			*proxy_infra_uri,	// Proxy infrastructure printer-uri value
+			*proxy_infra_uuid;	// Proxy infrastructure printer-uuid value
+  cups_mutex_t		proxy_auth_mutex;	// Mutex for authorization values
+  char			*proxy_client_id,	// Proxy OAuth client_id value, if any
+			*proxy_common_name,	// Proxy X.509 common name value, if any
+			*proxy_credentials,	// Cached X.509 credentials for common name, if any
+			*proxy_key,		// Cached private key for common name, if any
+			*proxy_oauth_uri,	// Proxy OAuth authorization server URI, if any
+			*proxy_oauth_scopes;	// Proxy OAuth authorization scope(s), if any
+  cups_json_t		*proxy_oauth_metadata;	// Proxy OAuth authorization server metadata, if any
+  cups_json_t		*proxy_device_grant;	// Proxy OAuth device grant, if any
+  char			*proxy_token;		// Proxy access token, if any
+  time_t		proxy_token_expires;	// Proxy access token expiration date/time, if any
+  char			*proxy_token_url;	// Proxy device token URL value, if any
 };
 
 

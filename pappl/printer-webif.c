@@ -16,6 +16,7 @@
 // Local functions...
 //
 
+static bool	infra_register(pappl_printer_t *printer);
 static void	infra_status(pappl_client_t  *client, pappl_printer_t *printer, const char *form_status, bool full_page);
 static void	job_cb(pappl_job_t *job, pappl_client_t *client);
 static void	job_pager(pappl_client_t *client, pappl_printer_t *printer, size_t job_index, size_t limit);
@@ -942,16 +943,60 @@ _papplPrinterWebInfra(
     {
       status = _PAPPL_LOC("Invalid form submission.");
     }
+    else if (cupsGetOption("connect", (cups_len_t)num_form, form))
+    {
+      // Connect to cloud service
+      const char *provider = cupsGetOption("infra_provider", (cups_len_t)num_form, form);
+					// Cloud service provider
+
+      if (provider && !strcmp(provider, "other"))
+        provider = cupsGetOption("other_host", (cups_len_t)num_form, form);
+
+      if (provider)
+      {
+        // Try registering with the specified provider...
+        char	uri[1024],		// system-uri value
+		host[256];		// URI hostname
+	int	port = 631;		// URI port number
+
+        if (strncmp(provider, "ipps://", 7))
+        {
+	  // Other 'host[:port' value...
+	  char *hostptr;		// Pointer into host string
+
+	  cupsCopyString(host, provider, sizeof(host));
+	  if ((hostptr = strrchr(host, ':')) != NULL && isdigit(hostptr[1] & 255))
+	  {
+	    *hostptr++ = '\0';
+	    port       = atoi(hostptr);
+	  }
+
+	  httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", /*userpass*/NULL, host, port, "/ipp/system");
+	  provider = uri;
+	}
+
+        papplPrinterSetProxy(printer, /*client_id*/NULL, /*common_name*/NULL, /*device_uuid*/NULL, provider, /*token_url*/NULL, /*infra_uri*/NULL, /*infra_uuid*/NULL);
+
+        if (!infra_register(printer))
+          status = printer->proxy_state_message;
+      }
+      else
+      {
+        // Missing cloud provider...
+	status = _PAPPL_LOC("Missing cloud provider.");
+      }
+    }
+    else if (cupsGetOption("disconnect", (cups_len_t)num_form, form))
+    {
+      // Disconnect from cloud service
+    }
     else
     {
-//      _papplPrinterWebConfigFinalize(printer, num_form, form);
-
-      status = _PAPPL_LOC("Form accepted.");
+      status = _PAPPL_LOC("Unknown action.");
     }
 
     cupsFreeOptions((cups_len_t)num_form, form);
   }
-
 
   // Show cloud printing status...
 
@@ -1506,6 +1551,183 @@ _papplPrinterWebSupplies(
 
 
 //
+// 'infra_register()' - Register with the INFRA provider.
+//
+
+static bool				// O - `true` on success, `false` on error
+infra_register(pappl_printer_t *printer)// I - Printer
+{
+  bool		ret = false;		// Return value
+  http_t	*http = NULL;		// Connection to service
+  char		host[256],		// Hostname
+		resource[1024];		// Resource path
+  int		port;			// Port number
+  size_t	i,			// Looping var
+		count;			// Number of values
+  ipp_t		*request,		// Current request
+		*response = NULL;	// Current response
+  ipp_attribute_t *attr;		// Attribute
+  char		device_uuid[46];	// New output-device-uuid value
+  const char	*oauth_uri;		// OAuth authorization server URI, if any
+  cups_json_t	*oauth_metadata = NULL;	// Service metadata, if any
+  char		*oauth_scopes = NULL;	// OAuth authorization scopes, if any
+//  char		*access_token = NULL;	// Current access token, if any
+//  time_t	access_expires;		// Current access token expiration
+  const char	*infra_uri,		// URI of infrastructure printer
+		*infra_uuid;		// UUID of infrastructure printer
+  static const char * const sattrs[] =	// System attributes we care about
+  {
+    "oauth-authorization-server-uri",
+    "oauth-authorization-scope",
+    "system-mandatory-registration-attributes",
+    "uri-authentication-supported"
+  };
+
+
+  // Reset state...
+  printer->proxy_state_message = NULL;
+
+  // Connect to system...
+  if ((http = httpConnectURI(printer->proxy_provider_uri, host, sizeof(host), &port, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/strstr(printer->proxy_provider_uri, "://localhost") == NULL)) == NULL)
+  {
+    // Unable to connect to system...
+    printer->proxy_state_message = cupsGetErrorString();
+    goto done;
+  }
+
+  // Get printer capabilities...
+  request = ippNewRequest(IPP_OP_GET_SYSTEM_ATTRIBUTES);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", /*lang*/NULL, printer->proxy_provider_uri);
+  ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", sizeof(sattrs) / sizeof(sattrs[0]), /*lang*/NULL, sattrs);
+
+  response = cupsDoRequest(http, request, resource);
+  if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    printer->proxy_state_message = cupsGetErrorString();
+    goto done;
+  }
+
+  if ((oauth_uri = ippGetString(ippFindAttribute(response, "oauth-authorization-server-uri", IPP_TAG_URI), 0, /*lang*/NULL)) != NULL)
+  {
+    if ((oauth_metadata = cupsOAuthGetMetadata(oauth_uri)) == NULL)
+    {
+      printer->proxy_state_message = cupsGetErrorString();
+      goto done;
+    }
+
+    // TODO: Add OAuth server API to verify that the OAuth server is allowed
+  }
+
+  if ((attr = ippFindAttribute(response, "oauth-authorization-scope", IPP_TAG_NAME)) != NULL)
+  {
+    // Convert 1setOf name to a space-delimited list of scope names...
+    size_t	length;			// Length of scopes string
+    char	*scopeptr,		// Pointer into scopes
+		*scopeend;		// End of scopes buffer
+
+    // Figure out the total number of bytes needed...
+    for (i = 0, count = ippGetCount(attr), length = 0; i < count; i ++)
+      length += strlen(ippGetString(attr, i, /*lang*/NULL)) + 1;
+
+    // Allocate memory...
+    if ((oauth_scopes = calloc(1, length)) == NULL)
+    {
+      printer->proxy_state_message = strerror(errno);
+      goto done;
+    }
+
+    // Copy the scope names and add spaces between the values...
+    for (i = 0, scopeptr = oauth_scopes, scopeend = oauth_scopes + length; i < count; i ++)
+    {
+      cupsCopyString(scopeptr, ippGetString(attr, i, /*lang*/NULL), (size_t)(scopeend - scopeptr));
+      scopeptr += strlen(scopeptr);
+
+      if ((i + 1) < count)
+        *scopeptr++ = ' ';
+    }
+  }
+
+  if ((attr = ippFindAttribute(response, "uri-authentication-supported", IPP_TAG_KEYWORD)) != NULL && ippContainsString(attr, "oauth") && oauth_uri)
+  {
+    // Use OAuth...
+    cupsMutexLock(&printer->proxy_auth_mutex);
+
+    free(printer->proxy_oauth_uri);
+    printer->proxy_oauth_uri = strdup(oauth_uri);
+
+    cupsJSONDelete(printer->proxy_oauth_metadata);
+    printer->proxy_oauth_metadata = oauth_metadata;
+
+    free(printer->proxy_oauth_scopes);
+    printer->proxy_oauth_scopes = oauth_scopes;
+
+    cupsMutexUnlock(&printer->proxy_auth_mutex);
+
+    if (!printer->proxy_token)
+    {
+      // No token yet, continue to get authorization...
+      ret = true;
+      goto done;
+    }
+  }
+  else
+  {
+    // Free unused values...
+    cupsJSONDelete(oauth_metadata);
+    free(oauth_scopes);
+  }
+
+  // Create a new random device UUID...
+  snprintf(device_uuid, sizeof(device_uuid), "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", cupsGetRand() & 255, cupsGetRand() & 255, cupsGetRand() & 255, cupsGetRand() & 255, cupsGetRand() & 255, cupsGetRand() & 255, (cupsGetRand() & 15) | 0x30, cupsGetRand() & 255, (cupsGetRand() & 0x3f) | 0x40, cupsGetRand() & 255, cupsGetRand() & 255, cupsGetRand() & 255, cupsGetRand() & 255, cupsGetRand() & 255, cupsGetRand() & 255, cupsGetRand() & 255);
+
+  // Register with the system...
+  request = ippNewRequest(IPP_OP_REGISTER_OUTPUT_DEVICE);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", /*lang*/NULL, printer->proxy_provider_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*lang*/NULL, device_uuid);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-server-type", /*lang*/NULL, "print");
+
+  // TODO: Implement support for X.509 certs/CSRs during registration based on system-mandatory-registration-attributes
+
+  ippDelete(response);
+  response = cupsDoRequest(http, request, resource);
+
+  if (ippGetStatusCode(response) >= IPP_STATUS_ERROR_BAD_REQUEST)
+  {
+    printer->proxy_state_message = cupsGetErrorString();
+    goto done;
+  }
+
+  infra_uri  = ippGetString(ippFindAttribute(response, "printer-xri-supported/xri-uri", IPP_TAG_URI), 0, /*lang*/NULL);
+  infra_uuid = ippGetString(ippFindAttribute(response, "printer-uuid", IPP_TAG_URI), 0, /*lang*/NULL);
+
+  if (infra_uri && infra_uuid)
+  {
+    // Success, start the proxy...
+    papplPrinterSetProxy(printer, /*client_id*/NULL, /*common_name*/NULL, device_uuid, printer->proxy_provider_uri, /*token_url*/NULL, infra_uri, infra_uuid);
+    ret = true;
+  }
+  else if (!infra_uri)
+  {
+    // No printer-xri-supported attribute...
+    printer->proxy_state_message = _PAPPL_LOC("Missing printer-xri-supported attribute in registration response.");
+  }
+  else
+  {
+    // No printer-uuid attribute...
+    printer->proxy_state_message = _PAPPL_LOC("Missing printer-uuid attribute in registration response.");
+  }
+
+  // Cleanup and return...
+  done:
+
+  httpClose(http);
+  ippDelete(response);
+
+  return (ret);
+}
+
+
+//
 // 'infra_status()' - Show the cloud (INFRA/proxy) status/controls.
 //
 
@@ -1518,17 +1740,24 @@ infra_status(
 {
   const char	*status;		// Current status
   char		title[1024],		// Localized title
-		path[1024];		// Path for cloud controls
+		path[1024],		// Path for cloud controls
+		provider_name[1024];	// Name of cloud provider
 
 
-  if (!printer->proxy_uri)
-    status = _PAPPL_LOC("Not Connected");
-  else if (!printer->proxy_token)
-    status = _PAPPL_LOC("Authorization Required");
-  else if (cupsArrayGetCount(printer->proxy_jobs) > 0)
-    status = _PAPPL_LOC("Printing");
+  if (printer->proxy_infra_uri)
+  {
+    if (cupsArrayGetCount(printer->proxy_jobs) > 0)
+      status = _PAPPL_LOC("Printing");
+    else
+      status = _PAPPL_LOC("Idle");
+  }
   else
-    status = _PAPPL_LOC("Idle");
+  {
+    if (!printer->proxy_token)
+      status = _PAPPL_LOC("Authorization Required");
+    else
+      status = _PAPPL_LOC("Not Connected");
+  }
 
   snprintf(title, sizeof(title), "%s (%s)", papplClientGetLocString(client, _PAPPL_LOC("Cloud Printing")), papplClientGetLocString(client, status));
 
@@ -1551,7 +1780,7 @@ infra_status(
 
   papplPrinterGetPath(printer, "cloud", path, sizeof(path));
 
-  if (!printer->proxy_uri)
+  if (!printer->proxy_provider_uri)
   {
     cups_len_t	i,			// Current provider
 		count = cupsArrayGetCount(printer->system->infra_providers);
@@ -1596,7 +1825,7 @@ infra_status(
   else
   {
     papplClientHTMLStartForm(client, path, /*multipart*/false);
-    papplClientHTMLPrintf(client, "          <p>%s <input type=\"submit\" name=\"disconnect\" value=\"%s\"></p>\n", printer->proxy_provider_name, papplClientGetLocString(client, _PAPPL_LOC("Disconnect")));
+    papplClientHTMLPrintf(client, "          <p>%s <input type=\"submit\" name=\"disconnect\" value=\"%s\"></p>\n", papplPrinterGetProxyProviderName(printer, provider_name, sizeof(provider_name)), papplClientGetLocString(client, _PAPPL_LOC("Disconnect")));
     papplClientHTMLPuts(client, "          </form>\n");
 
     if (printer->proxy_device_grant)
@@ -1620,11 +1849,11 @@ infra_status(
       free(qrcode_data);
     }
 
-    if (printer->proxy_uri)
+    if (printer->proxy_infra_uri)
     {
       papplClientHTMLPuts(client, "          <div class=\"info\">\n");
       papplClientHTMLPrintf(client, "            <p>%s</p>\n", papplClientGetLocString(client, _PAPPL_LOC("Cloud Printer URI:")));
-      papplClientHTMLPrintf(client, "            <p><a class=\"copy\" href=\"#\" onClick=\"return copy_text(this);\">%s</a></p>\n", printer->proxy_uri);
+      papplClientHTMLPrintf(client, "            <p><a class=\"copy\" href=\"#\" onClick=\"return copy_text(this);\">%s</a></p>\n", printer->proxy_infra_uri);
       papplClientHTMLPuts(client, "          </div>\n");
     }
   }

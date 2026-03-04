@@ -975,7 +975,7 @@ _papplJobSubmitFile(
         job->state_reasons |= PAPPL_JREASON_JOB_FETCHABLE;
         event              = PAPPL_EVENT_JOB_FETCHABLE;
       }
-      else if (job->printer->proxy_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
+      else if (job->printer->proxy_infra_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
       {
         if (!job->proxy_http)
         {

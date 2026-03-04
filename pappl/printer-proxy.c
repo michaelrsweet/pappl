@@ -61,11 +61,11 @@ _papplPrinterConnectProxyNoLock(
 
 
   // Copy the Infrastructure Printer URI...
-  cupsCopyString(uri, printer->proxy_uri, sizeof(uri));
+  cupsCopyString(uri, printer->proxy_infra_uri, sizeof(uri));
 
   // Get any client credentials using the proxy UUID...
-  creds = cupsCopyCredentials(/*path*/NULL, printer->proxy_uuid);
-  key   = cupsCopyCredentials(/*path*/NULL, printer->proxy_uuid);
+  creds = cupsCopyCredentials(/*path*/NULL, printer->proxy_infra_uuid);
+  key   = cupsCopyCredentials(/*path*/NULL, printer->proxy_infra_uuid);
 
   cupsSetClientCredentials(creds, key);
 
@@ -74,7 +74,7 @@ _papplPrinterConnectProxyNoLock(
 
   if ((http = httpConnectURI(uri, /*host*/NULL, /*hsize*/0, /*port*/NULL, resource, ressize, /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
   {
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to connect to infrastructure printer '%s': %s", printer->proxy_uri, cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to connect to infrastructure printer '%s': %s", printer->proxy_infra_uri, cupsGetErrorString());
     return (NULL);
   }
 
@@ -197,8 +197,8 @@ _papplPrinterUpdateProxy(
 
   // Send an Update-Output-Device-Attributes request
   request = ippNewRequest(IPP_OP_UPDATE_OUTPUT_DEVICE_ATTRIBUTES);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_device_uuid);
 
   _papplRWLockRead(printer);
   ippCopyAttributes(request, printer->driver_attrs, /*quickcopy*/false, /*cb*/NULL, /*cb_data*/NULL);
@@ -207,7 +207,7 @@ _papplPrinterUpdateProxy(
   ippDelete(do_request(printer, http, resource, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update output device attributes on '%s': %s", printer->proxy_uri, cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update output device attributes on '%s': %s", printer->proxy_infra_uri, cupsGetErrorString());
 
   if (close_http)
     httpClose(http);
@@ -247,10 +247,10 @@ _papplPrinterUpdateProxyDocument(
   doc = job->documents + doc_number - 1;
 
   request = ippNewRequest(IPP_OP_UPDATE_DOCUMENT_STATUS);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", pjob->parent_job_id);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "document-number", doc_number);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_device_uuid);
 
   ippAddInteger(request, IPP_TAG_DOCUMENT, IPP_TAG_INTEGER, "impressions-completed", doc->impcompleted);
   ippAddInteger(request, IPP_TAG_DOCUMENT, IPP_TAG_ENUM, "output-device-document-state", (int)doc->state);
@@ -261,7 +261,7 @@ _papplPrinterUpdateProxyDocument(
   ippDelete(do_request(printer, job->proxy_http, job->proxy_resource, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update job %d document %d status on '%s': %s", job->job_id, doc_number, printer->proxy_uri, cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update job %d document %d status on '%s': %s", job->job_id, doc_number, printer->proxy_infra_uri, cupsGetErrorString());
 }
 
 
@@ -292,9 +292,9 @@ _papplPrinterUpdateProxyJobNoLock(
 
   // Send a Update-Job-Status request
   request = ippNewRequest(IPP_OP_UPDATE_JOB_STATUS);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", pjob->parent_job_id);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_device_uuid);
 
   ippAddInteger(request, IPP_TAG_JOB, IPP_TAG_INTEGER, "job-impressions-completed", job->impcompleted);
   ippAddInteger(request, IPP_TAG_JOB, IPP_TAG_ENUM, "output-device-job-state", (int)job->state);
@@ -305,7 +305,7 @@ _papplPrinterUpdateProxyJobNoLock(
   ippDelete(do_request(printer, job->proxy_http, job->proxy_resource, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update job %d status on '%s': %s", job->job_id, printer->proxy_uri, cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to update job %d status on '%s': %s", job->job_id, printer->proxy_infra_uri, cupsGetErrorString());
 }
 
 
@@ -340,8 +340,8 @@ check_fetchable_jobs(
 
   // Send a Get-Jobs request for fetchable jobs...
   request = ippNewRequest(IPP_OP_GET_JOBS);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_device_uuid);
   ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "requested-attributes", sizeof(requested_attributes) / sizeof(requested_attributes[0]), /*language*/NULL, requested_attributes);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs", /*language*/NULL, "fetchable");
 
@@ -543,9 +543,9 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Fetching job %d.", job_id);
 
   request = ippNewRequest(IPP_OP_FETCH_JOB);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_device_uuid);
 
   response = do_request(printer, http, resource, request);
 
@@ -580,9 +580,9 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
 
   request = ippNewRequest(IPP_OP_ACKNOWLEDGE_JOB);
 
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_device_uuid);
 
   ippDelete(do_request(printer, http, resource, request));
 
@@ -612,10 +612,10 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
 
     request = ippNewRequest(IPP_OP_FETCH_DOCUMENT);
 
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
     ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
     ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "document-number", i);
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_device_uuid);
     ippAddStrings(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "compression-accepted", sizeof(compression_accepted) / sizeof(compression_accepted[0]), /*language*/NULL, compression_accepted);
 
     _papplRWLockRead(printer);
@@ -679,10 +679,10 @@ fetch_job(pappl_printer_t *printer,	// I - Printer
 
     request = ippNewRequest(IPP_OP_ACKNOWLEDGE_DOCUMENT);
 
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
     ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
     ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "document-number", i);
-    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_device_uuid);
 
     ippDelete(do_request(printer, http, resource, request));
 
@@ -735,7 +735,7 @@ subscribe_events(
 
   // Send a Create-Printer-Subscriptions request...
   request = ippNewRequest(IPP_OP_CREATE_PRINTER_SUBSCRIPTIONS);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
 
   ippAddString(request, IPP_TAG_SUBSCRIPTION, IPP_TAG_KEYWORD, "notify-pull-method", /*language*/NULL, "ippget");
   ippAddStrings(request, IPP_TAG_SUBSCRIPTION, IPP_TAG_KEYWORD, "notify-events", sizeof(notify_events) / sizeof(notify_events[0]), /*language*/NULL, notify_events);
@@ -745,9 +745,9 @@ subscribe_events(
 
   // Parse the response and free it...
   if (cupsGetError() != IPP_STATUS_OK)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create event notification subscription on '%s': %s", printer->proxy_uri, cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to create event notification subscription on '%s': %s", printer->proxy_infra_uri, cupsGetErrorString());
   else if ((attr = ippFindAttribute(response, "notify-subscription-id", IPP_TAG_INTEGER)) == NULL)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Missing subscription ID from '%s'.", printer->proxy_uri);
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Missing subscription ID from '%s'.", printer->proxy_infra_uri);
   else
     sub_id = ippGetInteger(attr, 0);
 
@@ -774,13 +774,13 @@ unsubscribe_events(
 
   // Send a Cancel-Subscription request
   request = ippNewRequest(IPP_OP_CANCEL_SUBSCRIPTION);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-subscription-id", sub_id);
 
   ippDelete(do_request(printer, http, resource, request));
 
   if (cupsGetError() != IPP_STATUS_OK)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to cancel event notification subscription on '%s': %s", printer->proxy_uri, cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to cancel event notification subscription on '%s': %s", printer->proxy_infra_uri, cupsGetErrorString());
 }
 
 
@@ -809,8 +809,8 @@ update_active_jobs(
   _papplRWLockRead(printer);
 
   request = ippNewRequest(IPP_OP_UPDATE_ACTIVE_JOBS);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_uuid);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*language*/NULL, printer->proxy_device_uuid);
 
   if ((count = cupsArrayGetCount(printer->proxy_jobs)) > 0)
   {
@@ -1005,7 +1005,7 @@ wait_events(
 
   // Send a Get-Notifications request
   request = ippNewRequest(IPP_OP_GET_NOTIFICATIONS);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", /*language*/NULL, printer->proxy_infra_uri);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-subscription-ids", sub_id);
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-sequence-numbers", *seq_number + 1);
 
@@ -1013,7 +1013,7 @@ wait_events(
 
   // Parse the response...
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST && cupsGetError() != IPP_STATUS_ERROR_NOT_FOUND)
-    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to get event notifications on '%s': %s", printer->proxy_uri, cupsGetErrorString());
+    papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to get event notifications on '%s': %s", printer->proxy_infra_uri, cupsGetErrorString());
 
   // Honor notify-get-interval between 5 and 60 seconds, otherwise check back in 5 seconds...
   if ((get_interval = ippGetInteger(ippFindAttribute(response, "notify-get-interval", IPP_TAG_INTEGER), 0)) >= 5 && get_interval <= 60)

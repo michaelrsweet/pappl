@@ -232,30 +232,35 @@ _papplPrinterDelete(
   free(printer->usb_storage);
 
   cupsArrayDelete(printer->output_devices);
+  cupsRWDestroy(&printer->output_rwlock);
 
   ippDelete(printer->driver_attrs);
   ippDelete(printer->attrs);
 
   cupsArrayDelete(printer->links);
 
-  free(printer->proxy_client_id);
+  cupsArrayDelete(printer->proxy_jobs);
+  cupsMutexDestroy(&printer->proxy_jobs_mutex);
+
+  free(printer->proxy_provider_uri);
   free(printer->proxy_device_uuid);
+  free(printer->proxy_infra_uri);
+  free(printer->proxy_infra_uuid);
+  cupsMutexDestroy(&printer->proxy_config_mutex);
+
+  free(printer->proxy_client_id);
   free(printer->proxy_common_name);
+  free(printer->proxy_credentials);
+  free(printer->proxy_key);
+  free(printer->proxy_oauth_uri);
+  free(printer->proxy_oauth_scopes);
+  cupsJSONDelete(printer->proxy_oauth_metadata);
+  cupsJSONDelete(printer->proxy_device_grant);
   free(printer->proxy_token);
   free(printer->proxy_token_url);
-  free(printer->proxy_provider_name);
-  free(printer->proxy_provider_uri);
-  free(printer->proxy_uri);
-  free(printer->proxy_uuid);
+  cupsMutexDestroy(&printer->proxy_auth_mutex);
 
-  cupsArrayDelete(printer->proxy_jobs);
-
-  cupsJSONDelete(printer->proxy_device_grant);
-
-  cupsRWDestroy(&printer->output_rwlock);
   cupsRWDestroy(&printer->rwlock);
-  cupsMutexDestroy(&printer->proxy_jobs_mutex);
-  cupsMutexDestroy(&printer->proxy_token_mutex);
 
   free(printer);
 }
@@ -768,8 +773,9 @@ create_printer(
   // Initialize printer structure and attributes...
   cupsRWInit(&printer->rwlock);
   cupsRWInit(&printer->output_rwlock);
+  cupsMutexInit(&printer->proxy_auth_mutex);
+  cupsMutexInit(&printer->proxy_config_mutex);
   cupsMutexInit(&printer->proxy_jobs_mutex);
-  cupsMutexInit(&printer->proxy_token_mutex);
 
   printer->system             = system;
   printer->name               = strdup(printer_name);

@@ -1315,7 +1315,7 @@ start_job(pappl_job_t *job)		// I - Job
   job->processing         = time(NULL);
   printer->processing_job = job;
 
-  if (printer->proxy_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
+  if (printer->proxy_infra_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
   {
     // Connect to the proxy to report status updates...
     char	resource[1024];		// Resource path

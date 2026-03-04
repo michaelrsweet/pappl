@@ -86,6 +86,10 @@
 		2774C75927DBCECE00A7C96D /* loc-private.h in Headers */ = {isa = PBXBuildFile; fileRef = 2774C75027DBCECE00A7C96D /* loc-private.h */; };
 		2774C75A27DBCECE00A7C96D /* loc.h in Headers */ = {isa = PBXBuildFile; fileRef = 2774C75127DBCECE00A7C96D /* loc.h */; };
 		2774C75B27DBCECE00A7C96D /* loc.h in Headers */ = {isa = PBXBuildFile; fileRef = 2774C75127DBCECE00A7C96D /* loc.h */; };
+		27852C5C2F58D737000CCC87 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27852C5B2F58D737000CCC87 /* CoreServices.framework */; };
+		27852C5D2F58D75B000CCC87 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27852C5B2F58D737000CCC87 /* CoreServices.framework */; };
+		27852C5E2F58D76A000CCC87 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27852C5B2F58D737000CCC87 /* CoreServices.framework */; };
+		27852C5F2F58D771000CCC87 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27852C5B2F58D737000CCC87 /* CoreServices.framework */; };
 		279A804F2E9708E000FA8A27 /* libpappl2_static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27FFF30824329AAF003C0B8F /* libpappl2_static.a */; };
 		279A80502E9708E000FA8A27 /* libcups3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271F98CE2AD5B17F005F735A /* libcups3.a */; };
 		279A80512E9708E000FA8A27 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 279EC3D027FA4B930079A47D /* libcrypto.a */; };
@@ -471,6 +475,7 @@
 		2774C74F27DBCECE00A7C96D /* client-loc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "client-loc.c"; path = "../pappl/client-loc.c"; sourceTree = "<group>"; };
 		2774C75027DBCECE00A7C96D /* loc-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "loc-private.h"; path = "../pappl/loc-private.h"; sourceTree = "<group>"; };
 		2774C75127DBCECE00A7C96D /* loc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = loc.h; path = ../pappl/loc.h; sourceTree = "<group>"; };
+		27852C5B2F58D737000CCC87 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
 		27905C63240D8896001D2A90 /* printer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = printer.h; path = ../pappl/printer.h; sourceTree = "<group>"; };
 		27905C64240D8896001D2A90 /* job.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = job.c; path = ../pappl/job.c; sourceTree = "<group>"; };
 		27905C65240D8896001D2A90 /* device.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = device.h; path = ../pappl/device.h; sourceTree = "<group>"; };
@@ -558,6 +563,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27852C5F2F58D771000CCC87 /* CoreServices.framework in Frameworks */,
 				2751DCEA2EE7AC87007DAB67 /* libpdfio.a in Frameworks */,
 				27FFF30E24329B2D003C0B8F /* libpappl2_static.a in Frameworks */,
 				271F98D32AD5B1F0005F735A /* libcups3.a in Frameworks */,
@@ -582,6 +588,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27852C5E2F58D76A000CCC87 /* CoreServices.framework in Frameworks */,
 				2751DCEB2EE7AC9A007DAB67 /* libpdfio.a in Frameworks */,
 				279EC3D427FA4BB90079A47D /* libcrypto.a in Frameworks */,
 				271F98D22AD5B1D4005F735A /* libcups3.a in Frameworks */,
@@ -606,6 +613,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27852C5D2F58D75B000CCC87 /* CoreServices.framework in Frameworks */,
 				2751DCE92EE7AC10007DAB67 /* libpdfio.a in Frameworks */,
 				279A806F2E9984F500FA8A27 /* libusb-1.0.a in Frameworks */,
 				279A806C2E9984D400FA8A27 /* libdbus-1.a in Frameworks */,
@@ -657,6 +665,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27852C5C2F58D737000CCC87 /* CoreServices.framework in Frameworks */,
 				2751DCED2EE7ACC0007DAB67 /* libpdfio.a in Frameworks */,
 				27D086042C9226D700DF20EC /* libdbus-1.a in Frameworks */,
 				271F98D02AD5B1B1005F735A /* libcrypto.a in Frameworks */,
@@ -845,6 +854,7 @@
 		27EFC5D42415EB550082CEA3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				27852C5B2F58D737000CCC87 /* CoreServices.framework */,
 				2751DCE82EE7AC10007DAB67 /* libpdfio.a */,
 				2764DBD52C23800D00DF08AD /* libdbus-1.a */,
 				271F98CE2AD5B17F005F735A /* libcups3.a */,

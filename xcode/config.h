@@ -1,7 +1,7 @@
 //
 // Xcode configuration header file for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -23,6 +23,15 @@
 
 // Location of CUPS config files
 #define CUPS_SERVERROOT		"/private/etc/cups"
+
+
+// statfs/statvfs and the corresponding headers
+#define HAVE_STATFS 1
+/* #undef HAVE_STATVFS */
+#define HAVE_SYS_MOUNT_H 1
+/* #undef HAVE_SYS_STATFS_H */
+/* #undef HAVE_SYS_STATVFS_H */
+/* #undef HAVE_SYS_VFS_H */
 
 
 // DNS-SD (mDNSResponder or Avahi)

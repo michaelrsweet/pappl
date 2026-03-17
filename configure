@@ -4680,6 +4680,53 @@ fi
 
 
 
+ac_fn_c_check_header_compile "$LINENO" "sys/mount.h" "ac_cv_header_sys_mount_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_mount_h" = xyes
+then :
+
+printf "%s\n" "#define HAVE_SYS_MOUNT_H 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_header_compile "$LINENO" "sys/statfs.h" "ac_cv_header_sys_statfs_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_statfs_h" = xyes
+then :
+
+printf "%s\n" "#define HAVE_SYS_STATFS_H 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_header_compile "$LINENO" "sys/statvfs.h" "ac_cv_header_sys_statvfs_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_statvfs_h" = xyes
+then :
+
+printf "%s\n" "#define HAVE_SYS_STATVFS_H 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_header_compile "$LINENO" "sys/vfs.h" "ac_cv_header_sys_vfs_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_vfs_h" = xyes
+then :
+
+printf "%s\n" "#define HAVE_SYS_VFS_H 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_func "$LINENO" "statfs" "ac_cv_func_statfs"
+if test "x$ac_cv_func_statfs" = xyes
+then :
+  printf "%s\n" "#define HAVE_STATFS 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "statvfs" "ac_cv_func_statvfs"
+if test "x$ac_cv_func_statvfs" = xyes
+then :
+  printf "%s\n" "#define HAVE_STATVFS 1" >>confdefs.h
+
+fi
+
+
+
 # Check whether --enable-libjpeg was given.
 if test ${enable_libjpeg+y}
 then :

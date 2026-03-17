@@ -1,7 +1,7 @@
 //
 // Private printer header file for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -13,12 +13,16 @@
 #  include "dnssd-private.h"
 #  include "printer.h"
 #  include "log.h"
-#  ifdef __APPLE__
+#  ifdef HAVE_SYS_MOUNT_H
 #    include <sys/param.h>
 #    include <sys/mount.h>
-#  elif !_WIN32
+#  elif defined(HAVE_SYS_STATFS_H)
 #    include <sys/statfs.h>
-#  endif // __APPLE__
+#  elif defined(HAVE_SYS_STATVFS_H)
+#    include <sys/statvfs.h>
+#  elif defined(HAVE_SYS_VFS_H)
+#    include <sys/vfs.h>
+#  endif // HAVE_SYS_MOUNT_H
 #  ifdef HAVE_SYS_RANDOM_H
 #    include <sys/random.h>
 #  endif // HAVE_SYS_RANDOM_H

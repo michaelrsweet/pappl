@@ -8,7 +8,7 @@
 //
 
 // Version numbers
-#define PAPPL_VERSION		"1.4.10"
+#define PAPPL_VERSION		"1.4.11"
 #define PAPPL_VERSION_MAJOR	1
 #define PAPPL_VERSION_MINOR	4
 

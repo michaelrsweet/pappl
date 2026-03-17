@@ -1,7 +1,7 @@
 //
 // Printer object for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -475,10 +475,13 @@ create_printer(
 			uuid[128],	// printer-uuid
 			print_group[65];// print-group value
   int			k_supported;	// Maximum file size supported
-#if !_WIN32
+#ifdef HAVE_STATFS
   struct statfs		spoolinfo;	// FS info for spool directory
   double		spoolsize;	// FS size
-#endif // !_WIN32
+#elif defined(HAVE_STATVFS)
+  struct statvfs	spoolinfo;	// FS info for spool directory
+  double		spoolsize;	// FS size
+#endif // !HAVE_STATFS
   char			path[256];	// Path to resource
   pappl_pr_driver_data_t driver_data;	// Driver data
   ipp_t			*driver_attrs;	// Driver attributes
@@ -759,16 +762,25 @@ create_printer(
   // Get the maximum spool size based on the size of the filesystem used for
   // the spool directory.  If the host OS doesn't support the statfs call
   // or the filesystem is larger than 2TiB, always report INT_MAX.
-#if _WIN32
-  k_supported = INT_MAX;
-#else // !_WIN32
+#ifdef HAVE_STATFS
   if (statfs(system->directory, &spoolinfo))
     k_supported = INT_MAX;
   else if ((spoolsize = (double)spoolinfo.f_bsize * spoolinfo.f_blocks / 1024) > INT_MAX)
     k_supported = INT_MAX;
   else
     k_supported = (int)spoolsize;
-#endif // _WIN32
+
+#elif defined(HAVE_STATVFS)
+  if (statvfs(system->directory, &spoolinfo))
+    k_supported = INT_MAX;
+  else if ((spoolsize = (double)spoolinfo.f_frsize * spoolinfo.f_blocks / 1024) > INT_MAX)
+    k_supported = INT_MAX;
+  else
+    k_supported = (int)spoolsize;
+
+#else
+  k_supported = INT_MAX;
+#endif // HAVE_STATFS
 
   // Initialize printer structure and attributes...
   cupsRWInit(&printer->rwlock);

@@ -1,7 +1,7 @@
 dnl
 dnl Configuration script for the Printer Application Framework
 dnl
-dnl Copyright © 2019-2024 by Michael R Sweet
+dnl Copyright © 2019-2026 by Michael R Sweet
 dnl
 dnl Licensed under Apache License v2.0.  See the file "LICENSE" for more
 dnl information.
@@ -190,6 +190,14 @@ for flag in -lpthreads -lpthread -pthread; do
 	AC_MSG_RESULT([no])
     ])
 done
+
+
+dnl Checks for statfs and its many headers...
+AC_CHECK_HEADER([sys/mount.h], AC_DEFINE([HAVE_SYS_MOUNT_H], [1], [Have <sys/mount.h> header?]))
+AC_CHECK_HEADER([sys/statfs.h], AC_DEFINE([HAVE_SYS_STATFS_H], [1], [Have <sys/statfs.h> header?]))
+AC_CHECK_HEADER([sys/statvfs.h], AC_DEFINE([HAVE_SYS_STATVFS_H], [1], [Have <sys/statvfs.h> header?]))
+AC_CHECK_HEADER([sys/vfs.h], AC_DEFINE([HAVE_SYS_VFS_H], [1], [Have <sys/vfs.h> header?]))
+AC_CHECK_FUNCS([statfs statvfs])
 
 
 dnl libjpeg...

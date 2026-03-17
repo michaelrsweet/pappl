@@ -1,7 +1,7 @@
 //
 // Visual Studio configuration header file for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -114,6 +114,15 @@ typedef unsigned long useconds_t;
 
 // Location of PAPPL domain socket (when run as root)
 /* #undef PAPPL_SOCKDIR */
+
+
+// statfs/statvfs and the corresponding headers
+/* #undef HAVE_STATFS */
+/* #undef HAVE_STATVFS */
+/* #undef HAVE_SYS_MOUNT_H */
+/* #undef HAVE_SYS_STATFS_H */
+/* #undef HAVE_SYS_STATVFS_H */
+/* #undef HAVE_SYS_VFS_H */
 
 
 // libjpeg

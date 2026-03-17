@@ -11,15 +11,18 @@
 #  define _PAPPL_PRINTER_PRIVATE_H_
 #  include "printer.h"
 #  include "log.h"
+#  ifdef HAVE_SYS_STATFS_H
+#    include <sys/statfs.h>
+#  endif // HAVE_SYS_STATFS_H
+#  ifdef HAVE_SYS_STATVFS_H
+#    include <sys/statvfs.h>
+#  endif // HAVE_SYS_STATVFS_H
+#  ifdef HAVE_SYS_VFS_H
+#    include <sys/vfs.h>
+#  endif // HAVE_SYS_VFS_H
 #  ifdef HAVE_SYS_MOUNT_H
 #    include <sys/param.h>
 #    include <sys/mount.h>
-#  elif defined(HAVE_SYS_STATFS_H)
-#    include <sys/statfs.h>
-#  elif defined(HAVE_SYS_STATVFS_H)
-#    include <sys/statvfs.h>
-#  elif defined(HAVE_SYS_VFS_H)
-#    include <sys/vfs.h>
 #  endif // HAVE_SYS_MOUNT_H
 #  include "base-private.h"
 #  include "device.h"

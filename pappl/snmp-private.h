@@ -1,7 +1,7 @@
 //
 // Private SNMP definitions for the Printer Application Framework.
 //
-// Copyright © 2020-2022 by Michael R Sweet
+// Copyright © 2020-2026 by Michael R Sweet
 // Copyright © 2007-2014 by Apple Inc.
 // Copyright © 2006-2007 by Easy Software Products, all rights reserved.
 //
@@ -53,9 +53,9 @@ typedef enum _pappl_asn1_e _pappl_asn1_t;// ASN1 request/object types
 
 typedef struct _pappl_snmp_string_s	// String value
 {
-  unsigned char	bytes[_PAPPL_SNMP_MAX_STRING];
-						// Bytes in string
   unsigned	num_bytes;			// Number of bytes
+  unsigned char	bytes[_PAPPL_SNMP_MAX_STRING + 1];
+						// Bytes in string
 } _pappl_snmp_string_t;
 
 union _pappl_snmp_value_u		// Object value

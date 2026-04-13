@@ -711,6 +711,14 @@ papplClientHTMLHeader(
 			"    <title>%s%s%s</title>\n"
 			"    <link rel=\"shortcut icon\" href=\"/favicon.png\" type=\"image/png\">\n"
 			"    <link rel=\"stylesheet\" href=\"/style.css\">\n"
+			"    <script>\n"
+			"function copy_text(elem) {\n"
+			"  if (navigator.clipboard) {\n"
+			"    navigator.clipboard.writeText(elem.textContent);\n"
+			"  }\n"
+			"  return false;\n"
+			"}\n"
+			"    </script>\n"
 			"    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">\n", title ? papplClientGetLocString(client, title) : "", title ? " - " : "", name);
   if (refresh > 0)
     papplClientHTMLPrintf(client, "<meta http-equiv=\"refresh\" content=\"%d\">\n", refresh);

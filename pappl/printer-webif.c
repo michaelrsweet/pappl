@@ -870,7 +870,7 @@ _papplPrinterWebHome(
   if (!(printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     _papplSystemWebSettings(client);
 
-  if (printer->system->options & PAPPL_SOPTIONS_INFRA_PROXY)
+  if ((printer->system->options & PAPPL_SOPTIONS_INFRA_PROXY) && !printer->output_devices)
     infra_status(client, printer, /*form_status*/NULL, /*fullpage*/false);
 
   papplClientHTMLPrintf(client,
@@ -1684,7 +1684,7 @@ infra_register(pappl_printer_t *printer)// I - Printer
   request = ippNewRequest(IPP_OP_REGISTER_OUTPUT_DEVICE);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", /*lang*/NULL, printer->proxy_provider_uri);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "output-device-uuid", /*lang*/NULL, device_uuid);
-  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-server-type", /*lang*/NULL, "print");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", /*lang*/NULL, "print");
 
   // TODO: Implement support for X.509 certs/CSRs during registration based on system-mandatory-registration-attributes
 

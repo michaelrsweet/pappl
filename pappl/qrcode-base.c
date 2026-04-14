@@ -544,7 +544,7 @@ draw_function_patterns(
       step = 26;
 
     uint8_t alignPositionIndex = alignCount - 1;
-    uint8_t alignPosition[alignCount];
+    uint8_t alignPosition[256];
 
     alignPosition[0] = 6;
 
@@ -800,11 +800,11 @@ perform_error_correction(
   uint8_t numShortBlocks = (uint8_t)(numBlocks - moduleCount / 8 % numBlocks);
   uint8_t shortBlockLen = (uint8_t)(moduleCount / 8 / numBlocks);
   uint8_t shortDataBlockLen = shortBlockLen - blockEccLen;
-  uint8_t result[data->datasize];
+  uint8_t result[8192];
 
   memset(result, 0, sizeof(result));
 
-  uint8_t coeff[blockEccLen];
+  uint8_t coeff[256];
   rs_init(blockEccLen, coeff);
 
   uint16_t offset = 0;

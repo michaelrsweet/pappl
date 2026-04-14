@@ -38,7 +38,17 @@ jobs:
     - name: Test PAPPL
       env:
         ASAN_OPTIONS: leak_check_at_exit=false
-      run: make test || cat testsuite/test*.log
+      run: make test
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v7
+      if: ${{ !cancelled() }}
+      with:
+        name: linux-test-results
+        path: |
+          testsuite/test*.log
+          testsuite/testpappl.output/*
+          testsuite/testpappl.spool/*
+          testsuite/testpappl.state
     - name: Run Clang Static Analyzer
       run: cd pappl && make CC=clang "GHA_ERROR=::error::" clang
     - name: Run cppcheck
@@ -68,7 +78,17 @@ jobs:
     - name: Build PAPPL
       run: make
     - name: Test PAPPL
-      run: make test || cat testsuite/test*.log
+      run: make test
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v7
+      if: ${{ !cancelled() }}
+      with:
+        name: macos-test-results
+        path: |
+          testsuite/test*.log
+          testsuite/testpappl.output/*
+          testsuite/testpappl.spool/*
+          testsuite/testpappl.state
     - name: Run Clang Static Analyzer
       run: cd pappl && make "GHA_ERROR=::error::" clang
 
@@ -80,11 +100,20 @@ jobs:
     - name: Checkout PAPPL sources
       uses: actions/checkout@v4
     - name: Setup msbuild
-      uses: microsoft/setup-msbuild@v2
+      uses: microsoft/setup-msbuild@v3.0.0
     - name: Restore NuGet packages
       run: cd vcnet; nuget restore pappl.sln
     - name: Build PAPPL
       run: cd vcnet; msbuild pappl.sln
     - name: Test PAPPL
       run: cd vcnet; ./copy-dlls.bat x64\Debug; cd x64\Debug; ./testpappl -c -l testpappl.log -o testpappl.output -t api,client,pwg-raster
-
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v7
+      if: ${{ !cancelled() }}
+      with:
+        name: windows-test-results
+        path: |
+          testsuite/test*.log
+          testsuite/testpappl.output/*
+          testsuite/testpappl.spool/*
+          testsuite/testpappl.state

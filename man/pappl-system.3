@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2025-10-12" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2026-04-13" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -329,6 +329,10 @@ PAPPL_SOPTIONS_NO_DNS_SD
 .br
 Disable DNS-SD registrations
 .TP 5
+PAPPL_SOPTIONS_NO_FILTERS
+.br
+Disable default file filters
+.TP 5
 PAPPL_SOPTIONS_NO_TLS
 .br
 Disable TLS support
@@ -448,6 +452,38 @@ external commands.
 .PP
 .IP 5
 Note: This function can only be used when the system is not running.
+.SS papplSystemAddHostAlias
+Add an alternate host name for the system.
+.PP
+.nf
+void papplSystemAddHostAlias (
+    pappl_system_t *system,
+    const char *name
+);
+.fi
+.PP
+Ordinarily requests can be submitted to the system's host name or numeric
+addresses.  This function adds an alternate host name that should be allowed
+for the system.
+.PP
+Host aliases cannot be added after \fIpapplSystemRun\fR is called.
+.SS papplSystemAddInfraProvider
+Add a cloud printing provider.
+.PP
+.nf
+void papplSystemAddInfraProvider (
+    pappl_system_t *system,
+    const char *name,
+    const char *uri
+);
+.fi
+.PP
+This function adds a cloud (IPP Shared Infrastructure Extensions) printing
+provider to the list of pre-configured cloud printing services in the web
+interface.
+.PP
+Cloud printing providers cannot be added after \fIpapplSystemRun\fR is
+called.
 .SS papplSystemAddListenerFd
 Add a socket listener file descriptor.
 .PP

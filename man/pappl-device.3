@@ -1,4 +1,4 @@
-.TH pappl-device 3 "pappl device functions" "2025-10-12" "pappl device functions"
+.TH pappl-device 3 "pappl device functions" "2026-04-13" "pappl device functions"
 .SH NAME
 pappl-device \- pappl device functions
 .SH LIBRARY
@@ -394,9 +394,9 @@ information.
 Get the current printer supplies.
 .PP
 .nf
-int  papplDeviceGetSupplies (
+size_t  papplDeviceGetSupplies (
     pappl_device_t *device,
-    int max_supplies,
+    size_t max_supplies,
     pappl_supply_t *supplies
 );
 .fi
@@ -657,7 +657,7 @@ typedef pappl_preason_t (*pappl_devstatus_cb_t)(pappl_device_t *device);
 Device supplies callback
 .PP
 .nf
-typedef int (*pappl_devsupplies_cb_t)(pappl_device_t *device, int max_supplies, pappl_supply_t *supplies);
+typedef size_t (*pappl_devsupplies_cb_t)(pappl_device_t *device, size_t max_supplies, pappl_supply_t *supplies);
 .fi
 .SS pappl_devtype_t
 Device type bitfield

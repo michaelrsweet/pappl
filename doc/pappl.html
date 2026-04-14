@@ -92,13 +92,16 @@ blockquote :first-child {
   margin-bottom: 0;
 }
 p code, li code, p.code, pre, ul.code li {
+  background: rgba(127,127,127,0.25);
+  border: thin dotted gray;
   font-family: monospace;
   hyphens: manual;
   -webkit-hyphens: manual;
 }
+p code, li code {
+  padding: 0 5px;
+}
 p.code, pre, ul.code li {
-  background: rgba(127,127,127,0.25);
-  border: thin dotted gray;
   padding: 10px;
   page-break-inside: avoid;
 }
@@ -216,6 +219,21 @@ span.string {
   }
   a:link:hover, a:visited:hover, a:active {
     color: #f06;
+  }
+  span.comment {
+    color: #7c7;
+  }
+  span.directive {
+    color: red;
+  }
+  span.number {
+    color: #c64;
+  }
+  span.reserved {
+    color: #77f;
+  }
+  span.string {
+    color: #f7f;
   }
 }
 /* Show contents on left side in web browser */
@@ -434,8 +452,10 @@ span.string {
 <li><a href="#papplPrinterGetPath">papplPrinterGetPath</a></li>
 <li><a href="#papplPrinterGetPrintGroup">papplPrinterGetPrintGroup</a></li>
 <li><a href="#papplPrinterGetProxyClientID">papplPrinterGetProxyClientID</a></li>
+<li><a href="#papplPrinterGetProxyCommonName">papplPrinterGetProxyCommonName</a></li>
 <li><a href="#papplPrinterGetProxyDeviceUUID">papplPrinterGetProxyDeviceUUID</a></li>
-<li><a href="#papplPrinterGetProxyName">papplPrinterGetProxyName</a></li>
+<li><a href="#papplPrinterGetProxyProviderName">papplPrinterGetProxyProviderName</a></li>
+<li><a href="#papplPrinterGetProxyProviderURI">papplPrinterGetProxyProviderURI</a></li>
 <li><a href="#papplPrinterGetProxyTokenURL">papplPrinterGetProxyTokenURL</a></li>
 <li><a href="#papplPrinterGetProxyURI">papplPrinterGetProxyURI</a></li>
 <li><a href="#papplPrinterGetProxyUUID">papplPrinterGetProxyUUID</a></li>
@@ -493,6 +513,8 @@ span.string {
 <li><a href="#papplSystemAddExtCommandPath">papplSystemAddExtCommandPath</a></li>
 <li><a href="#papplSystemAddExtReadOnlyPath">papplSystemAddExtReadOnlyPath</a></li>
 <li><a href="#papplSystemAddExtReadWritePath">papplSystemAddExtReadWritePath</a></li>
+<li><a href="#papplSystemAddHostAlias">papplSystemAddHostAlias</a></li>
+<li><a href="#papplSystemAddInfraProvider">papplSystemAddInfraProvider</a></li>
 <li><a href="#papplSystemAddLink">papplSystemAddLink</a></li>
 <li><a href="#papplSystemAddListenerFd">papplSystemAddListenerFd</a></li>
 <li><a href="#papplSystemAddListeners">papplSystemAddListeners</a></li>
@@ -1693,7 +1715,7 @@ this function until the following request.</blockquote>
 <h3 class="function"><a id="papplClientGetForm">papplClientGetForm</a></h3>
 <p class="description">Get form data from the web client.</p>
 <p class="code">
-<span class="reserved">int</span> papplClientGetForm(<a href="#pappl_client_t">pappl_client_t</a> *client, cups_option_t **form);</p>
+size_t papplClientGetForm(<a href="#pappl_client_t">pappl_client_t</a> *client, cups_option_t **form);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>client</th>
@@ -2160,7 +2182,7 @@ is encrypted with TLS.</p>
 <h3 class="function"><a id="papplClientIsValidForm">papplClientIsValidForm</a></h3>
 <p class="description">Validate HTML form variables.</p>
 <p class="code">
-<span class="reserved">bool</span> papplClientIsValidForm(<a href="#pappl_client_t">pappl_client_t</a> *client, <span class="reserved">int</span> num_form, cups_option_t *form);</p>
+<span class="reserved">bool</span> papplClientIsValidForm(<a href="#pappl_client_t">pappl_client_t</a> *client, size_t num_form, cups_option_t *form);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>client</th>
@@ -2636,7 +2658,7 @@ information.</blockquote>
 <h3 class="function"><a id="papplDeviceGetSupplies">papplDeviceGetSupplies</a></h3>
 <p class="description">Get the current printer supplies.</p>
 <p class="code">
-<span class="reserved">int</span> papplDeviceGetSupplies(<a href="#pappl_device_t">pappl_device_t</a> *device, <span class="reserved">int</span> max_supplies, <a href="#pappl_supply_t">pappl_supply_t</a> *supplies);</p>
+size_t papplDeviceGetSupplies(<a href="#pappl_device_t">pappl_device_t</a> *device, size_t max_supplies, <a href="#pappl_supply_t">pappl_supply_t</a> *supplies);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>device</th>
@@ -4429,6 +4451,21 @@ pointed to by the &quot;buffer&quot; argument.</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
 <p class="description">Proxy printer client_id or <code>NULL</code> if none</p>
+<h3 class="function"><a id="papplPrinterGetProxyCommonName">papplPrinterGetProxyCommonName</a></h3>
+<p class="description">Get the proxy printer common name.</p>
+<p class="code">
+<span class="reserved">char</span> *papplPrinterGetProxyCommonName(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <span class="reserved">char</span> *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Proxy printer common name or <code>NULL</code> on error</p>
 <h3 class="function"><a id="papplPrinterGetProxyDeviceUUID">papplPrinterGetProxyDeviceUUID</a></h3>
 <p class="description">Get the proxy printer output device UUID.</p>
 <p class="code">
@@ -4444,10 +4481,10 @@ pointed to by the &quot;buffer&quot; argument.</p>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
 <p class="description">Proxy printer device UUID or <code>NULL</code> on error</p>
-<h3 class="function"><a id="papplPrinterGetProxyName">papplPrinterGetProxyName</a></h3>
-<p class="description">Get the proxy printer common name.</p>
+<h3 class="function"><a id="papplPrinterGetProxyProviderName">papplPrinterGetProxyProviderName</a></h3>
+<p class="description">Get the proxy printer provider name.</p>
 <p class="code">
-<span class="reserved">char</span> *papplPrinterGetProxyName(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <span class="reserved">char</span> *buffer, size_t bufsize);</p>
+<span class="reserved">char</span> *papplPrinterGetProxyProviderName(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <span class="reserved">char</span> *buffer, size_t bufsize);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
@@ -4458,7 +4495,22 @@ pointed to by the &quot;buffer&quot; argument.</p>
 <td class="description">Size of buffer</td></tr>
 </tbody></table>
 <h4 class="returnvalue">Return Value</h4>
-<p class="description">Proxy printer common name or <code>NULL</code> on error</p>
+<p class="description">Proxy printer provider name or <code>NULL</code> on error</p>
+<h3 class="function"><a id="papplPrinterGetProxyProviderURI">papplPrinterGetProxyProviderURI</a></h3>
+<p class="description">Get the proxy printer provider URI.</p>
+<p class="code">
+<span class="reserved">char</span> *papplPrinterGetProxyProviderURI(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <span class="reserved">char</span> *buffer, size_t bufsize);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>printer</th>
+<td class="description">Printer</td></tr>
+<tr><th>buffer</th>
+<td class="description">String buffer</td></tr>
+<tr><th>bufsize</th>
+<td class="description">Size of buffer</td></tr>
+</tbody></table>
+<h4 class="returnvalue">Return Value</h4>
+<p class="description">Proxy printer provider URI or <code>NULL</code> on error</p>
 <h3 class="function"><a id="papplPrinterGetProxyTokenURL">papplPrinterGetProxyTokenURL</a></h3>
 <p class="description">Get the proxy printer OAuth device token URL.</p>
 <p class="code">
@@ -5129,17 +5181,19 @@ named authorization service.</blockquote>
 <h3 class="function"><a id="papplPrinterSetProxy">papplPrinterSetProxy</a></h3>
 <p class="description">Set/restore the proxy settings for a printer.</p>
 <p class="code">
-<span class="reserved">void</span> papplPrinterSetProxy(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <span class="reserved">const</span> <span class="reserved">char</span> *client_id, <span class="reserved">const</span> <span class="reserved">char</span> *device_uuid, <span class="reserved">const</span> <span class="reserved">char</span> *name, <span class="reserved">const</span> <span class="reserved">char</span> *token_url, <span class="reserved">const</span> <span class="reserved">char</span> *uri, <span class="reserved">const</span> <span class="reserved">char</span> *uuid);</p>
+<span class="reserved">void</span> papplPrinterSetProxy(<a href="#pappl_printer_t">pappl_printer_t</a> *printer, <span class="reserved">const</span> <span class="reserved">char</span> *client_id, <span class="reserved">const</span> <span class="reserved">char</span> *common_name, <span class="reserved">const</span> <span class="reserved">char</span> *device_uuid, <span class="reserved">const</span> <span class="reserved">char</span> *provider_uri, <span class="reserved">const</span> <span class="reserved">char</span> *token_url, <span class="reserved">const</span> <span class="reserved">char</span> *uri, <span class="reserved">const</span> <span class="reserved">char</span> *uuid);</p>
 <h4 class="parameters">Parameters</h4>
 <table class="list"><tbody>
 <tr><th>printer</th>
 <td class="description">Printer</td></tr>
 <tr><th>client_id</th>
 <td class="description">Proxy printer client_id or <code>NULL</code> if none</td></tr>
+<tr><th>common_name</th>
+<td class="description">Proxy printer common name</td></tr>
 <tr><th>device_uuid</th>
 <td class="description">Proxy printer device (local) UUID</td></tr>
-<tr><th>name</th>
-<td class="description">Proxy printer common name</td></tr>
+<tr><th>provider_uri</th>
+<td class="description">Provider URI</td></tr>
 <tr><th>token_url</th>
 <td class="description">Proxy printer device token URL or <code>NULL</code> if none</td></tr>
 <tr><th>uri</th>
@@ -5420,6 +5474,43 @@ external commands.<br>
 <br>
 </p><blockquote>
 Note: This function can only be used when the system is not running.</blockquote>
+<h3 class="function"><a id="papplSystemAddHostAlias">papplSystemAddHostAlias</a></h3>
+<p class="description">Add an alternate host name for the system.</p>
+<p class="code">
+<span class="reserved">void</span> papplSystemAddHostAlias(<a href="#pappl_system_t">pappl_system_t</a> *system, <span class="reserved">const</span> <span class="reserved">char</span> *name);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>name</th>
+<td class="description">Alternate host name</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">Ordinarily requests can be submitted to the system's host name or numeric
+addresses.  This function adds an alternate host name that should be allowed
+for the system.<br>
+<br>
+Host aliases cannot be added after <a href="#papplSystemRun"><code>papplSystemRun</code></a> is called.</p>
+<h3 class="function"><a id="papplSystemAddInfraProvider">papplSystemAddInfraProvider</a></h3>
+<p class="description">Add a cloud printing provider.</p>
+<p class="code">
+<span class="reserved">void</span> papplSystemAddInfraProvider(<a href="#pappl_system_t">pappl_system_t</a> *system, <span class="reserved">const</span> <span class="reserved">char</span> *name, <span class="reserved">const</span> <span class="reserved">char</span> *uri);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">Sytem</td></tr>
+<tr><th>name</th>
+<td class="description">The human-readable provider name</td></tr>
+<tr><th>uri</th>
+<td class="description">The registration URI</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function adds a cloud (IPP Shared Infrastructure Extensions) printing
+provider to the list of pre-configured cloud printing services in the web
+interface.<br>
+<br>
+Cloud printing providers cannot be added after <a href="#papplSystemRun"><code>papplSystemRun</code></a> is
+called.</p>
 <h3 class="function"><a id="papplSystemAddLink">papplSystemAddLink</a></h3>
 <p class="description">Add a link to the navigation header.</p>
 <p class="code">
@@ -7367,7 +7458,7 @@ typedef <a href="#pappl_preason_t">pappl_preason_t</a> (*pappl_devstatus_cb_t)(<
 <h3 class="typedef"><a id="pappl_devsupplies_cb_t">pappl_devsupplies_cb_t</a></h3>
 <p class="description">Device supplies callback</p>
 <p class="code">
-typedef int (*pappl_devsupplies_cb_t)(<a href="#pappl_device_t">pappl_device_t</a> *device, int max_supplies, <a href="#pappl_supply_t">pappl_supply_t</a> *supplies);
+typedef size_t (*pappl_devsupplies_cb_t)(<a href="#pappl_device_t">pappl_device_t</a> *device, size_t max_supplies, <a href="#pappl_supply_t">pappl_supply_t</a> *supplies);
 </p>
 <h3 class="typedef"><a id="pappl_devtype_t">pappl_devtype_t</a></h3>
 <p class="description">Device type bitfield</p>
@@ -8591,6 +8682,7 @@ typedef struct <a href="#pappl_wifi_s">pappl_wifi_s</a> pappl_wifi_t;
 <tr><th>PAPPL_SOPTIONS_MULTI_QUEUE </th><td class="description">Support multiple printers</td></tr>
 <tr><th>PAPPL_SOPTIONS_NONE </th><td class="description">No options</td></tr>
 <tr><th>PAPPL_SOPTIONS_NO_DNS_SD </th><td class="description">Disable DNS-SD registrations</td></tr>
+<tr><th>PAPPL_SOPTIONS_NO_FILTERS </th><td class="description">Disable default file filters</td></tr>
 <tr><th>PAPPL_SOPTIONS_NO_TLS </th><td class="description">Disable TLS support</td></tr>
 <tr><th>PAPPL_SOPTIONS_RAW_SOCKET </th><td class="description">Accept jobs via raw sockets</td></tr>
 <tr><th>PAPPL_SOPTIONS_USB_PRINTER </th><td class="description">Accept jobs via USB for default printer (embedded Linux only)</td></tr>

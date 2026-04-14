@@ -150,7 +150,6 @@ papplPrinterGetPath
 papplPrinterGetPrintGroup
 papplPrinterGetProxyClientID
 papplPrinterGetProxyDeviceUUID
-papplPrinterGetProxyName
 papplPrinterGetProxyTokenURL
 papplPrinterGetProxyURI
 papplPrinterGetProxyUUID

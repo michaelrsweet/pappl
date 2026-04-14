@@ -1,4 +1,4 @@
-.TH pappl-client 3 "pappl client functions" "2025-10-12" "pappl client functions"
+.TH pappl-client 3 "pappl client functions" "2026-04-13" "pappl client functions"
 .SH NAME
 pappl-client \- pappl client functions
 .SH LIBRARY
@@ -265,7 +265,7 @@ this function until the following request.
 Get form data from the web client.
 .PP
 .nf
-int  papplClientGetForm (
+size_t  papplClientGetForm (
     pappl_client_t *client,
     cups_option_t **form
 );
@@ -655,7 +655,7 @@ Validate HTML form variables.
 .nf
 bool  papplClientIsValidForm (
     pappl_client_t *client,
-    int num_form,
+    size_t num_form,
     cups_option_t *form
 );
 .fi

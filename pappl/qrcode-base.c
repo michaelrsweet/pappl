@@ -8,8 +8,8 @@
 // Refactoring and cleanup by Michael R Sweet.
 //
 // Copyright © 2025-2026 by Michael R Sweet
-// Copyright © 2017 Richard Moore     (https://github.com/ricmoo/QRCode)
-// Copyright © 2017 Project Nayuki    (https://www.nayuki.io/page/qr-code-generator-library)
+// Copyright © 2017 Richard Moore  (https://github.com/ricmoo/QRCode)
+// Copyright © 2017 Project Nayuki  (https://www.nayuki.io/page/qr-code-generator-library)
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -180,7 +180,7 @@ _papplMakeQRCode(
 
 
   // Range chck input...
-  if (!s || ecc < _PAPPL_QRECC_LOW || ecc > _PAPPL_QRECC_HIGH || version < _PAPPL_QRVERSION_AUTO || version > _PAPPL_QRVERSION_MAX)
+  if (!s || ecc > _PAPPL_QRECC_HIGH || version > _PAPPL_QRVERSION_MAX)
     return (NULL);
 
   // Figure out the QR code settings...

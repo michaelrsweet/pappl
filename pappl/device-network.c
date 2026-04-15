@@ -1841,7 +1841,7 @@ pappl_socket_supplies(
 
 
   // Get the device data...
-  _PAPPL_DEBUG("pappl_socket_supplies(device=%p, max_supplies=%d, supplies=%p)\n", device, max_supplies, supplies);
+  _PAPPL_DEBUG("pappl_socket_supplies(device=%p, max_supplies=%u, supplies=%p)\n", device, (unsigned)max_supplies, supplies);
 
   if ((sock = papplDeviceGetData(device)) == NULL)
     return (0);

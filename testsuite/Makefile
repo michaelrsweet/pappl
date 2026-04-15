@@ -1,7 +1,7 @@
 #
 # Test suite makefile for the Printer Application Framework
 #
-# Copyright © 2020-2025 by Michael R Sweet
+# Copyright © 2020-2026 by Michael R Sweet
 #
 # Licensed under Apache License v2.0.  See the file "LICENSE" for more
 # information.
@@ -51,10 +51,14 @@ test:		testpappl
 	$(RM) testpappl.log
 	$(RM) -r testpappl.output
 	$(MKDIR) testpappl.output
+	date >test.log
 	echo "./testhttpmon"
-	./testhttpmon 2>test.log
+	./testhttpmon 2>>test.log
+	echo "./testqrcode"
+	./testhttpmon 2>>test.log
 	echo "./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,infra,idle-shutdown"
-	PAPPL_EXEC=../pappl/pappl-exec ./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,infra,idle-shutdown 2>test.log
+	PAPPL_EXEC=../pappl/pappl-exec ./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,infra,idle-shutdown 2>>test.log
+	date >>test.log
 
 
 # HTTP monitor unit test

@@ -13,7 +13,7 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, v1.4.x ]
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ master ]
@@ -36,13 +36,13 @@ jobs:
 
     steps:
       - name: Checkout PAPPL sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Update build environment
         run: sudo apt-get update --fix-missing -y
       - name: Install prerequisites
         run: sudo apt-get install -y avahi-daemon cppcheck libavahi-client-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev
       - name: Checkout libcups3
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: OpenPrinting/libcups
           path: libcups
@@ -52,14 +52,14 @@ jobs:
       - name: Build/install libcups3
         run: cd libcups; make && sudo make install
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql.yml
           queries: +security-and-quality
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@v4
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"

@@ -14,13 +14,13 @@ jobs:
 
     steps:
     - name: Checkout PAPPL sources
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Update build environment
       run: sudo apt-get update --fix-missing -y
     - name: Install prerequisites
       run: sudo apt-get install -y avahi-daemon cppcheck libavahi-client-dev libgnutls28-dev libjpeg-dev libpam-dev libpng-dev libusb-1.0-0-dev zlib1g-dev
     - name: Checkout libcups3
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: OpenPrinting/libcups
         path: libcups
@@ -60,11 +60,11 @@ jobs:
 
     steps:
     - name: Checkout PAPPL sources
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Install Prerequisites
       run: brew install cppcheck libjpeg
     - name: Checkout libcups3
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: OpenPrinting/libcups
         path: libcups
@@ -98,7 +98,7 @@ jobs:
 
     steps:
     - name: Checkout PAPPL sources
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Setup msbuild
       uses: microsoft/setup-msbuild@v3.0.0
     - name: Restore NuGet packages

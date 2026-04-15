@@ -23,3 +23,12 @@ preprocessorErrorDirective
 
 // The cppcheck null pointer detection logic is totally broken
 ctunullpointer
+
+// Memory leak detection is totally broken
+memleak
+
+// Object index detection is totally broken
+objectIndex
+
+// Uninitialized variable detection is totally broken
+uninitvar

@@ -1,7 +1,7 @@
 //
 // Printer driver functions for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1187,9 +1187,9 @@ make_attrs(
   if (data->num_resolution > 0)
   {
     char	dm[32],			// DM (duplex mode) value
-		is[256],		// IS (media-source) values
-		mt[256],		// MT (media-type) values
-		ob[256],		// OB (output-bin) values
+		is[256] = "",		// IS (media-source) values
+		mt[256] = "",		// MT (media-type) values
+		ob[256] = "",		// OB (output-bin) values
 		rs[32];			// RS (resolution) values
 
     num_values = 0;

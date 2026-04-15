@@ -74,20 +74,23 @@ test_qrcode(FILE       *fp,		// I - File
   qrcode = _papplMakeQRCode(s, _PAPPL_QRVERSION_AUTO, _PAPPL_QRECC_LOW);
   testEnd(qrcode != NULL);
 
-  // Create the data URL...
-  testBegin("_papplMakeDataURL()");
-  if ((dataurl = _papplMakeDataURL(qrcode)) != NULL)
+  if (qrcode)
   {
-    testEndMessage(true, "%u bytes", (unsigned)strlen(dataurl));
+    // Create the data URL...
+    testBegin("_papplMakeDataURL()");
+    if ((dataurl = _papplMakeDataURL(qrcode)) != NULL)
+    {
+      testEndMessage(true, "%u bytes", (unsigned)strlen(dataurl));
 
-    fprintf(fp, "    <p>%s<br>\n    &nbsp;<br>\n    <img src=\"%s\" border=\"4\"><br>&nbsp;</p>\n", s, dataurl);
+      fprintf(fp, "    <p>%s<br>\n    &nbsp;<br>\n    <img src=\"%s\" border=\"4\"><br>&nbsp;</p>\n", s, dataurl);
 
-    free(dataurl);
+      free(dataurl);
+    }
+    else
+    {
+      testEnd(false);
+    }
+
+    _papplBBDelete(qrcode);
   }
-  else
-  {
-    testEnd(false);
-  }
-
-  _papplBBDelete(qrcode);
 }

@@ -204,7 +204,9 @@ static void	device_error_cb(void *err_data, const char *message);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static int	do_ps_query(const char *device_uri);
 static void	event_cb(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
-static bool	heartbeat_cb(pappl_system_t *system, void *data);
+#if !_WIN32
+static void	heartbeat_handler(int sig);
+#endif // !_WIN32
 static void	heartbeat_update(void);
 static bool	infra_deregister_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *printer, void *data);
 static pappl_printer_t *infra_register_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *requested_printer, void *data);
@@ -834,11 +836,24 @@ main(int  argc,				// I - Number of command-line arguments
 
   cupsCopyString(output_directory, outdir, sizeof(output_directory));
 
+  // Initialize a heartbeat interval timer...
+#if !_WIN32
+  struct itimerval tval;		// Interval timer value
+
+  signal(SIGALRM, heartbeat_handler);
+
+  tval.it_interval.tv_sec  = _PAPPL_HEARTBEAT_INTERVAL;
+  tval.it_interval.tv_usec = 0;
+  tval.it_value.tv_sec     = 2 * _PAPPL_HEARTBEAT_INTERVAL;
+  tval.it_value.tv_usec    = 0;
+
+  setitimer(ITIMER_REAL, &tval, /*ovalue*/NULL);
+#endif // !_WIN32
+
   // Initialize the system and any printers...
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
   papplSystemAddHostAlias(system, "bogus.example.com");
   papplSystemAddListeners(system, NULL);
-  papplSystemAddTimerCallback(system, /*start*/0, _PAPPL_HEARTBEAT_INTERVAL, (pappl_timer_cb_t)heartbeat_cb, /*cb_data*/NULL);
   papplSystemAddTimerCallback(system, /*start*/0, _PAPPL_TIMER_INTERVAL, (pappl_timer_cb_t)timer_cb, /*cb_data*/&testdata);
   papplSystemSetEventCallback(system, event_cb, (void *)"testpappl");
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
@@ -1082,32 +1097,26 @@ event_cb(pappl_system_t  *system,	// I - System
 
 
 //
-// 'heartbeat_cb()' - Verify that the tests are still making progress.
+// 'heartbeat_handler()' - Verify that the tests are still making progress.
 //
 
-static bool				// O - `true` to continue, `false` to stop
-heartbeat_cb(pappl_system_t *system,	// I - System (unused)
-             void           *data)	// I - Callback data (unused)
+static void
+heartbeat_handler(int sig)		// I - Signal number (unused)
 {
   static size_t	heartbeat_prev = 0;	// Previous heartbeat count
 
 
-  (void)system;
-  (void)data;
+  (void)sig;
 
   cupsMutexLock(&heartbeat_mutex);
 
   // Abort if the heartbeat count hasn't incremented...
-  _PAPPL_DEBUG("heartbeat_cb: heartbeat_count=%lu, heartbeat_prev=%lu\n", (unsigned long)heartbeat_count, (unsigned long)heartbeat_prev);
-
   if (heartbeat_count == heartbeat_prev)
     abort();
 
   heartbeat_prev = heartbeat_count;
 
   cupsMutexUnlock(&heartbeat_mutex);
-
-  return (true);
 }
 
 

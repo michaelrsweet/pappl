@@ -1,7 +1,7 @@
 //
 // Main test suite file for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -120,10 +120,21 @@ static inline char *win32_realpath(const char *relpath, char *abspath)
 
 #define _PAPPL_DEFAULT_CLIENTS	100
 #define _PAPPL_DEFAULT_REQUESTS	1000
+#define _PAPPL_HEARTBEAT_INTERVAL 30
 #define _PAPPL_MAX_CLIENTS	1000
 #define _PAPPL_MAX_REQUESTS	100000
 #define _PAPPL_MAX_TIMER_COUNT	32
 #define _PAPPL_TIMER_INTERVAL	5
+
+
+//
+// Macros...
+//
+
+#define _papplTestBegin(...)	heartbeat_update(), testBegin(__VA_ARGS__)
+#define _papplTestEnd(b)	heartbeat_update(), testEnd(b)
+#define _papplTestEndMessage(...) heartbeat_update(), testEndMessage(__VA_ARGS__)
+#define _papplTestProgress()	heartbeat_update(), testProgress()
 
 
 //
@@ -137,6 +148,10 @@ static char		current_ssid[32] = "";
 static size_t		event_count = 0;// Number of events that have been delivered
 static pappl_event_t	event_mask = PAPPL_EVENT_NONE;
 					// Events that have been delivered
+static cups_mutex_t	heartbeat_mutex = CUPS_MUTEX_INITIALIZER;
+					// Mutex for heartbeat
+static size_t		heartbeat_count = 0;
+					// Heartbeat counter
 static int		output_count = 0;
 					// Number of expected output files
 static char		output_device_uri[1024] = "";
@@ -189,6 +204,8 @@ static void	device_error_cb(void *err_data, const char *message);
 static bool	device_list_cb(const char *device_info, const char *device_uri, const char *device_id, void *data);
 static int	do_ps_query(const char *device_uri);
 static void	event_cb(pappl_system_t *system, pappl_printer_t *printer, pappl_job_t *job, pappl_event_t event, void *data);
+static bool	heartbeat_cb(pappl_system_t *system, void *data);
+static void	heartbeat_update(void);
 static bool	infra_deregister_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *printer, void *data);
 static pappl_printer_t *infra_register_cb(pappl_client_t *client, const char *device_uuid, pappl_printer_t *requested_printer, void *data);
 static const char *make_raster_file(ipp_t *response, bool grayscale, char *tempname, size_t tempsize);
@@ -821,7 +838,8 @@ main(int  argc,				// I - Number of command-line arguments
   system = papplSystemCreate(soptions, name ? name : "Test System", port, "_print,_universal", spool, log, level, auth, tls_only);
   papplSystemAddHostAlias(system, "bogus.example.com");
   papplSystemAddListeners(system, NULL);
-  papplSystemAddTimerCallback(system, 0, _PAPPL_TIMER_INTERVAL, (pappl_timer_cb_t)timer_cb, &testdata);
+  papplSystemAddTimerCallback(system, /*start*/0, _PAPPL_HEARTBEAT_INTERVAL, (pappl_timer_cb_t)heartbeat_cb, /*cb_data*/NULL);
+  papplSystemAddTimerCallback(system, /*start*/0, _PAPPL_TIMER_INTERVAL, (pappl_timer_cb_t)timer_cb, /*cb_data*/&testdata);
   papplSystemSetEventCallback(system, event_cb, (void *)"testpappl");
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
   papplSystemSetRegisterCallbacks(system, infra_register_cb, infra_deregister_cb, /*cbdata*/NULL);
@@ -1064,6 +1082,53 @@ event_cb(pappl_system_t  *system,	// I - System
 
 
 //
+// 'heartbeat_cb()' - Verify that the tests are still making progress.
+//
+
+static bool				// O - `true` to continue, `false` to stop
+heartbeat_cb(pappl_system_t *system,	// I - System (unused)
+             void           *data)	// I - Callback data (unused)
+{
+  static size_t	heartbeat_prev = 0;	// Previous heartbeat count
+
+
+  (void)system;
+  (void)data;
+
+  cupsMutexLock(&heartbeat_mutex);
+
+  // Abort if the heartbeat count hasn't incremented...
+  _PAPPL_DEBUG("heartbeat_cb: heartbeat_count=%lu, heartbeat_prev=%lu\n", (unsigned long)heartbeat_count, (unsigned long)heartbeat_prev);
+
+  if (heartbeat_count == heartbeat_prev)
+    abort();
+
+  heartbeat_prev = heartbeat_count;
+
+  cupsMutexUnlock(&heartbeat_mutex);
+
+  return (true);
+}
+
+
+//
+// 'heartbeat_update()' - Update the heartbeat count...
+//
+
+static void
+heartbeat_update(void)
+{
+  cupsMutexLock(&heartbeat_mutex);
+
+  heartbeat_count ++;
+
+  _PAPPL_DEBUG("heartbeat_update: heartbeat_count=%lu\n", (unsigned long)heartbeat_count);
+
+  cupsMutexUnlock(&heartbeat_mutex);
+}
+
+
+//
 // 'infra_deregister_cb()' - Deregister-Output-Device callback.
 //
 
@@ -1215,7 +1280,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   }
   else
   {
-    testEndMessage(false, "no default or ready media reported by printer");
+    _papplTestEndMessage(false, "no default or ready media reported by printer");
     return (NULL);
   }
 
@@ -1246,13 +1311,13 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
 
   if (xdpi < 72 || ydpi < 72)
   {
-    testEndMessage(false, "no supported raster resolutions");
+    _papplTestEndMessage(false, "no supported raster resolutions");
     return (NULL);
   }
 
   if (!type)
   {
-    testEndMessage(false, "no supported color spaces or bit depths");
+    _papplTestEndMessage(false, "no supported color spaces or bit depths");
     return (NULL);
   }
 
@@ -1260,7 +1325,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
 #if CUPS_VERSION_MAJOR < 3 && CUPS_VERSION_MINOR < 5
   if (!cupsRasterInitPWGHeader(&header, media, type, xdpi, ydpi, "one-sided", NULL))
   {
-    testEndMessage(false, "unable to initialize raster context: %s", cupsRasterGetErrorString());
+    _papplTestEndMessage(false, "unable to initialize raster context: %s", cupsRasterGetErrorString());
     return (NULL);
   }
 
@@ -1274,7 +1339,7 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
 
   if (!cupsRasterInitHeader(&header, &cups_media, /*optimize*/NULL, IPP_QUALITY_NORMAL, /*intent*/NULL, IPP_ORIENT_PORTRAIT, "one-sided", type, xdpi, ydpi, /*sheet_back*/NULL))
   {
-    testEndMessage(false, "unable to initialize raster context: %s", cupsRasterGetErrorString());
+    _papplTestEndMessage(false, "unable to initialize raster context: %s", cupsRasterGetErrorString());
     return (NULL);
   }
 #endif // CUPS_VERSION_MAJOR < 3
@@ -1299,20 +1364,20 @@ make_raster_file(ipp_t      *response,  // I - Printer attributes
   // Prepare the raster file...
   if ((line = malloc(header.cupsBytesPerLine)) == NULL)
   {
-    testEndMessage(false, "unable to allocate %u bytes for raster output: %s", header.cupsBytesPerLine, strerror(errno));
+    _papplTestEndMessage(false, "unable to allocate %u bytes for raster output: %s", header.cupsBytesPerLine, strerror(errno));
     return (NULL);
   }
 
   if ((fd = cupsCreateTempFd(NULL, NULL, tempname, tempsize)) < 0)
   {
-    testEndMessage(false, "unable to create temporary print file: %s", strerror(errno));
+    _papplTestEndMessage(false, "unable to create temporary print file: %s", strerror(errno));
     free(line);
     return (NULL);
   }
 
   if ((ras = cupsRasterOpen(fd, CUPS_RASTER_WRITE_PWG)) == NULL)
   {
-    testEndMessage(false, "unable to open raster stream: %s", cupsRasterGetErrorString());
+    _papplTestEndMessage(false, "unable to open raster stream: %s", cupsRasterGetErrorString());
     close(fd);
     free(line);
     return (NULL);
@@ -1501,8 +1566,8 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     }
     else if (strcmp(name, "idle-shutdown"))
     {
-      testBegin("%s", name);
-      testEndMessage(false, "unknown test");
+      _papplTestBegin("%s", name);
+      _papplTestEndMessage(false, "unknown test");
       ret = (void *)1;
     }
   }
@@ -1523,10 +1588,10 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   if (!ret && cupsArrayFind(testdata->names, (void *)"api"))
   {
     // papplSystemSetEventCallback
-    testBegin("api: papplSystemSetEventCallback");
+    _papplTestBegin("api: papplSystemSetEventCallback");
     if (event_count > 0 && event_mask == (PAPPL_EVENT_SYSTEM_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_CREATED | PAPPL_EVENT_PRINTER_DELETED | PAPPL_EVENT_PRINTER_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED | PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED))
     {
-      testEndMessage(true, "count=%lu", (unsigned long)event_count);
+      _papplTestEndMessage(true, "count=%lu", (unsigned long)event_count);
     }
     else
     {
@@ -1572,7 +1637,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 	"system-stopped"
       };
 
-      testEndMessage(false, "count=%lu", (unsigned long)event_count);
+      _papplTestEndMessage(false, "count=%lu", (unsigned long)event_count);
       ret = (void *)1;
 
       if (event_mask == PAPPL_EVENT_NONE)
@@ -1590,7 +1655,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     }
 
     // papplSystemAddTimerCallback
-    testBegin("api: papplSystemAddTimerCallback");
+    _papplTestBegin("api: papplSystemAddTimerCallback");
     curtime  = time(NULL);
     expected = (int)((curtime - testdata->timer_start + _PAPPL_TIMER_INTERVAL - 1) / _PAPPL_TIMER_INTERVAL);
     if (expected > _PAPPL_MAX_TIMER_COUNT)
@@ -1600,7 +1665,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     {
       int	i;				// Looping var
 
-      testEndMessage(false, "timer_count=%d, expected=%d", testdata->timer_count, expected);
+      _papplTestEndMessage(false, "timer_count=%d, expected=%d", testdata->timer_count, expected);
       for (i = 1; i < testdata->timer_count; i ++)
 	testMessage("timer@%ld (%ld seconds)", (long)testdata->timer_times[i], (long)(testdata->timer_times[i] - testdata->timer_times[i - 1]));
 
@@ -1608,7 +1673,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     }
     else
     {
-      testEndMessage(true, "timer_count=%d", testdata->timer_count);
+      _papplTestEndMessage(true, "timer_count=%d", testdata->timer_count);
     }
   }
 
@@ -1639,9 +1704,9 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 
   // Show final status...
   if (ret)
-    printf("\nFAILED: %d of %d output file(s), %.1fMB\n", files, output_count, total / 1048576.0);
+    printf("\nFAILED: %d of %d output file(s), %.1fMB\n", files, output_count, (double)total / 1048576.0);
   else
-    printf("\nPASSED: %d of %d output file(s), %.1fMB\n", files, output_count, total / 1048576.0);
+    printf("\nPASSED: %d of %d output file(s), %.1fMB\n", files, output_count, (double)total / 1048576.0);
 
   // Force shutdown
   papplSystemShutdown(testdata->system);
@@ -1748,114 +1813,114 @@ test_api(pappl_system_t *system)	// I - System
   for (i = 0; i < (int)(sizeof(languages) / sizeof(languages[0])); i ++)
   {
     // papplSystemFindLoc
-    testBegin("api: papplSystemFindLoc('%s')", languages[i]);
+    _papplTestBegin("api: papplSystemFindLoc('%s')", languages[i]);
     if ((loc = papplSystemFindLoc(system, languages[i])) == NULL)
     {
-      testEnd(false);
+      _papplTestEnd(false);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
 
     // papplLocGetString
-    testBegin("api: papplLocGetString('%s')", key);
+    _papplTestBegin("api: papplLocGetString('%s')", key);
     if ((text = papplLocGetString(loc, key)) == NULL || text == key)
     {
-      testEndMessage(false, "got %p", text);
+      _papplTestEndMessage(false, "got %p", text);
       pass = false;
     }
     else if (!strcmp(key, text) && strcmp(languages[i], "en"))
     {
-      testEndMessage(false, "not localized");
+      _papplTestEndMessage(false, "not localized");
       pass = false;
     }
     else
-      testEndMessage(true, "got '%s'", text);
+      _papplTestEndMessage(true, "got '%s'", text);
   }
 
   // papplSystemFindLoc
-  testBegin("api: papplSystemFindLoc('zz')");
+  _papplTestBegin("api: papplSystemFindLoc('zz')");
   if ((loc = papplSystemFindLoc(system, "zz")) != NULL)
   {
-    testEndMessage(false, "got %p", loc);
+    _papplTestEndMessage(false, "got %p", loc);
     pass = false;
   }
   else
-    testEndMessage(true, "got NULL");
+    _papplTestEndMessage(true, "got NULL");
 
   // papplLocGetString
-  testBegin("api: papplLocGetString('%s')", key);
+  _papplTestBegin("api: papplLocGetString('%s')", key);
   if ((text = papplLocGetString(loc, key)) != key)
   {
-    testEndMessage(false, "got %p", text);
+    _papplTestEndMessage(false, "got %p", text);
     pass = false;
   }
   else
-    testEndMessage(true, "got key string");
+    _papplTestEndMessage(true, "got key string");
 
   // papplSystemGet/SetAdminGroup
-  testBegin("api: papplSystemGetAdminGroup");
+  _papplTestBegin("api: papplSystemGetAdminGroup");
   if (papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "admin-%u", (unsigned)i);
-    testBegin("api: papplSystemGet/SetAdminGroup('%s')", set_str);
+    _papplTestBegin("api: papplSystemGet/SetAdminGroup('%s')", set_str);
     papplSystemSetAdminGroup(system, set_str);
     if (!papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetAdminGroup(NULL)");
+  _papplTestBegin("api: papplSystemGet/SetAdminGroup(NULL)");
   papplSystemSetAdminGroup(system, NULL);
   if (papplSystemGetAdminGroup(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetContact
-  testBegin("api: papplSystemGetContact");
+  _papplTestBegin("api: papplSystemGetContact");
   if (!papplSystemGetContact(system, &get_contact))
   {
-    testEndMessage(false, "got NULL, expected 'Michael R Sweet'");
+    _papplTestEndMessage(false, "got NULL, expected 'Michael R Sweet'");
     pass = false;
   }
   else if (strcmp(get_contact.name, "Michael R Sweet"))
   {
-    testEndMessage(false, "got '%s', expected 'Michael R Sweet'", get_contact.name);
+    _papplTestEndMessage(false, "got '%s', expected 'Michael R Sweet'", get_contact.name);
     pass = false;
   }
   else if (strcmp(get_contact.email, "msweet@example.org"))
   {
-    testEndMessage(false, "got '%s', expected 'msweet@example.org'", get_contact.email);
+    _papplTestEndMessage(false, "got '%s', expected 'msweet@example.org'", get_contact.email);
     pass = false;
   }
   else if (strcmp(get_contact.telephone, "+1-705-555-1212"))
   {
-    testEndMessage(false, "got '%s', expected '+1-705-555-1212'", get_contact.telephone);
+    _papplTestEndMessage(false, "got '%s', expected '+1-705-555-1212'", get_contact.telephone);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
@@ -1863,158 +1928,158 @@ test_api(pappl_system_t *system)	// I - System
     snprintf(set_contact.email, sizeof(set_contact.email), "admin-%u@example.org", (unsigned)i);
     snprintf(set_contact.telephone, sizeof(set_contact.telephone), "+1-705-555-%04u", (unsigned)i * 1111);
 
-    testBegin("api: papplSystemGet/SetContact('%s')", set_contact.name);
+    _papplTestBegin("api: papplSystemGet/SetContact('%s')", set_contact.name);
     papplSystemSetContact(system, &set_contact);
     if (!papplSystemGetContact(system, &get_contact))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_contact.name);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_contact.name);
       pass = false;
     }
     else if (strcmp(get_contact.name, set_contact.name))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_contact.name, set_contact.name);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_contact.name, set_contact.name);
       pass = false;
     }
     else if (strcmp(get_contact.email, set_contact.email))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_contact.email, set_contact.email);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_contact.email, set_contact.email);
       pass = false;
     }
     else if (strcmp(get_contact.telephone, set_contact.telephone))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_contact.telephone, set_contact.telephone);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_contact.telephone, set_contact.telephone);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
   // papplSystemGet/SetDefaultPrinterID
-  testBegin("api: papplSystemGetDefaultPrinterID");
+  _papplTestBegin("api: papplSystemGetDefaultPrinterID");
   if ((get_int = papplSystemGetDefaultPrinterID(system)) == 0)
   {
-    testEndMessage(false, "got 0, expected > 0");
+    _papplTestEndMessage(false, "got 0, expected > 0");
     pass = false;
   }
   else
-    testEndMessage(true, "%d", get_int);
+    _papplTestEndMessage(true, "%d", get_int);
 
   for (set_int = 2; set_int >= 1; set_int --)
   {
-    testBegin("api: papplSystemSetDefaultPrinterID(%d)", set_int);
+    _papplTestBegin("api: papplSystemSetDefaultPrinterID(%d)", set_int);
     papplSystemSetDefaultPrinterID(system, set_int);
     if ((get_int = papplSystemGetDefaultPrinterID(system)) != set_int)
     {
-      testEndMessage(false, "got %d, expected %d", get_int, set_int);
+      _papplTestEndMessage(false, "got %d, expected %d", get_int, set_int);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
   // papplSystemGet/SetDefaultPrintGroup
-  testBegin("api: papplSystemGetDefaultPrintGroup");
+  _papplTestBegin("api: papplSystemGetDefaultPrintGroup");
   if (papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "users-%u", (unsigned)i);
-    testBegin("api: papplSystemGet/SetDefaultPrintGroup('%s')", set_str);
+    _papplTestBegin("api: papplSystemGet/SetDefaultPrintGroup('%s')", set_str);
     papplSystemSetDefaultPrintGroup(system, set_str);
     if (!papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetDefaultPrintGroup(NULL)");
+  _papplTestBegin("api: papplSystemGet/SetDefaultPrintGroup(NULL)");
   papplSystemSetDefaultPrintGroup(system, NULL);
   if (papplSystemGetDefaultPrintGroup(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetDNSSDName
-  testBegin("api: papplSystemGetDNSSDName");
+  _papplTestBegin("api: papplSystemGetDNSSDName");
   if (!papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected 'Test System'");
+    _papplTestEndMessage(false, "got NULL, expected 'Test System'");
     pass = false;
   }
   else if (strcmp(get_str, "Test System"))
   {
-    testEndMessage(false, "got '%s', expected 'Test System'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected 'Test System'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "System Test %c", (char)(i + 'A'));
-    testBegin("api: papplSystemGet/SetDNSSDName('%s')", set_str);
+    _papplTestBegin("api: papplSystemGet/SetDNSSDName('%s')", set_str);
     papplSystemSetDNSSDName(system, set_str);
     if (!papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetDNSSDName(NULL)");
+  _papplTestBegin("api: papplSystemGet/SetDNSSDName(NULL)");
   papplSystemSetDNSSDName(system, NULL);
   if (papplSystemGetDNSSDName(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetFooterHTML
-  testBegin("api: papplSystemGetFooterHTML");
+  _papplTestBegin("api: papplSystemGetFooterHTML");
   if ((get_value = papplSystemGetFooterHTML(system)) == NULL)
   {
-    testEndMessage(false, "got NULL, expected 'Copyright ...'");
+    _papplTestEndMessage(false, "got NULL, expected 'Copyright ...'");
     pass = false;
   }
   else if (strncmp(get_value, "Copyright &copy; 202", 20))
   {
-    testEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
+    _papplTestEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
-  testBegin("api: papplSystemSetFooterHTML('Mike wuz here.')");
+  _papplTestBegin("api: papplSystemSetFooterHTML('Mike wuz here.')");
   papplSystemSetFooterHTML(system, "Mike wuz here.");
   if ((get_value = papplSystemGetFooterHTML(system)) == NULL)
   {
-    testEndMessage(false, "got NULL, expected 'Mike wuz here.'");
+    _papplTestEndMessage(false, "got NULL, expected 'Mike wuz here.'");
     pass = false;
   }
   else if (papplSystemIsRunning(system))
@@ -2022,437 +2087,437 @@ test_api(pappl_system_t *system)	// I - System
     // System is running so we can't change the footer text anymore...
     if (strncmp(get_value, "Copyright &copy; 202", 20))
     {
-      testEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
+      _papplTestEndMessage(false, "got '%s', expected 'Copyright ...'", get_value);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
   else
   {
     // System is not running so we can change the footer text...
     if (strcmp(get_value, "Mike wuz here."))
     {
-      testEndMessage(false, "got '%s', expected 'Mike wuz here.'", get_value);
+      _papplTestEndMessage(false, "got '%s', expected 'Mike wuz here.'", get_value);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
   // papplSystemGet/SetGeoLocation
-  testBegin("api: papplSystemGetGeoLocation");
+  _papplTestBegin("api: papplSystemGetGeoLocation");
   if (!papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
+    _papplTestEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
   else if (strcmp(get_str, "geo:46.4707,-80.9961"))
   {
-    testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
-  testBegin("api: papplSystemGet/SetGeoLocation('bad-value')");
+  _papplTestBegin("api: papplSystemGet/SetGeoLocation('bad-value')");
   papplSystemSetGeoLocation(system, "bad-value");
   if (!papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
+    _papplTestEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
   else if (strcmp(get_str, "geo:46.4707,-80.9961"))
   {
-    testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
   {
-    testBegin("api: papplSystemGet/SetGeoLocation('%s')", set_locations[i][1]);
+    _papplTestBegin("api: papplSystemGet/SetGeoLocation('%s')", set_locations[i][1]);
     papplSystemSetGeoLocation(system, set_locations[i][1]);
     if (!papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_locations[i][1]);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_locations[i][1]);
       pass = false;
     }
     else if (strcmp(get_str, set_locations[i][1]))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][1]);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][1]);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetGeoLocation(NULL)");
+  _papplTestBegin("api: papplSystemGet/SetGeoLocation(NULL)");
   papplSystemSetGeoLocation(system, NULL);
   if (papplSystemGetGeoLocation(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetHostname
-  testBegin("api: papplSystemGetHostname");
+  _papplTestBegin("api: papplSystemGetHostname");
   if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected '*.domain'");
+    _papplTestEndMessage(false, "got NULL, expected '*.domain'");
     pass = false;
   }
   else if (!strchr(get_str, '.'))
   {
-    testEndMessage(false, "got '%s', expected '*.domain'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected '*.domain'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "example%u.org", (unsigned)i);
-    testBegin("api: papplSystemGet/SetHostname('%s')", set_str);
+    _papplTestBegin("api: papplSystemGet/SetHostname('%s')", set_str);
     papplSystemSetHostName(system, set_str);
     if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetHostName(NULL)");
+  _papplTestBegin("api: papplSystemGet/SetHostName(NULL)");
   papplSystemSetHostName(system, NULL);
   if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected '*.domain'");
+    _papplTestEndMessage(false, "got NULL, expected '*.domain'");
     pass = false;
   }
   else if (!strchr(get_str, '.'))
   {
-    testEndMessage(false, "got '%s', expected '*.domain'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected '*.domain'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetIdleShutdown
-  testBegin("api: papplSystemGetIdleShutdown");
+  _papplTestBegin("api: papplSystemGetIdleShutdown");
   if ((get_int = papplSystemGetIdleShutdown(system)) != 0)
   {
-    testEndMessage(false, "got %d, expected 0", get_int);
+    _papplTestEndMessage(false, "got %d, expected 0", get_int);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
-  testBegin("api: papplSystemSetIdleShutdown(-1)");
+  _papplTestBegin("api: papplSystemSetIdleShutdown(-1)");
   papplSystemSetIdleShutdown(system, -1);
   if ((get_int = papplSystemGetIdleShutdown(system)) != 0)
   {
-    testEndMessage(false, "got %d, expected 0", get_int);
+    _papplTestEndMessage(false, "got %d, expected 0", get_int);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
-  testBegin("api: papplSystemSetIdleShutdown(30)");
+  _papplTestBegin("api: papplSystemSetIdleShutdown(30)");
   papplSystemSetIdleShutdown(system, 30);
   if ((get_int = papplSystemGetIdleShutdown(system)) != 30)
   {
-    testEndMessage(false, "got %d, expected 30", get_int);
+    _papplTestEndMessage(false, "got %d, expected 30", get_int);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
-  testBegin("api: papplSystemSetIdleShutdown(0)");
+  _papplTestBegin("api: papplSystemSetIdleShutdown(0)");
   papplSystemSetIdleShutdown(system, 0);
   if ((get_int = papplSystemGetIdleShutdown(system)) != 0)
   {
-    testEndMessage(false, "got %d, expected 0", get_int);
+    _papplTestEndMessage(false, "got %d, expected 0", get_int);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
-  testBegin("api: papplSystemSetIdleShutdown(90)");
+  _papplTestBegin("api: papplSystemSetIdleShutdown(90)");
   papplSystemSetIdleShutdown(system, 90);
   if ((get_int = papplSystemGetIdleShutdown(system)) != 90)
   {
-    testEndMessage(false, "got %d, expected 30", get_int);
+    _papplTestEndMessage(false, "got %d, expected 30", get_int);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetLocation
-  testBegin("api: papplSystemGetLocation");
+  _papplTestBegin("api: papplSystemGetLocation");
   if (!papplSystemGetLocation(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected 'Test Lab 42'");
+    _papplTestEndMessage(false, "got NULL, expected 'Test Lab 42'");
     pass = false;
   }
   else if (strcmp(get_str, "Test Lab 42"))
   {
-    testEndMessage(false, "got '%s', expected 'Test Lab 42'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected 'Test Lab 42'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
   {
-    testBegin("api: papplSystemGet/SetLocation('%s')", set_locations[i][0]);
+    _papplTestBegin("api: papplSystemGet/SetLocation('%s')", set_locations[i][0]);
     papplSystemSetLocation(system, set_locations[i][0]);
     if (!papplSystemGetLocation(system, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_locations[i][0]);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_locations[i][0]);
       pass = false;
     }
     else if (strcmp(get_str, set_locations[i][0]))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][0]);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][0]);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetLocation(NULL)");
+  _papplTestBegin("api: papplSystemGet/SetLocation(NULL)");
   papplSystemSetLocation(system, NULL);
   if (papplSystemGetLocation(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetLogLevel
-  testBegin("api: papplSystemGetLogLevel");
+  _papplTestBegin("api: papplSystemGetLogLevel");
   if (papplSystemGetLogLevel(system) == PAPPL_LOGLEVEL_UNSPEC)
   {
-    testEndMessage(false, "got PAPPL_LOGLEVEL_UNSPEC, expected another PAPPL_LOGLEVEL_ value");
+    _papplTestEndMessage(false, "got PAPPL_LOGLEVEL_UNSPEC, expected another PAPPL_LOGLEVEL_ value");
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (set_loglevel = PAPPL_LOGLEVEL_FATAL; set_loglevel >= PAPPL_LOGLEVEL_DEBUG; set_loglevel --)
   {
-    testBegin("api: papplSystemSetLogLevel(PAPPL_LOGLEVEL_%s)", set_loglevels[set_loglevel + 1]);
+    _papplTestBegin("api: papplSystemSetLogLevel(PAPPL_LOGLEVEL_%s)", set_loglevels[set_loglevel + 1]);
     papplSystemSetLogLevel(system, set_loglevel);
     if ((get_loglevel = papplSystemGetLogLevel(system)) != set_loglevel)
     {
-      testEndMessage(false, "got PAPPL_LOGLEVEL_%s, expected PAPPL_LOGLEVEL_%s", set_loglevels[get_loglevel + 1], set_loglevels[set_loglevel + 1]);
+      _papplTestEndMessage(false, "got PAPPL_LOGLEVEL_%s, expected PAPPL_LOGLEVEL_%s", set_loglevels[get_loglevel + 1], set_loglevels[set_loglevel + 1]);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
   // papplSystemGet/SetMaxLogSize
-  testBegin("api: papplSystemGetMaxLogSize");
+  _papplTestBegin("api: papplSystemGetMaxLogSize");
   if ((get_size = papplSystemGetMaxLogSize(system)) != (size_t)(1024 * 1024))
   {
-    testEndMessage(false, "got %ld, expected %ld", (long)get_size, (long)(1024 * 1024));
+    _papplTestEndMessage(false, "got %ld, expected %ld", (long)get_size, (long)(1024 * 1024));
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (set_size = 0; set_size <= (16 * 1024 * 1024); set_size += 1024 * 1024)
   {
-    testBegin("api: papplSystemSetMaxLogSize(%ld)", (long)set_size);
+    _papplTestBegin("api: papplSystemSetMaxLogSize(%ld)", (long)set_size);
     papplSystemSetMaxLogSize(system, set_size);
     if ((get_size = papplSystemGetMaxLogSize(system)) != set_size)
     {
-      testEndMessage(false, "got %ld, expected %ld", (long)get_size,  (long)set_size);
+      _papplTestEndMessage(false, "got %ld, expected %ld", (long)get_size,  (long)set_size);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemSetMaxLogSize(0)");
+  _papplTestBegin("api: papplSystemSetMaxLogSize(0)");
   papplSystemSetMaxLogSize(system, 0);
   if ((get_size = papplSystemGetMaxLogSize(system)) != 0)
   {
-    testEndMessage(false, "got %ld, expected 0", (long)get_size);
+    _papplTestEndMessage(false, "got %ld, expected 0", (long)get_size);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetNextPrinterID
-  testBegin("api: papplSystemGetNextPrinterID");
+  _papplTestBegin("api: papplSystemGetNextPrinterID");
   if ((get_int = papplSystemGetNextPrinterID(system)) != 3)
   {
-    testEndMessage(false, "got %d, expected 3", get_int);
+    _papplTestEndMessage(false, "got %d, expected 3", get_int);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   set_int = (cupsGetRand() % 1000000) + 4;
-  testBegin("api: papplSystemSetNextPrinterID(%d)", set_int);
+  _papplTestBegin("api: papplSystemSetNextPrinterID(%d)", set_int);
   papplSystemSetNextPrinterID(system, set_int);
   if ((get_int = papplSystemGetNextPrinterID(system)) != set_int)
   {
     if (papplSystemIsRunning(system))
-      testEnd(true);
+      _papplTestEnd(true);
     else
     {
-      testEndMessage(false, "got %d, expected %d", get_int, set_int);
+      _papplTestEndMessage(false, "got %d, expected %d", get_int, set_int);
       pass = false;
     }
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetOrganization
-  testBegin("api: papplSystemGetOrganization");
+  _papplTestBegin("api: papplSystemGetOrganization");
   if (!papplSystemGetOrganization(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected 'Lakeside Robotics'");
+    _papplTestEndMessage(false, "got NULL, expected 'Lakeside Robotics'");
     pass = false;
   }
   else if (strcmp(get_str, "Lakeside Robotics"))
   {
-    testEndMessage(false, "got '%s', expected 'Lakeside Robotics'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected 'Lakeside Robotics'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "Organization %c", (char)(i + 'A'));
-    testBegin("api: papplSystemGet/SetOrganization('%s')", set_str);
+    _papplTestBegin("api: papplSystemGet/SetOrganization('%s')", set_str);
     papplSystemSetOrganization(system, set_str);
     if (!papplSystemGetOrganization(system, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetOrganization(NULL)");
+  _papplTestBegin("api: papplSystemGet/SetOrganization(NULL)");
   papplSystemSetOrganization(system, NULL);
   if (papplSystemGetOrganization(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetOrganizationalUnit
-  testBegin("api: papplSystemGetOrganizationalUnit");
+  _papplTestBegin("api: papplSystemGetOrganizationalUnit");
   if (papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "%c Team", (char)(i + 'A'));
-    testBegin("api: papplSystemGet/SetOrganizationalUnit('%s')", set_str);
+    _papplTestBegin("api: papplSystemGet/SetOrganizationalUnit('%s')", set_str);
     papplSystemSetOrganizationalUnit(system, set_str);
     if (!papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetOrganizationalUnit(NULL)");
+  _papplTestBegin("api: papplSystemGet/SetOrganizationalUnit(NULL)");
   papplSystemSetOrganizationalUnit(system, NULL);
   if (papplSystemGetOrganizationalUnit(system, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplSystemGet/SetUUID
-  testBegin("api: papplSystemGetUUID");
+  _papplTestBegin("api: papplSystemGetUUID");
   if ((get_value = papplSystemGetUUID(system)) == NULL)
   {
-    testEndMessage(false, "got NULL, expected 'urn:uuid:...'");
+    _papplTestEndMessage(false, "got NULL, expected 'urn:uuid:...'");
     pass = false;
   }
   else if (strncmp(get_value, "urn:uuid:", 9))
   {
-    testEndMessage(false, "got '%s', expected 'urn:uuid:...'", get_value);
+    _papplTestEndMessage(false, "got '%s', expected 'urn:uuid:...'", get_value);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "urn:uuid:%04x%04x-%04x-%04x-%04x-%04x%04x%04x", (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536), (unsigned)(cupsGetRand() % 65536));
-    testBegin("api: papplSystemGet/SetUUID('%s')", set_str);
+    _papplTestBegin("api: papplSystemGet/SetUUID('%s')", set_str);
     papplSystemSetUUID(system, set_str);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (papplSystemIsRunning(system))
     {
       if (!strcmp(get_value, set_str) || strncmp(get_value, "urn:uuid:", 9))
       {
-	testEndMessage(false, "got '%s', expected different 'urn:uuid:...'", get_value);
+	_papplTestEndMessage(false, "got '%s', expected different 'urn:uuid:...'", get_value);
 	pass = false;
       }
       else
-        testEnd(true);
+        _papplTestEnd(true);
     }
     else if (strcmp(get_value, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_value, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_value, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetUUID(NULL)");
+  _papplTestBegin("api: papplSystemGet/SetUUID(NULL)");
   if ((get_value = papplSystemGetUUID(system)) == NULL)
   {
-    testEndMessage(false, "unable to get current UUID");
+    _papplTestEndMessage(false, "unable to get current UUID");
     pass = false;
   }
   else
@@ -2462,47 +2527,47 @@ test_api(pappl_system_t *system)	// I - System
     papplSystemSetUUID(system, NULL);
     if ((get_value = papplSystemGetUUID(system)) == NULL)
     {
-      testEndMessage(false, "got NULL, expected 'urn:uuid:...'");
+      _papplTestEndMessage(false, "got NULL, expected 'urn:uuid:...'");
       pass = false;
     }
     else if (papplSystemIsRunning(system))
     {
       if (!strcmp(get_value, set_str) || strncmp(get_value, "urn:uuid:", 9))
       {
-	testEndMessage(false, "got '%s', expected different 'urn:uuid:...'", get_value);
+	_papplTestEndMessage(false, "got '%s', expected different 'urn:uuid:...'", get_value);
 	pass = false;
       }
       else
-	testEnd(true);
+	_papplTestEnd(true);
     }
     else if (!strcmp(get_value, set_str))
     {
-      testEndMessage(false, "got '%s', expected different '%s'", get_value, set_str);
+      _papplTestEndMessage(false, "got '%s', expected different '%s'", get_value, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
   // papplSystemGet/SetVersions
-  testBegin("api: papplSystemGetVersions");
+  _papplTestBegin("api: papplSystemGetVersions");
 
   if ((get_nvers = papplSystemGetVersions(system, (int)(sizeof(get_vers) / sizeof(get_vers[0])), get_vers)) != 1)
   {
-    testEndMessage(false, "got %u versions, expected 1", (unsigned)get_nvers);
+    _papplTestEndMessage(false, "got %u versions, expected 1", (unsigned)get_nvers);
     pass = false;
   }
   else if (strcmp(get_vers[0].name, "Test System") || strcmp(get_vers[0].sversion, "2.0 build 42"))
   {
-    testEndMessage(false, "got '%s v%s', expected 'Test System v2.0m build 42'", get_vers[0].name, get_vers[0].sversion);
+    _papplTestEndMessage(false, "got '%s v%s', expected 'Test System v2.0m build 42'", get_vers[0].name, get_vers[0].sversion);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
-    testBegin("api: papplSystemGet/SetVersions(%u)", (unsigned)i + 1);
+    _papplTestBegin("api: papplSystemGet/SetVersions(%u)", (unsigned)i + 1);
 
     memset(set_vers + i, 0, sizeof(pappl_version_t));
     snprintf(set_vers[i].name, sizeof(set_vers[i].name), "Component %c", (char)('A' + i));
@@ -2514,7 +2579,7 @@ test_api(pappl_system_t *system)	// I - System
 
     if ((get_nvers = papplSystemGetVersions(system, (int)(sizeof(get_vers) / sizeof(get_vers[0])), get_vers)) != (i + 1))
     {
-      testEndMessage(false, "got %u versions, expected %u", (unsigned)get_nvers, (unsigned)i + 1);
+      _papplTestEndMessage(false, "got %u versions, expected %u", (unsigned)get_nvers, (unsigned)i + 1);
       pass = false;
     }
     else
@@ -2523,43 +2588,43 @@ test_api(pappl_system_t *system)	// I - System
       {
         if (strcmp(get_vers[j].name, set_vers[j].name) || strcmp(get_vers[j].sversion, set_vers[j].sversion))
 	{
-	  testEndMessage(false, "got '%s v%s', expected '%s v%s'", get_vers[j].name, get_vers[j].sversion, set_vers[j].name, set_vers[j].sversion);
+	  _papplTestEndMessage(false, "got '%s v%s', expected '%s v%s'", get_vers[j].name, get_vers[j].sversion, set_vers[j].name, set_vers[j].sversion);
 	  pass = false;
 	  break;
 	}
       }
 
       if (j >= get_nvers)
-        testEnd(true);
+        _papplTestEnd(true);
     }
   }
 
   // papplSystemFindPrinter
-  testBegin("api: papplSystemFindPrinter(default)");
+  _papplTestBegin("api: papplSystemFindPrinter(default)");
   if ((printer = papplSystemFindPrinter(system, "/ipp/print", 0, NULL)) == NULL)
   {
-    testEndMessage(false, "got NULL");
+    _papplTestEndMessage(false, "got NULL");
     pass = false;
   }
   else if (papplPrinterGetID(printer) != papplSystemGetDefaultPrinterID(system))
   {
-    testEndMessage(false, "got printer #%d, expected #%d", papplPrinterGetID(printer), papplSystemGetDefaultPrinterID(system));
+    _papplTestEndMessage(false, "got printer #%d, expected #%d", papplPrinterGetID(printer), papplSystemGetDefaultPrinterID(system));
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (set_int = 1; set_int < 3; set_int ++)
   {
-    testBegin("api: papplSystemFindPrinter(%d)", set_int);
+    _papplTestBegin("api: papplSystemFindPrinter(%d)", set_int);
     if ((printer = papplSystemFindPrinter(system, NULL, set_int, NULL)) == NULL)
     {
-      testEndMessage(false, "got NULL");
+      _papplTestEndMessage(false, "got NULL");
       pass = false;
     }
     else
     {
-      testEnd(true);
+      _papplTestEnd(true);
       if (!test_api_printer(printer))
 	pass = false;
     }
@@ -2571,49 +2636,49 @@ test_api(pappl_system_t *system)	// I - System
     char	name[128];		// Printer name
 
     snprintf(name, sizeof(name), "test%u", (unsigned)i);
-    testBegin("api: papplPrinterCreate(%s)", name);
+    _papplTestBegin("api: papplPrinterCreate(%s)", name);
     if ((printer = papplPrinterCreate(system, 0, name, "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) == NULL)
     {
-      testEndMessage(false, "got NULL");
+      _papplTestEndMessage(false, "got NULL");
       pass = false;
     }
     else
     {
-      testEnd(true);
+      _papplTestEnd(true);
 
       get_int = papplPrinterGetID(printer);
 
-      testBegin("api: papplPrinterDelete(%s)", name);
+      _papplTestBegin("api: papplPrinterDelete(%s)", name);
       papplPrinterDelete(printer);
 
       if (papplSystemFindPrinter(system, NULL, get_int, NULL) != NULL)
       {
-        testEndMessage(false, "printer not deleted");
+        _papplTestEndMessage(false, "printer not deleted");
         pass = false;
       }
       else
       {
-        testEnd(true);
+        _papplTestEnd(true);
 
-	testBegin("api: papplPrinterCreate(%s again)", name);
+	_papplTestBegin("api: papplPrinterCreate(%s again)", name);
 	if ((printer = papplPrinterCreate(system, 0, name, "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", "file:///dev/null")) == NULL)
 	{
-	  testEndMessage(false, "got NULL");
+	  _papplTestEndMessage(false, "got NULL");
 	  pass = false;
 	}
 	else if (papplPrinterGetID(printer) == get_int)
 	{
-	  testEndMessage(false, "got the same printer ID");
+	  _papplTestEndMessage(false, "got the same printer ID");
 	  pass = false;
 	}
 	else
-	  testEnd(true);
+	  _papplTestEnd(true);
       }
     }
   }
 
   // papplSystemIteratePrinters
-  testBegin("api: papplSystemIteratePrinters");
+  _papplTestBegin("api: papplSystemIteratePrinters");
 
   pdata.pass = true;
   pdata.count = 0;
@@ -2622,16 +2687,16 @@ test_api(pappl_system_t *system)	// I - System
 
   if (pdata.count != 12)
   {
-    testEndMessage(false, "got %d printers, expected 12", pdata.count);
+    _papplTestEndMessage(false, "got %d printers, expected 12", pdata.count);
     pass = false;
   }
   else if (!pdata.pass)
   {
-    testEndMessage(false, "per-printer test failed");
+    _papplTestEndMessage(false, "per-printer test failed");
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   return (pass);
 }
@@ -2674,29 +2739,29 @@ test_api_printer(
 
 
   // papplPrinterGet/SetContact
-  testBegin("api: papplPrinterGetContact");
+  _papplTestBegin("api: papplPrinterGetContact");
   if (!papplPrinterGetContact(printer, &get_contact))
   {
-    testEndMessage(false, "got NULL, expected 'Michael R Sweet'");
+    _papplTestEndMessage(false, "got NULL, expected 'Michael R Sweet'");
     pass = false;
   }
   else if (strcmp(get_contact.name, "Michael R Sweet"))
   {
-    testEndMessage(false, "got '%s', expected 'Michael R Sweet'", get_contact.name);
+    _papplTestEndMessage(false, "got '%s', expected 'Michael R Sweet'", get_contact.name);
     pass = false;
   }
   else if (strcmp(get_contact.email, "msweet@example.org"))
   {
-    testEndMessage(false, "got '%s', expected 'msweet@example.org'", get_contact.email);
+    _papplTestEndMessage(false, "got '%s', expected 'msweet@example.org'", get_contact.email);
     pass = false;
   }
   else if (strcmp(get_contact.telephone, "+1-705-555-1212"))
   {
-    testEndMessage(false, "got '%s', expected '+1-705-555-1212'", get_contact.telephone);
+    _papplTestEndMessage(false, "got '%s', expected '+1-705-555-1212'", get_contact.telephone);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
@@ -2704,328 +2769,328 @@ test_api_printer(
     snprintf(set_contact.email, sizeof(set_contact.email), "admin-%d@example.org", i);
     snprintf(set_contact.telephone, sizeof(set_contact.telephone), "+1-705-555-%04d", i * 1111);
 
-    testBegin("api: papplPrinterGet/SetContact('%s')", set_contact.name);
+    _papplTestBegin("api: papplPrinterGet/SetContact('%s')", set_contact.name);
     papplPrinterSetContact(printer, &set_contact);
     if (!papplPrinterGetContact(printer, &get_contact))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_contact.name);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_contact.name);
       pass = false;
     }
     else if (strcmp(get_contact.name, set_contact.name))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_contact.name, set_contact.name);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_contact.name, set_contact.name);
       pass = false;
     }
     else if (strcmp(get_contact.email, set_contact.email))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_contact.email, set_contact.email);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_contact.email, set_contact.email);
       pass = false;
     }
     else if (strcmp(get_contact.telephone, set_contact.telephone))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_contact.telephone, set_contact.telephone);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_contact.telephone, set_contact.telephone);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
   // papplPrinterGet/SetPrintGroup
-  testBegin("api: papplPrinterGetPrintGroup");
+  _papplTestBegin("api: papplPrinterGetPrintGroup");
   if (papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "users-%d", i);
-    testBegin("api: papplPrinterGet/SetPrintGroup('%s')", set_str);
+    _papplTestBegin("api: papplPrinterGet/SetPrintGroup('%s')", set_str);
     papplPrinterSetPrintGroup(printer, set_str);
     if (!papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplPrinterGet/SetPrintGroup(NULL)");
+  _papplTestBegin("api: papplPrinterGet/SetPrintGroup(NULL)");
   papplPrinterSetPrintGroup(printer, NULL);
   if (papplPrinterGetPrintGroup(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplPrinterGet/SetDNSSDName
-  testBegin("api: papplPrinterGetDNSSDName");
+  _papplTestBegin("api: papplPrinterGetDNSSDName");
   if (!papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected string");
+    _papplTestEndMessage(false, "got NULL, expected string");
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "Printer Test %c", i + 'A');
-    testBegin("api: papplPrinterGet/SetDNSSDName('%s')", set_str);
+    _papplTestBegin("api: papplPrinterGet/SetDNSSDName('%s')", set_str);
     papplPrinterSetDNSSDName(printer, set_str);
     if (!papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplPrinterGet/SetDNSSDName(NULL)");
+  _papplTestBegin("api: papplPrinterGet/SetDNSSDName(NULL)");
   papplPrinterSetDNSSDName(printer, NULL);
   if (papplPrinterGetDNSSDName(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplPrinterGet/SetGeoLocation
   expected_null = !strcmp(papplPrinterGetName(printer), "Label Printer");
 
-  testBegin("api: papplPrinterGetGeoLocation");
+  _papplTestBegin("api: papplPrinterGetGeoLocation");
   get_ptr = papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str));
   if (get_ptr && expected_null)
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else if (!get_ptr && !expected_null)
   {
-    testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
+    _papplTestEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
   else if (get_ptr && strcmp(get_str, "geo:46.4707,-80.9961"))
   {
-    testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
-  testBegin("api: papplPrinterGet/SetGeoLocation('bad-value')");
+  _papplTestBegin("api: papplPrinterGet/SetGeoLocation('bad-value')");
   papplPrinterSetGeoLocation(printer, "bad-value");
   get_ptr = papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str));
   if (get_ptr && expected_null)
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else if (!get_ptr && !expected_null)
   {
-    testEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
+    _papplTestEndMessage(false, "got NULL, expected 'geo:46.4707,-80.9961'");
     pass = false;
   }
   else if (get_ptr && strcmp(get_str, "geo:46.4707,-80.9961"))
   {
-    testEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected 'geo:46.4707,-80.9961'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
   {
-    testBegin("api: papplPrinterGet/SetGeoLocation('%s')", set_locations[i][1]);
+    _papplTestBegin("api: papplPrinterGet/SetGeoLocation('%s')", set_locations[i][1]);
     papplPrinterSetGeoLocation(printer, set_locations[i][1]);
     if (!papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_locations[i][1]);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_locations[i][1]);
       pass = false;
     }
     else if (strcmp(get_str, set_locations[i][1]))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][1]);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][1]);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplPrinterGet/SetGeoLocation(NULL)");
+  _papplTestBegin("api: papplPrinterGet/SetGeoLocation(NULL)");
   papplPrinterSetGeoLocation(printer, NULL);
   if (papplPrinterGetGeoLocation(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplPrinterGet/SetLocation
-  testBegin("api: papplPrinterGetLocation");
+  _papplTestBegin("api: papplPrinterGetLocation");
   if (!papplPrinterGetLocation(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected 'Test Lab 42'");
+    _papplTestEndMessage(false, "got NULL, expected 'Test Lab 42'");
     pass = false;
   }
   else if (strcmp(get_str, "Test Lab 42"))
   {
-    testEndMessage(false, "got '%s', expected 'Test Lab 42'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected 'Test Lab 42'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < (int)(sizeof(set_locations) / sizeof(set_locations[0])); i ++)
   {
-    testBegin("api: papplPrinterGet/SetLocation('%s')", set_locations[i][0]);
+    _papplTestBegin("api: papplPrinterGet/SetLocation('%s')", set_locations[i][0]);
     papplPrinterSetLocation(printer, set_locations[i][0]);
     if (!papplPrinterGetLocation(printer, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_locations[i][0]);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_locations[i][0]);
       pass = false;
     }
     else if (strcmp(get_str, set_locations[i][0]))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][0]);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_locations[i][0]);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplPrinterGet/SetLocation(NULL)");
+  _papplTestBegin("api: papplPrinterGet/SetLocation(NULL)");
   papplPrinterSetLocation(printer, NULL);
   if (papplPrinterGetLocation(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplPrinterGet/SetNextJobID
-  testBegin("api: papplPrinterGetNextJobID");
+  _papplTestBegin("api: papplPrinterGetNextJobID");
   if ((get_int = papplPrinterGetNextJobID(printer)) != 1)
   {
-    testEndMessage(false, "got %d, expected 1", get_int);
+    _papplTestEndMessage(false, "got %d, expected 1", get_int);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   set_int = (cupsGetRand() % 1000000) + 2;
-  testBegin("api: papplPrinterSetNextJobID(%d)", set_int);
+  _papplTestBegin("api: papplPrinterSetNextJobID(%d)", set_int);
   papplPrinterSetNextJobID(printer, set_int);
   if ((get_int = papplPrinterGetNextJobID(printer)) != set_int)
   {
-    testEndMessage(false, "got %d, expected %d", get_int, set_int);
+    _papplTestEndMessage(false, "got %d, expected %d", get_int, set_int);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplPrinterGet/SetOrganization
-  testBegin("api: papplPrinterGetOrganization");
+  _papplTestBegin("api: papplPrinterGetOrganization");
   if (!papplPrinterGetOrganization(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got NULL, expected 'Lakeside Robotics'");
+    _papplTestEndMessage(false, "got NULL, expected 'Lakeside Robotics'");
     pass = false;
   }
   else if (strcmp(get_str, "Lakeside Robotics"))
   {
-    testEndMessage(false, "got '%s', expected 'Lakeside Robotics'", get_str);
+    _papplTestEndMessage(false, "got '%s', expected 'Lakeside Robotics'", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "Organization %c", i + 'A');
-    testBegin("api: papplPrinterGet/SetOrganization('%s')", set_str);
+    _papplTestBegin("api: papplPrinterGet/SetOrganization('%s')", set_str);
     papplPrinterSetOrganization(printer, set_str);
     if (!papplPrinterGetOrganization(printer, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplPrinterGet/SetOrganization(NULL)");
+  _papplTestBegin("api: papplPrinterGet/SetOrganization(NULL)");
   papplPrinterSetOrganization(printer, NULL);
   if (papplPrinterGetOrganization(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   // papplPrinterGet/SetOrganizationalUnit
-  testBegin("api: papplPrinterGetOrganizationalUnit");
+  _papplTestBegin("api: papplPrinterGetOrganizationalUnit");
   if (papplPrinterGetOrganizationalUnit(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "%c Team", i + 'A');
-    testBegin("api: papplPrinterGet/SetOrganizationalUnit('%s')", set_str);
+    _papplTestBegin("api: papplPrinterGet/SetOrganizationalUnit('%s')", set_str);
     papplPrinterSetOrganizationalUnit(printer, set_str);
     if (!papplPrinterGetOrganizationalUnit(printer, get_str, sizeof(get_str)))
     {
-      testEndMessage(false, "got NULL, expected '%s'", set_str);
+      _papplTestEndMessage(false, "got NULL, expected '%s'", set_str);
       pass = false;
     }
     else if (strcmp(get_str, set_str))
     {
-      testEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
+      _papplTestEndMessage(false, "got '%s', expected '%s'", get_str, set_str);
       pass = false;
     }
     else
-      testEnd(true);
+      _papplTestEnd(true);
   }
 
-  testBegin("api: papplPrinterGet/SetOrganizationalUnit(NULL)");
+  _papplTestBegin("api: papplPrinterGet/SetOrganizationalUnit(NULL)");
   papplPrinterSetOrganizationalUnit(printer, NULL);
   if (papplPrinterGetOrganizationalUnit(printer, get_str, sizeof(get_str)))
   {
-    testEndMessage(false, "got '%s', expected NULL", get_str);
+    _papplTestEndMessage(false, "got '%s', expected NULL", get_str);
     pass = false;
   }
   else
-    testEnd(true);
+    _papplTestEnd(true);
 
   return (pass);
 }
@@ -3121,19 +3186,19 @@ test_client(pappl_system_t *system)	// I - System
 
 
   // Connect to system...
-  testBegin("client: Connect to server");
+  _papplTestBegin("client: Connect to server");
   if ((http = connect_to_printer(system, false, uri, sizeof(uri))) == NULL)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     return (false);
   }
   else
   {
-    testEnd(true);
+    _papplTestEnd(true);
   }
 
   // Test Get-System-Attributes
-  testBegin("client: Get-System-Attributes");
+  _papplTestBegin("client: Get-System-Attributes");
 
   request = ippNewRequest(IPP_OP_GET_SYSTEM_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -3143,7 +3208,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() != IPP_STATUS_OK)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     ippDelete(response);
     goto done;
   }
@@ -3153,18 +3218,18 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, sattrs[i], IPP_TAG_ZERO))
       {
-	testEndMessage(false, "Missing required '%s' attribute in response", sattrs[i]);
+	_papplTestEndMessage(false, "Missing required '%s' attribute in response", sattrs[i]);
 	ippDelete(response);
 	goto done;
       }
     }
 
-    testEnd(true);
+    _papplTestEnd(true);
     ippDelete(response);
   }
 
   // Test Get-Printers
-  testBegin("client: Get-Printers");
+  _papplTestBegin("client: Get-Printers");
 
   request = ippNewRequest(IPP_OP_GET_PRINTERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -3174,7 +3239,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() != IPP_STATUS_OK)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     ippDelete(response);
     goto done;
   }
@@ -3184,18 +3249,18 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
-	testEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
+	_papplTestEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
 	ippDelete(response);
 	goto done;
       }
     }
 
-    testEnd(true);
+    _papplTestEnd(true);
     ippDelete(response);
   }
 
   // Test Get-Printer-Attributes on /
-  testBegin("client: Get-Printer-Attributes=/");
+  _papplTestBegin("client: Get-Printer-Attributes=/");
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/");
@@ -3205,7 +3270,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() != IPP_STATUS_OK)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     ippDelete(response);
     goto done;
   }
@@ -3215,18 +3280,18 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(response, pattrs[i], IPP_TAG_ZERO))
       {
-	testEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
+	_papplTestEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
 	ippDelete(response);
         goto done;
       }
     }
 
-    testEnd(true);
+    _papplTestEnd(true);
     ippDelete(response);
   }
 
   // Test Get-Printer-Attributes on /ipp/print
-  testBegin("client: Get-Printer-Attributes=/ipp/print");
+  _papplTestBegin("client: Get-Printer-Attributes=/ipp/print");
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
@@ -3236,7 +3301,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() != IPP_STATUS_OK)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
   else
@@ -3245,16 +3310,16 @@ test_client(pappl_system_t *system)	// I - System
     {
       if (!ippFindAttribute(supported, pattrs[i], IPP_TAG_ZERO))
       {
-	testEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
+	_papplTestEndMessage(false, "Missing required '%s' attribute in response", pattrs[i]);
 	goto done;
       }
     }
 
-    testEnd(true);
+    _papplTestEnd(true);
   }
 
   // Create a system subscription for a variety of events...
-  testBegin("client: Create-System-Subscriptions");
+  _papplTestBegin("client: Create-System-Subscriptions");
 
   request = ippNewRequest(IPP_OP_CREATE_SYSTEM_SUBSCRIPTIONS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -3270,23 +3335,23 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() != IPP_STATUS_OK)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
   else if (subscription_id == 0)
   {
-    testEndMessage(false, "missing required 'notify-subscription-id' attribute in response");
+    _papplTestEndMessage(false, "missing required 'notify-subscription-id' attribute in response");
     goto done;
   }
   else
   {
-    testEndMessage(true, "notify-subscription-id=%d", subscription_id);
+    _papplTestEndMessage(true, "notify-subscription-id=%d", subscription_id);
   }
 
   end = time(NULL) + 70;
 
   // Verify the subscription exists...
-  testBegin("client: Get-Subscription-Attributes");
+  _papplTestBegin("client: Get-Subscription-Attributes");
 
   request = ippNewRequest(IPP_OP_GET_SUBSCRIPTION_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -3304,21 +3369,21 @@ test_client(pappl_system_t *system)	// I - System
   }
   else if (!attr)
   {
-    testEndMessage(false, "missing 'notify-events' attribute");
+    _papplTestEndMessage(false, "missing 'notify-events' attribute");
     goto done;
   }
   else
   {
-    testEnd(true);
+    _papplTestEnd(true);
   }
 
   // Send a print job to get some events...
-  testBegin("client: Make raster print file");
+  _papplTestBegin("client: Make raster print file");
   if (!make_raster_file(supported, false, filename, sizeof(filename)))
     goto done;
-  testEnd(true);
+  _papplTestEnd(true);
 
-  testBegin("client: Print-Job (Raster)");
+  _papplTestBegin("client: Print-Job (Raster)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3332,15 +3397,15 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEndMessage(true, "job-id=%d", job_id);
+  _papplTestEndMessage(true, "job-id=%d", job_id);
   output_count ++;
 
 #ifdef HAVE_LIBJPEG
-  testBegin("client: Print-Job (JPEG w/hold)");
+  _papplTestBegin("client: Print-Job (JPEG w/hold)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3360,13 +3425,13 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEndMessage(true, "job-id=%d", job_id);
+  _papplTestEndMessage(true, "job-id=%d", job_id);
 
-  testBegin("client: Release-Job (JPEG)");
+  _papplTestBegin("client: Release-Job (JPEG)");
   request = ippNewRequest(IPP_OP_RELEASE_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
@@ -3376,13 +3441,13 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s: %s", ippErrorString(cupsGetError()), cupsGetErrorString());
+    _papplTestEndMessage(false, "%s: %s", ippErrorString(cupsGetError()), cupsGetErrorString());
     goto done;
   }
 
-  testEnd(true);
+  _papplTestEnd(true);
 
-  testBegin("client: Get-Job-Attributes (JPEG)");
+  _papplTestBegin("client: Get-Job-Attributes (JPEG)");
   interval = 1;
   do
   {
@@ -3397,7 +3462,7 @@ test_client(pappl_system_t *system)	// I - System
 
     if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
     {
-      testProgress();
+      _papplTestProgress();
       sleep(_PAPPL_FIB_VALUE(interval));
       interval = _PAPPL_FIB_NEXT(interval);
     }
@@ -3406,14 +3471,14 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
+  _papplTestEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
   output_count ++;
 
-  testBegin("client: Create-Job (Multi-JPEG)");
+  _papplTestBegin("client: Create-Job (Multi-JPEG)");
   request = ippNewRequest(IPP_OP_CREATE_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3426,11 +3491,11 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEndMessage(true, "job-id=%d", job_id);
+  _papplTestEndMessage(true, "job-id=%d", job_id);
 
   static const char * const jpeg_files[] =
   {
@@ -3442,7 +3507,7 @@ test_client(pappl_system_t *system)	// I - System
 
   for (i = 0; i < (int)(sizeof(jpeg_files) / sizeof(jpeg_files[0])); i ++)
   {
-    testBegin("client: Send-Document (%s)", jpeg_files[i]);
+    _papplTestBegin("client: Send-Document (%s)", jpeg_files[i]);
 
     request = ippNewRequest(IPP_OP_SEND_DOCUMENT);
     ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
@@ -3461,14 +3526,14 @@ test_client(pappl_system_t *system)	// I - System
 
     if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
-      testEndMessage(false, "%s", cupsGetErrorString());
+      _papplTestEndMessage(false, "%s", cupsGetErrorString());
       goto done;
     }
 
-    testEnd(true);
+    _papplTestEnd(true);
   }
 
-  testBegin("client: Get-Job-Attributes (Multi-JPEG)");
+  _papplTestBegin("client: Get-Job-Attributes (Multi-JPEG)");
   interval = 1;
   do
   {
@@ -3483,7 +3548,7 @@ test_client(pappl_system_t *system)	// I - System
 
     if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
     {
-      testProgress();
+      _papplTestProgress();
       sleep(_PAPPL_FIB_VALUE(interval));
       interval = _PAPPL_FIB_NEXT(interval);
     }
@@ -3492,16 +3557,16 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
+  _papplTestEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
   output_count ++;
 #endif // HAVE_LIBJPEG
 
 #ifdef HAVE_LIBPNG
-  testBegin("client: Print-Job (PNG w/Hold)");
+  _papplTestBegin("client: Print-Job (PNG w/Hold)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3521,13 +3586,13 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEndMessage(true, "job-id=%d", job_id);
+  _papplTestEndMessage(true, "job-id=%d", job_id);
 
-  testBegin("client: Release-Job (PNG)");
+  _papplTestBegin("client: Release-Job (PNG)");
   request = ippNewRequest(IPP_OP_RELEASE_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
@@ -3537,13 +3602,13 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEnd(true);
+  _papplTestEnd(true);
 
-  testBegin("client: Get-Job-Attributes (PNG)");
+  _papplTestBegin("client: Get-Job-Attributes (PNG)");
   interval = 1;
   do
   {
@@ -3558,7 +3623,7 @@ test_client(pappl_system_t *system)	// I - System
 
     if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
     {
-      testProgress();
+      _papplTestProgress();
       sleep(_PAPPL_FIB_VALUE(interval));
       interval = _PAPPL_FIB_NEXT(interval);
     }
@@ -3567,16 +3632,16 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
+  _papplTestEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
   output_count ++;
 #endif // HAVE_LIBPNG
 
   // Hold-New-Jobs
-  testBegin("client: Hold-New-Jobs");
+  _papplTestBegin("client: Hold-New-Jobs");
   request = ippNewRequest(IPP_OP_HOLD_NEW_JOBS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3585,13 +3650,13 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEnd(true);
+  _papplTestEnd(true);
 
-  testBegin("client: Print-Job (Raster 2)");
+  _papplTestBegin("client: Print-Job (Raster 2)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3602,7 +3667,7 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() == IPP_STATUS_OK)
   {
-    testEndMessage(false, "Job accepted but should have been rejected.");
+    _papplTestEndMessage(false, "Job accepted but should have been rejected.");
     goto done;
   }
 
@@ -3610,14 +3675,14 @@ test_client(pappl_system_t *system)	// I - System
   snprintf(outfile, sizeof(outfile), "%s/Client Test Raster Job 2.pwg", output_directory);
   if (!access(outfile, 0))
   {
-    testEndMessage(false, "Unexpected job output file created.");
+    _papplTestEndMessage(false, "Unexpected job output file created.");
     goto done;
   }
 
-  testEnd(true);
+  _papplTestEnd(true);
 
 #ifdef HAVE_LIBJPEG
-  testBegin("client: Print-Job (JPEG w/o hold)");
+  _papplTestBegin("client: Print-Job (JPEG w/o hold)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3637,12 +3702,12 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
   else if (job_state != IPP_JSTATE_HELD)
   {
-    testEndMessage(false, "job-state is %s, expected pending-held", ippEnumString("job-state", (int)job_state));
+    _papplTestEndMessage(false, "job-state is %s, expected pending-held", ippEnumString("job-state", (int)job_state));
     goto done;
   }
 
@@ -3650,17 +3715,17 @@ test_client(pappl_system_t *system)	// I - System
   snprintf(outfile, sizeof(outfile), "%s/Client Test JPEG Job without Hold.pwg", output_directory);
   if (!access(outfile, 0))
   {
-    testEndMessage(false, "Unexpected job output file created.");
+    _papplTestEndMessage(false, "Unexpected job output file created.");
     goto done;
   }
 
-  testEndMessage(true, "job-id=%d", job_id);
+  _papplTestEndMessage(true, "job-id=%d", job_id);
   output_count ++;
 #endif // HAVE_LIBJPEG
 
   if (ippContainsString(ippFindAttribute(supported, "document-format-supported", IPP_TAG_MIMETYPE), "application/pdf"))
   {
-    testBegin("client: Print-Job (PDF w/o Hold)");
+    _papplTestBegin("client: Print-Job (PDF w/o Hold)");
     request = ippNewRequest(IPP_OP_PRINT_JOB);
     ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3680,12 +3745,12 @@ test_client(pappl_system_t *system)	// I - System
 
     if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
-      testEndMessage(false, "%s", cupsGetErrorString());
+      _papplTestEndMessage(false, "%s", cupsGetErrorString());
       goto done;
     }
     else if (job_state != IPP_JSTATE_HELD)
     {
-      testEndMessage(false, "job-state is %s, expected pending-held", ippEnumString("job-state", (int)job_state));
+      _papplTestEndMessage(false, "job-state is %s, expected pending-held", ippEnumString("job-state", (int)job_state));
       goto done;
     }
 
@@ -3693,16 +3758,16 @@ test_client(pappl_system_t *system)	// I - System
     snprintf(outfile, sizeof(outfile), "%s/Client Test PDF Job without Hold.pwg", output_directory);
     if (!access(outfile, 0))
     {
-      testEndMessage(false, "Unexpected job output file created.");
+      _papplTestEndMessage(false, "Unexpected job output file created.");
       goto done;
     }
 
-    testEndMessage(true, "job-id=%d", job_id);
+    _papplTestEndMessage(true, "job-id=%d", job_id);
     output_count ++;
   }
 
 #ifdef HAVE_LIBPNG
-  testBegin("client: Print-Job (PNG w/o Hold)");
+  _papplTestBegin("client: Print-Job (PNG w/o Hold)");
   request = ippNewRequest(IPP_OP_PRINT_JOB);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3722,12 +3787,12 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
   else if (job_state != IPP_JSTATE_HELD)
   {
-    testEndMessage(false, "job-state is %s, expected pending-held", ippEnumString("job-state", (int)job_state));
+    _papplTestEndMessage(false, "job-state is %s, expected pending-held", ippEnumString("job-state", (int)job_state));
     goto done;
   }
 
@@ -3735,16 +3800,16 @@ test_client(pappl_system_t *system)	// I - System
   snprintf(outfile, sizeof(outfile), "%s/Client Test PNG Job without Hold.pwg", output_directory);
   if (!access(outfile, 0))
   {
-    testEndMessage(false, "Unexpected job output file created.");
+    _papplTestEndMessage(false, "Unexpected job output file created.");
     goto done;
   }
 
-  testEndMessage(true, "job-id=%d", job_id);
+  _papplTestEndMessage(true, "job-id=%d", job_id);
   output_count ++;
 #endif // HAVE_LIBPNG
 
   // Release-Held-New-Jobs
-  testBegin("client: Release-Held-New-Jobs");
+  _papplTestBegin("client: Release-Held-New-Jobs");
   request = ippNewRequest(IPP_OP_RELEASE_HELD_NEW_JOBS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "printer-uri", NULL, "ipp://localhost/ipp/print");
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
@@ -3753,14 +3818,14 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
-  testEnd(true);
+  _papplTestEnd(true);
 
   // Get event notifications...
-  testBegin("client: Get-Notifications");
+  _papplTestBegin("client: Get-Notifications");
 
   request = ippNewRequest(IPP_OP_GET_NOTIFICATIONS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
@@ -3800,7 +3865,7 @@ test_client(pappl_system_t *system)	// I - System
     }
     else
     {
-      testEndMessage(false, "Unexpected event '%s'", keyword);
+      _papplTestEndMessage(false, "Unexpected event '%s'", keyword);
       ippDelete(response);
       goto done;
     }
@@ -3810,51 +3875,51 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() != IPP_STATUS_OK)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
   else if (recv_events != (PAPPL_EVENT_JOB_COMPLETED | PAPPL_EVENT_JOB_CREATED | PAPPL_EVENT_JOB_PROGRESS | PAPPL_EVENT_JOB_STATE_CHANGED | PAPPL_EVENT_PRINTER_CONFIG_CHANGED | PAPPL_EVENT_PRINTER_STATE_CHANGED))
   {
-    testEndMessage(false, "wrong events seen");
+    _papplTestEndMessage(false, "wrong events seen");
     goto done;
   }
   else
   {
-    testEnd(true);
+    _papplTestEnd(true);
   }
 
   // PAPPL-Find-Devices
-  testBegin("client: PAPPL-Find-Devices");
+  _papplTestBegin("client: PAPPL-Find-Devices");
   request = ippNewRequest(PAPPL_IPP_OP_FIND_DEVICES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
 
   response = cupsDoRequest(http, request, "/ipp/system");
 
   if ((attr = ippFindAttribute(response, "smi55357-device-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
-    testEndMessage(true, "%u devices found", (unsigned)ippGetCount(attr));
+    _papplTestEndMessage(true, "%u devices found", (unsigned)ippGetCount(attr));
   else if (cupsGetError() == IPP_STATUS_ERROR_NOT_FOUND)
-    testEndMessage(true, "no devices found");
+    _papplTestEndMessage(true, "no devices found");
   else
-    testEndMessage(false, "failed: %s", cupsGetErrorString());
+    _papplTestEndMessage(false, "failed: %s", cupsGetErrorString());
 
   ippDelete(response);
 
   // PAPPL-Find-Drivers
-  testBegin("client: PAPPL-Find-Drivers");
+  _papplTestBegin("client: PAPPL-Find-Drivers");
   request = ippNewRequest(PAPPL_IPP_OP_FIND_DRIVERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
 
   response = cupsDoRequest(http, request, "/ipp/system");
 
   if ((attr = ippFindAttribute(response, "smi55357-driver-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
-    testEndMessage(true, "%u drivers found", (unsigned)ippGetCount(attr));
+    _papplTestEndMessage(true, "%u drivers found", (unsigned)ippGetCount(attr));
   else
-    testEndMessage(false, "failed: %s", cupsGetErrorString());
+    _papplTestEndMessage(false, "failed: %s", cupsGetErrorString());
 
   ippDelete(response);
 
   // PAPPL-Find-Drivers (good device-id)
-  testBegin("client: PAPPL-Find-Drivers (good device-id)");
+  _papplTestBegin("client: PAPPL-Find-Drivers (good device-id)");
   request = ippNewRequest(PAPPL_IPP_OP_FIND_DRIVERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_TEXT), "smi55357-device-id", NULL, "MFG:Example;MDL:Printer;CMD:PWGRaster;");
@@ -3862,14 +3927,14 @@ test_client(pappl_system_t *system)	// I - System
   response = cupsDoRequest(http, request, "/ipp/system");
 
   if ((attr = ippFindAttribute(response, "smi55357-driver-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
-    testEndMessage(true, "%u drivers found", (unsigned)ippGetCount(attr));
+    _papplTestEndMessage(true, "%u drivers found", (unsigned)ippGetCount(attr));
   else
-    testEndMessage(false, "failed: %s", cupsGetErrorString());
+    _papplTestEndMessage(false, "failed: %s", cupsGetErrorString());
 
   ippDelete(response);
 
   // PAPPL-Find-Drivers (bad device-id)
-  testBegin("client: PAPPL-Find-Drivers (bad device-id)");
+  _papplTestBegin("client: PAPPL-Find-Drivers (bad device-id)");
   request = ippNewRequest(PAPPL_IPP_OP_FIND_DRIVERS);
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_URI), "system-uri", NULL, "ipp://localhost/ipp/system");
   ippAddString(request, IPP_TAG_OPERATION, IPP_CONST_TAG(IPP_TAG_TEXT), "smi55357-device-id", NULL, "MFG:Example;MDL:Printer;CMD:PCL;");
@@ -3877,19 +3942,19 @@ test_client(pappl_system_t *system)	// I - System
   response = cupsDoRequest(http, request, "/ipp/system");
 
   if ((attr = ippFindAttribute(response, "smi55357-driver-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
-    testEndMessage(false, "%u drivers found", (unsigned)ippGetCount(attr));
+    _papplTestEndMessage(false, "%u drivers found", (unsigned)ippGetCount(attr));
   else if (cupsGetError() == IPP_STATUS_ERROR_NOT_FOUND)
-    testEndMessage(true, "no drivers found");
+    _papplTestEndMessage(true, "no drivers found");
   else
-    testEndMessage(false, "failed: %s", cupsGetErrorString());
+    _papplTestEndMessage(false, "failed: %s", cupsGetErrorString());
 
   ippDelete(response);
 
   // Verify that the subscription expires...
-  testBegin("client: Get-Subscription-Attributes(expiration)");
+  _papplTestBegin("client: Get-Subscription-Attributes(expiration)");
   while (time(NULL) < end)
   {
-    testProgress();
+    _papplTestProgress();
     sleep(5);
   }
 
@@ -3906,17 +3971,17 @@ test_client(pappl_system_t *system)	// I - System
 
   if (cupsGetError() != IPP_STATUS_ERROR_NOT_FOUND)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
   else if (attr)
   {
-    testEndMessage(false, "unexpected 'notify-events' attribute");
+    _papplTestEndMessage(false, "unexpected 'notify-events' attribute");
     goto done;
   }
   else
   {
-    testEnd(true);
+    _papplTestEnd(true);
   }
 
   ret = true;
@@ -4063,7 +4128,7 @@ test_client_max(pappl_system_t *system,	// I - System
   total = data.num_children * data.num_requests;
 
   // Start client threads
-  testBegin("%s", name);
+  _papplTestBegin("%s", name);
   gettimeofday(&data.start, NULL);
   gettimeofday(&data.end, NULL);
   for (i = 0; i < data.num_children; i ++)
@@ -4115,7 +4180,7 @@ test_client_max(pappl_system_t *system,	// I - System
   secs = (double)(data.end.tv_sec - data.start.tv_sec) + 0.000001 * (data.end.tv_usec - data.start.tv_usec);
   i    = cupsArrayGetCount(data.errors);
 
-  testEndMessage(i == 0, "%.3f seconds, %.0f requests/sec, %lu errors", secs, data.request_count / secs, (unsigned long)i);
+  _papplTestEndMessage(i == 0, "%.3f seconds, %.0f requests/sec, %lu errors", secs, (double)data.request_count / secs, (unsigned long)i);
   for (ptr = (const char *)cupsArrayGetFirst(data.errors); ptr; ptr = (const char *)cupsArrayGetNext(data.errors))
     fprintf(stderr, "%s: %s\n", name, ptr);
 
@@ -4140,22 +4205,22 @@ test_idle_shutdown(
   // Verify that idle shutdown works...
   papplSystemSetIdleShutdown(system, 90);
 
-  testBegin("idle-shutdown");
+  _papplTestBegin("idle-shutdown");
 
   end = time(NULL) + 100;
   while (time(NULL) < end)
   {
-    testProgress();
+    _papplTestProgress();
     sleep(1);
   }
 
   if (papplSystemIsShutdown(system))
   {
-    testEnd(true);
+    _papplTestEnd(true);
   }
   else
   {
-    testEnd(false);
+    _papplTestEnd(false);
     goto done;
   }
 
@@ -4280,66 +4345,66 @@ test_infra(pappl_system_t *system)	// I - System
   };
 
 
-  testBegin("infra: papplPrinterCreate(ptest)");
+  _papplTestBegin("infra: papplPrinterCreate(ptest)");
   if ((ptest = papplPrinterCreate(system, /*printer_id*/0, "ProxyP", "pwg_common-300dpi-black_1-sgray_8", "MFG:PWG;MDL:Office Printer;CMD:PWGRaster;", output_device_uri)) != NULL)
   {
-    testEnd(true);
+    _papplTestEnd(true);
   }
   else
   {
-    testEnd(false);
+    _papplTestEnd(false);
     return (false);
   }
 
-  testBegin("infra: papplPrinterGetUUID(ptest)");
+  _papplTestBegin("infra: papplPrinterGetUUID(ptest)");
   if ((proxy_device_uuid = papplPrinterGetUUID(ptest)) != NULL)
-    testEndMessage(true, "%s", proxy_device_uuid);
+    _papplTestEndMessage(true, "%s", proxy_device_uuid);
   else
-    testEnd(false);
+    _papplTestEnd(false);
 
-  testBegin("infra: papplPrinterCreateInfra(itest)");
+  _papplTestBegin("infra: papplPrinterCreateInfra(itest)");
   if ((itest = papplPrinterCreateInfra(system, /*printer_id*/0, "InfrastructureP", /*num_device_uuids*/0, /*device_uuids*/NULL)) != NULL)
   {
-    testEnd(true);
+    _papplTestEnd(true);
   }
   else
   {
-    testEndMessage(false, "%s", strerror(errno));
+    _papplTestEndMessage(false, "%s", strerror(errno));
     return (false);
   }
 
-  testBegin("infra: papplPrinterGetUUID(itest)");
+  _papplTestBegin("infra: papplPrinterGetUUID(itest)");
   if ((proxy_uuid = papplPrinterGetUUID(itest)) != NULL)
-    testEndMessage(true, "%s", proxy_uuid);
+    _papplTestEndMessage(true, "%s", proxy_uuid);
   else
-    testEnd(false);
+    _papplTestEnd(false);
 
-  testBegin("infra: papplPrinterGetURI(itest)");
+  _papplTestBegin("infra: papplPrinterGetURI(itest)");
   if (papplPrinterGetURI(itest, proxy_uri, sizeof(proxy_uri)))
-    testEndMessage(true, "%s", proxy_uri);
+    _papplTestEndMessage(true, "%s", proxy_uri);
   else
-    testEnd(false);
+    _papplTestEnd(false);
 
-  testBegin("infra: papplPrinterGetUUID(itest)");
+  _papplTestBegin("infra: papplPrinterGetUUID(itest)");
   if ((proxy_name = papplPrinterGetUUID(itest)) != NULL)
-    testEndMessage(true, "%s", proxy_name);
+    _papplTestEndMessage(true, "%s", proxy_name);
   else
-    testEnd(false);
+    _papplTestEnd(false);
 
-  testBegin("infra: papplPrinterSetProxy(ptest pointing to itest)");
+  _papplTestBegin("infra: papplPrinterSetProxy(ptest pointing to itest)");
   papplPrinterSetProxy(ptest, /*client_id*/NULL, proxy_name, proxy_device_uuid, /*provider_uri*/NULL, /*token_url*/NULL, proxy_uri, proxy_uuid);
-  testEnd(true);
+  _papplTestEnd(true);
 
   // Connect to system...
-  testBegin("infra: httpConnectURI(%s)", proxy_uri);
+  _papplTestBegin("infra: httpConnectURI(%s)", proxy_uri);
   if ((http = httpConnectURI(proxy_uri, /*host*/NULL, /*hostsize*/0, /*port*/NULL, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     return (false);
   }
   else
   {
-    testEnd(true);
+    _papplTestEnd(true);
   }
 
   // Send print jobs to infra test printer and see if they show up on the proxy test printer...
@@ -4347,7 +4412,7 @@ test_infra(pappl_system_t *system)	// I - System
   {
     int	interval = 1;			// Interval between status queries...
 
-    testBegin("infra: Print-Job (%s)", test_files[i]);
+    _papplTestBegin("infra: Print-Job (%s)", test_files[i]);
     output_count ++;
 
     request = ippNewRequest(IPP_OP_PRINT_JOB);
@@ -4368,14 +4433,14 @@ test_infra(pappl_system_t *system)	// I - System
 
     if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
-      testEndMessage(false, "%s", cupsGetErrorString());
+      _papplTestEndMessage(false, "%s", cupsGetErrorString());
       ret = false;
       continue;
     }
 
-    testEndMessage(true, "job-id=%d, job-state=%s", job_id, ippEnumString("job-state", (int)job_state));
+    _papplTestEndMessage(true, "job-id=%d, job-state=%s", job_id, ippEnumString("job-state", (int)job_state));
 
-    testBegin("infra: Get-Job-Attributes (%s)", test_files[i]);
+    _papplTestBegin("infra: Get-Job-Attributes (%s)", test_files[i]);
     do
     {
       request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
@@ -4389,7 +4454,7 @@ test_infra(pappl_system_t *system)	// I - System
 
       if (cupsGetError() == IPP_STATUS_OK && job_state < IPP_JSTATE_CANCELED)
       {
-        testProgress();
+        _papplTestProgress();
 	sleep(_PAPPL_FIB_VALUE(interval));
 	interval = _PAPPL_FIB_NEXT(interval);
       }
@@ -4398,46 +4463,46 @@ test_infra(pappl_system_t *system)	// I - System
 
     if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
-      testEndMessage(false, "%s", cupsGetErrorString());
+      _papplTestEndMessage(false, "%s", cupsGetErrorString());
       ret = false;
       continue;
     }
 
-    testEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
+    _papplTestEndMessage(job_state == IPP_JSTATE_COMPLETED, "job-state=%s", ippEnumString("job-state", (int)job_state));
     if (job_state != IPP_JSTATE_COMPLETED)
       ret = false;
   }
 
-  testBegin("infra: papplPrinterGetNumberOfJobs(itest)");
+  _papplTestBegin("infra: papplPrinterGetNumberOfJobs(itest)");
   if ((num_ijobs = papplPrinterGetNumberOfJobs(itest)) > 0)
   {
-    testEndMessage(true, "%u jobs", (unsigned)num_ijobs);
+    _papplTestEndMessage(true, "%u jobs", (unsigned)num_ijobs);
   }
   else
   {
-    testEndMessage(false, "No jobs");
+    _papplTestEndMessage(false, "No jobs");
     ret = false;
   }
 
-  testBegin("infra: papplPrinterGetNumberOfJobs(ptest)");
+  _papplTestBegin("infra: papplPrinterGetNumberOfJobs(ptest)");
   if ((num_pjobs = papplPrinterGetNumberOfJobs(ptest)) > 0)
   {
     if (num_pjobs == num_ijobs)
     {
-      testEndMessage(true, "%u jobs", (unsigned)num_ijobs);
+      _papplTestEndMessage(true, "%u jobs", (unsigned)num_ijobs);
     }
     else
     {
-      testEndMessage(false, "No jobs, expected %u jobs", (unsigned)num_ijobs);
+      _papplTestEndMessage(false, "No jobs, expected %u jobs", (unsigned)num_ijobs);
       ret = false;
     }
   }
   else
   {
     if (num_ijobs > 0)
-      testEndMessage(false, "No jobs, expected %u jobs", (unsigned)num_ijobs);
+      _papplTestEndMessage(false, "No jobs, expected %u jobs", (unsigned)num_ijobs);
     else
-      testEndMessage(false, "No jobs");
+      _papplTestEndMessage(false, "No jobs");
 
     ret = false;
   }
@@ -4517,17 +4582,17 @@ test_print_files(
 
 
   // Connect to system...
-  testBegin("%s: Connect to server", prompt);
+  _papplTestBegin("%s: Connect to server", prompt);
   if ((http = connect_to_printer(system, true, uri, sizeof(uri))) == NULL)
   {
-    testEndMessage(false, "Unable to connect: %s", cupsGetErrorString());
+    _papplTestEndMessage(false, "Unable to connect: %s", cupsGetErrorString());
     return (false);
   }
 
-  testEnd(true);
+  _papplTestEnd(true);
 
   // Check for file format support...
-  testBegin("%s: Check for %s support", prompt, format);
+  _papplTestBegin("%s: Check for %s support", prompt, format);
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
@@ -4539,11 +4604,11 @@ test_print_files(
   {
     if (ippContainsString(format_supported, format))
     {
-      testEndMessage(true, "%s is supported", format);
+      _papplTestEndMessage(true, "%s is supported", format);
     }
     else
     {
-      testEndMessage(true, "%s is not supported", format);
+      _papplTestEndMessage(true, "%s is not supported", format);
       ippDelete(response);
       httpClose(http);
       return (true);
@@ -4551,7 +4616,7 @@ test_print_files(
   }
   else
   {
-    testEndMessage(false, "No document-format-supported attribute");
+    _papplTestEndMessage(false, "No document-format-supported attribute");
     ippDelete(response);
     httpClose(http);
     return (false);
@@ -4577,7 +4642,7 @@ test_print_files(
 
 	  // Print the job...
 	  snprintf(job_name, sizeof(job_name), "%s+%s+%s+%s", files[i], ippEnumString("orientation-requested", orients[j]), modes[k], scalings[m]);
-	  testBegin("%s: Print-Job(%s)", prompt, job_name);
+	  _papplTestBegin("%s: Print-Job(%s)", prompt, job_name);
 
 	  request = ippNewRequest(IPP_OP_PRINT_JOB);
 	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
@@ -4593,7 +4658,7 @@ test_print_files(
 
 	  if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
 	  {
-	    testEndMessage(false, "%s", cupsGetErrorString());
+	    _papplTestEndMessage(false, "%s", cupsGetErrorString());
 	    ippDelete(response);
 	    httpClose(http);
 	    return (false);
@@ -4601,7 +4666,7 @@ test_print_files(
 
 	  job_id = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
 
-          testEndMessage(true, "job-id=%d", job_id);
+          _papplTestEndMessage(true, "job-id=%d", job_id);
 	  ippDelete(response);
 	  output_count ++;
 
@@ -4609,11 +4674,11 @@ test_print_files(
 	  interval = 1;
 	  do
 	  {
-	    testProgress();
+	    _papplTestProgress();
 	    sleep(_PAPPL_FIB_VALUE(interval));
 	    interval = _PAPPL_FIB_NEXT(interval);
 
-	    testBegin("%s: Get-Job-Attributes(job-id=%d)", prompt, job_id);
+	    _papplTestBegin("%s: Get-Job-Attributes(job-id=%d)", prompt, job_id);
 
 	    request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
 	    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
@@ -4624,7 +4689,7 @@ test_print_files(
 
 	    if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
 	    {
-	      testEndMessage(false, "%s", cupsGetErrorString());
+	      _papplTestEndMessage(false, "%s", cupsGetErrorString());
 	      httpClose(http);
 	      ippDelete(response);
 	      return (false);
@@ -4632,7 +4697,7 @@ test_print_files(
 
 	    job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
 
-            testEndMessage(job_state != (ipp_jstate_t)0, "job-state=%d", job_state);
+            _papplTestEndMessage(job_state != (ipp_jstate_t)0, "job-state=%d", job_state);
 	    ippDelete(response);
 	  }
 	  while (job_state < IPP_JSTATE_CANCELED);
@@ -4677,16 +4742,16 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
 
   // Connect to system...
-  testBegin("pwg-raster: Connect to server");
+  _papplTestBegin("pwg-raster: Connect to server");
   if ((http = connect_to_printer(system, false, uri, sizeof(uri))) == NULL)
   {
-    testEndMessage(false, "Unable to connect: %s", cupsGetErrorString());
+    _papplTestEndMessage(false, "Unable to connect: %s", cupsGetErrorString());
     return (false);
   }
-  testEnd(true);
+  _papplTestEnd(true);
 
   // Get printer capabilities
-  testBegin("pwg-raster: Get-Printer-Attributes");
+  _papplTestBegin("pwg-raster: Get-Printer-Attributes");
 
   request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
   ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, "ipp://localhost/ipp/print");
@@ -4696,23 +4761,23 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
   if (cupsGetError() != IPP_STATUS_OK)
   {
-    testEndMessage(false, "%s", cupsGetErrorString());
+    _papplTestEndMessage(false, "%s", cupsGetErrorString());
     goto done;
   }
 
   if ((mode_supported = ippFindAttribute(supported, "print-color-mode-supported", IPP_TAG_KEYWORD)) == NULL)
   {
-    testEndMessage(false, "missing required 'print-color-mode-supported' attribute in response");
+    _papplTestEndMessage(false, "missing required 'print-color-mode-supported' attribute in response");
     goto done;
   }
 
-  testEnd(true);
+  _papplTestEnd(true);
 
   // Loop through the supported print-color-mode values...
   for (i = 0; i < (int)(sizeof(modes) / sizeof(modes[0])); i ++)
   {
     // Make raster data for this mode...
-    testBegin("pwg-raster: Print-Job(%s)", modes[i]);
+    _papplTestBegin("pwg-raster: Print-Job(%s)", modes[i]);
 
     if (!ippContainsString(mode_supported, modes[i]))
       continue;				// Not supported, skip
@@ -4745,7 +4810,7 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
     if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
     {
-      testEndMessage(false, "Unable to print %s: %s", job_name, cupsGetErrorString());
+      _papplTestEndMessage(false, "Unable to print %s: %s", job_name, cupsGetErrorString());
       goto done;
     }
 
@@ -4753,18 +4818,18 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
     ippDelete(response);
 
-    testEndMessage(true, "job-id=%d", job_id);
+    _papplTestEndMessage(true, "job-id=%d", job_id);
     output_count ++;
 
     // Poll job status until completed...
     interval = 1;
     do
     {
-      testProgress();
+      _papplTestProgress();
       sleep(_PAPPL_FIB_VALUE(interval));
       interval = _PAPPL_FIB_NEXT(interval);
 
-      testBegin("pwg-raster: Get-Job-Attributes(job-id=%d)", job_id);
+      _papplTestBegin("pwg-raster: Get-Job-Attributes(job-id=%d)", job_id);
 
       request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
       ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, uri);
@@ -4775,13 +4840,13 @@ test_pwg_raster(pappl_system_t *system)	// I - System
 
       if (cupsGetError() >= IPP_STATUS_ERROR_BAD_REQUEST)
       {
-	testEndMessage(false, "Unable to get job state for '%s': %s", job_name, cupsGetErrorString());
+	_papplTestEndMessage(false, "Unable to get job state for '%s': %s", job_name, cupsGetErrorString());
         goto done;
       }
 
       job_state = (ipp_jstate_t)ippGetInteger(ippFindAttribute(response, "job-state", IPP_TAG_ENUM), 0);
 
-      testEndMessage(true, "job-state=%d", job_state);
+      _papplTestEndMessage(true, "job-state=%d", job_state);
       ippDelete(response);
     }
     while (job_state < IPP_JSTATE_CANCELED);

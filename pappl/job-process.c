@@ -1,7 +1,7 @@
 //
 // Job processing (printing) functions for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1210,11 +1210,15 @@ finish_job(pappl_job_t  *job)		// I - Job
 
   _papplPrinterUpdateProxyJobNoLock(printer, job);
 
+  cupsMutexLock(&job->proxy_mutex);
+
   httpClose(job->proxy_http);
   job->proxy_http = NULL;
 
   free(job->proxy_resource);
   job->proxy_resource = NULL;
+
+  cupsMutexUnlock(&job->proxy_mutex);
 
   _papplJobSetRetainNoLock(job);
 
@@ -1317,6 +1321,8 @@ start_job(pappl_job_t *job)		// I - Job
 
   if (printer->proxy_infra_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
   {
+    cupsMutexLock(&job->proxy_mutex);
+
     // Connect to the proxy to report status updates...
     char	resource[1024];		// Resource path
 
@@ -1333,6 +1339,8 @@ start_job(pappl_job_t *job)		// I - Job
 
     if (job->proxy_http && job->proxy_resource)
       _papplPrinterUpdateProxyJobNoLock(printer, job);
+
+    cupsMutexUnlock(&job->proxy_mutex);
   }
 
   _papplSystemAddEventNoLock(printer->system, printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);

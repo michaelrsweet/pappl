@@ -1,7 +1,7 @@
 //
 // Job object for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -102,6 +102,7 @@ _papplJobCreate(
   }
 
   cupsRWInit(&job->rwlock);
+  cupsMutexInit(&job->proxy_mutex);
 
   job->attrs   = ippNew();
   job->fd      = -1;
@@ -977,13 +978,13 @@ _papplJobSubmitFile(
       }
       else if (job->printer->proxy_infra_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
       {
+	cupsMutexLock(&job->proxy_mutex);
+
         if (!job->proxy_http)
         {
 	  char	resource[1024];		// Resource path
 
-	  _papplRWLockRead(job->printer);
           job->proxy_http = _papplPrinterConnectProxyNoLock(job->printer, resource, sizeof(resource));
-	  _papplRWUnlock(job->printer);
 
 	  free(job->proxy_resource);
 	  if (job->proxy_http)
@@ -994,6 +995,8 @@ _papplJobSubmitFile(
 
 	if (job->proxy_http && job->proxy_resource)
           _papplPrinterUpdateProxyJobNoLock(job->printer, job);
+
+	cupsMutexUnlock(&job->proxy_mutex);
       }
 
       _papplSystemAddEventNoLock(job->system, job->printer, job, event, NULL);

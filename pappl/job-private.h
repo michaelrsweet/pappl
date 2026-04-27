@@ -1,7 +1,7 @@
 //
 // Private job header file for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -78,6 +78,7 @@ struct _pappl_job_s			// Job data
   int			fd;			// Print file descriptor
   bool			streaming;		// Streaming job?
   void			*data;			// Per-job driver data
+  cups_mutex_t		proxy_mutex;		// Mutex for proxy connectio9
   http_t		*proxy_http;		// Connection to Infrastructure Printer for status updates
   char			*proxy_resource;	// Resource path for connection
 };

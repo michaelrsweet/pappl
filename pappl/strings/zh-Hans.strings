@@ -38,7 +38,7 @@
 "media-type.other" = "其它";
 "media-type.paper" = "纸张";
 "media-type.plastic" = "塑料";
-"media-type.transfer" = "传输";
+"media-type.transfer" = "转印";
 "media.iso_a10_26x37mm" = "A10";
 "media.iso_a8_52x74mm" = "A8";
 "media.iso_a9_37x52mm" = "A9";
@@ -54,10 +54,10 @@
 "Password" = "密码";
 "Security" = "安全";
 "media-source.left" = "左侧";
-"media-source.main" = "主菜单";
+"media-source.main" = "主要";
 "media-tracking.mark" = "标记";
 "media-type.cd" = "CD";
-"media-type.envelope" = "封套";
+"media-type.envelope" = "信封";
 "media-type.roll" = "翻滚";
 "media-type.screen" = "屏幕";
 "media.iso_b1_707x1000mm" = "B1";

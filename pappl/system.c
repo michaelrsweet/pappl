@@ -130,8 +130,12 @@ _papplSystemConfigChanged(
 // The "spooldir" argument specifies the location of job files.  If `NULL`, a
 // temporary directory is created.
 //
-// The "logfile" argument specifies where to send log messages.  If `NULL`, the
-// log messages are written to a temporary file.
+// The "logfile" argument specifies where to send log messages.  Three special
+// values are recognized:
+//
+// - `NULL`: log messages are written to a temporary file.
+// - "-": log messages are written to the standard error file.
+// - "syslog": log messages are sent to the system logging daemon.
 //
 // The "loglevel" argument specifies the initial logging level.
 //

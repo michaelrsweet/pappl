@@ -1,7 +1,7 @@
 //
 // System object for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -129,8 +129,12 @@ _papplSystemConfigChanged(
 // The "spooldir" argument specifies the location of job files.  If `NULL`, a
 // temporary directory is created.
 //
-// The "logfile" argument specifies where to send log messages.  If `NULL`, the
-// log messages are written to a temporary file.
+// The "logfile" argument specifies where to send log messages.  Three special
+// values are recognized:
+//
+// - `NULL`: log messages are written to a temporary file.
+// - "-": log messages are written to the standard error file.
+// - "syslog": log messages are sent to the system logging daemon.
 //
 // The "loglevel" argument specifies the initial logging level.
 //

@@ -5,6 +5,7 @@ Changes in PAPPL
 v1.4.11 - YYYY-MM-DD
 --------------------
 
+- Updated the programmer's manual (Issue #418)
 - Fixed builds on FreeBSD and other systems without a sys/statfs.h header
   (Issue #411)
 - Fixed a truncation bug when decoding SNMP string values.
@@ -112,7 +113,7 @@ v1.4.3 - 2023-11-15
 - Fixed default "copies" value with `papplJobCreateWithFile`.
 
 
-v1.4.2 - 2024-10-16
+v1.4.2 - 2023-10-16
 -------------------
 
 - Fixed potential crash while listing devices (Issue #296)
@@ -120,14 +121,14 @@ v1.4.2 - 2024-10-16
 - Fixed loading of previous state (Issue #298)
 
 
-v1.4.1 - 2024-10-10
+v1.4.1 - 2023-10-10
 -------------------
 
 - Fixed typos in the names of the `papplJobResume` and `papplJobSuspend`
   functions (Issue #295)
 
 
-v1.4.0 - 2024-09-28
+v1.4.0 - 2023-09-28
 -------------------
 
 - Added support for "job-retain-until" (Issue #14)

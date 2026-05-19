@@ -23,11 +23,50 @@ Apple Raster, and "raw" files to printers connected via USB and network
 (AppSocket/JetDirect/IPP) connections.  Other formats can be supported through
 "filter" callbacks you register.
 
-PAPPL is Copyright © 2019-2024 by Michael R Sweet and is licensed under the
+PAPPL is Copyright © 2019-2026 by Michael R Sweet and is licensed under the
 Apache License Version 2.0 with an (optional) exception to allow linking against
 GPL2/LGPL2 software (like older versions of CUPS), so it can be used *freely* in
 any project you'd like.  See the files "LICENSE" and "NOTICE" in the source
 distribution for more information.
+
+
+Standards and Certifications
+----------------------------
+
+PAPPL implements the following IPP standards:
+
+- [RFC 3380](https://www.rfc-editor.org/rfc/rfc3380): IPP: Job and Printer Set Operations
+- [RFC 3510](https://www.rfc-editor.org/rfc/rfc3510): IPP: IPP URL Scheme
+- [RFC 3995](https://www.rfc-editor.org/rfc/rfc3995): IPP Event Notifications and Subscriptions
+- [RFC 3996](https://www.rfc-editor.org/rfc/rfc3996): The 'ippget' Delivery Method for Event Notifications
+- [RFC 3998](https://www.rfc-editor.org/rfc/rfc3998): IPP Job and Printer Administrative Operations
+- [RFC 7472](https://www.rfc-editor.org/rfc/rfc7472): IPP over HTTPS Transport Binding and 'ipps' URI Scheme
+- [RFC 8010/STD 92](https://www.rfc-editor.org/rfc/rfc8010): IPP/1.1 Encoding and Transport
+- [RFC 8011/STD 92](https://www.rfc-editor.org/rfc/rfc8011): IPP/1.1 Model and Semantics
+- [PWG 5100.1](https://ftp.pwg.org/pub/pwg/candidates/cs-ippfinishings30-20220527-5100.1.pdf): IPP Finishings 3.0 (FIN)
+- [PWG 5100.2](https://ftp.pwg.org/pub/pwg/candidates/cs-ippoutputbin10-20010207-5100.2.pdf): "output-bin" attribute extension
+- [PWG 5100.5](https://ftp.pwg.org/pub/pwg/candidates/cs-ippdocobject12-20240517-5100.5.pdf): IPP Document Object v1.2
+- [PWG 5100.6](https://ftp.pwg.org/pub/pwg/candidates/cs-ipppageoverride10-20031031-5100.6.pdf): IPP Page Overrides
+- [PWG 5100.7](https://ftp.pwg.org/pub/pwg/candidates/cs-ippjobext21-20230210-5100.7.pdf): IPP Job Extensions v2.1 (JOBEXT)
+- [PWG 5100.9](https://ftp.pwg.org/pub/pwg/candidates/cs-ippstate10-20090731-5100.9.pdf): IPP Printer State Extensions
+- [PWG 5100.11](https://ftp.pwg.org/pub/pwg/candidates/cs-ippepx20-20240315-5100.11.pdf): IPP Enterprise Printing Extensions v2.0 (EPX)
+- [PWG 5100.12](https://ftp.pwg.org/pub/pwg/standards/std-ippbase23-20241108-5100.12.pdf): Internet Printing Protocol/2.x Fourth Edition
+- [PWG 5100.13](https://ftp.pwg.org/pub/pwg/candidates/cs-ippnodriver20-20230301-5100.13.pdf): IPP Driver Replacement Extensions v2.0 (NODRIVER)
+- [PWG 5100.14](https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf): IPP Everywhere™ v1.1
+- [PWG 5100.18](https://ftp.pwg.org/pub/pwg/candidates/cs-ippinfra11-20250502-5100.18.pdf): IPP Shared Infrastructure Extensions v1.1 (INFRA)
+- [PWG 5100.22](https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem11-20250328-5100.22.pdf): IPP System Service v1.1 (SYSTEM) *(Partial Implementation)*
+- [PWG 5100.23](https://ftp.pwg.org/pub/pwg/candidates/cs-ippoauth10-20251017-5100.23.pdf): IPP OAuth Extensions v1.0 (OAUTH)
+- [PWG 5101.1](https://ftp.pwg.org/pub/pwg/candidates/cs-pwgmsn21-20230915-5101.1.pdf): PWG Media Standardized Names v2.1 (MSN)
+- [PWG 5102.4](https://ftp.pwg.org/pub/pwg/candidates/cs-ippraster10-20120420-5102.4.pdf): PWG Raster Format
+- [PWG 5107.3](https://ftp.pwg.org/pub/pwg/candidates/cs-pwgmfdalerts11-20190412-5107.3.pdf): PWG MFD Alerts v1.1 (MFD Alerts)
+- [IPP Label Printing Extensions v1.0](https://ftp.pwg.org/pub/pwg/ipp/registrations/reg-ipplabel10-20200213.pdf)
+- [IPP Wi-Fi Configuration Extensions v1.0](https://ftp.pwg.org/pub/pwg/ipp/registrations/reg-ippwifi10-20240912.pdf)
+
+While the author cannot guarantee or warranty successful certification, a
+PAPPL-based printer application with a properly implemented printer driver and
+the necessary operating system support (mDNS/DNS-SD, IPv4/IPv4LL/IPv6, TCP/IP,
+TLS, etc.) and spool disk space can pass the AirPrint™, IPP Everywhere™, and
+Mopria® certifications.
 
 
 Requirements

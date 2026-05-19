@@ -6,7 +6,7 @@
 <meta name="generator" content="codedoc v3.8">
 <meta name="author" content="Michael R Sweet">
 <meta name="language" content="en-US">
-<meta name="copyright" content="Copyright © 2020-2025 by Michael R Sweet">
+<meta name="copyright" content="Copyright © 2020-2026 by Michael R Sweet">
 <meta name="version" content="2.0b1">
 <style type="text/css"><!--
 body {
@@ -271,12 +271,13 @@ span.string {
 <p><img class="title" src="pappl-512.png"></p>
 <h1 class="title">PAPPL v2.0 Programmers Manual</h1>
 <p>Michael R Sweet</p>
-<p>Copyright © 2020-2025 by Michael R Sweet</p>
+<p>Copyright © 2020-2026 by Michael R Sweet</p>
 </div>
 <div class="contents">
 <h2 class="title">Contents</h2>
 <ul class="contents">
 <li><a href="#introduction">Introduction</a><ul class="subcontents">
+<li><a href="#standards-and-certifications">Standards and Certifications</a></li>
 <li><a href="#requirements">Requirements</a></li>
 <li><a href="#getting-prerequisites">Getting Prerequisites</a></li>
 <li><a href="#building-pappl">Building PAPPL</a></li>
@@ -751,7 +752,64 @@ span.string {
 <p>PAPPL is a simple C-based framework/library for developing CUPS Printer Applications, which are the recommended replacement for printer drivers. It is sufficiently general purpose to support any kind of printer or driver that can be used on desktops, servers, and in embedded environments.</p>
 <p>PAPPL embeds a multi-threaded HTTP / <a href="https://www.pwg.org/ipp/everywhere.html">IPP Everywhere™</a> server and provides callbacks for a variety of events that allows a GUI or command-line application to interact with both the local user that is running the Printer Application and any network clients that are submitting print jobs, querying printer status and capabilities, and so forth.</p>
 <p>PAPPL provides a simple driver interface for raster graphics printing, and developers of CUPS Raster drivers will readily adapt to it. PAPPL can also be used with printers that support vector graphics printing although you'll have to develop more code to support them. Drivers provide configuration and capability information to PAPPL, and PAPPL then calls the driver to print things as needed. PAPPL automatically supports printing of JPEG, PNG, PWG Raster, Apple Raster, and &quot;raw&quot; files to printers connected via USB and network (AppSocket/JetDirect/IPP) connections. Other formats can be supported through &quot;filter&quot; callbacks you register.</p>
-<p>PAPPL is Copyright © 2019-2024 by Michael R Sweet and is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used <em>freely</em> in any project you'd like. See the files &quot;LICENSE&quot; and &quot;NOTICE&quot; in the source distribution for more information.</p>
+<p>PAPPL is Copyright © 2019-2026 by Michael R Sweet and is licensed under the Apache License Version 2.0 with an (optional) exception to allow linking against GPL2/LGPL2 software (like older versions of CUPS), so it can be used <em>freely</em> in any project you'd like. See the files &quot;LICENSE&quot; and &quot;NOTICE&quot; in the source distribution for more information.</p>
+<h3 class="title" id="standards-and-certifications">Standards and Certifications</h3>
+<p>PAPPL implements the following IPP standards:</p>
+<ul>
+<li><p><a href="https://www.rfc-editor.org/rfc/rfc3380">RFC 3380</a>: IPP: Job and Printer Set Operations</p>
+</li>
+<li><p><a href="https://www.rfc-editor.org/rfc/rfc3510">RFC 3510</a>: IPP: IPP URL Scheme</p>
+</li>
+<li><p><a href="https://www.rfc-editor.org/rfc/rfc3995">RFC 3995</a>: IPP Event Notifications and Subscriptions</p>
+</li>
+<li><p><a href="https://www.rfc-editor.org/rfc/rfc3996">RFC 3996</a>: The 'ippget' Delivery Method for Event Notifications</p>
+</li>
+<li><p><a href="https://www.rfc-editor.org/rfc/rfc3998">RFC 3998</a>: IPP Job and Printer Administrative Operations</p>
+</li>
+<li><p><a href="https://www.rfc-editor.org/rfc/rfc7472">RFC 7472</a>: IPP over HTTPS Transport Binding and 'ipps' URI Scheme</p>
+</li>
+<li><p><a href="https://www.rfc-editor.org/rfc/rfc8010">RFC 8010/STD 92</a>: IPP/1.1 Encoding and Transport</p>
+</li>
+<li><p><a href="https://www.rfc-editor.org/rfc/rfc8011">RFC 8011/STD 92</a>: IPP/1.1 Model and Semantics</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippfinishings30-20220527-5100.1.pdf">PWG 5100.1</a>: IPP Finishings 3.0 (FIN)</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippoutputbin10-20010207-5100.2.pdf">PWG 5100.2</a>: &quot;output-bin&quot; attribute extension</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippdocobject12-20240517-5100.5.pdf">PWG 5100.5</a>: IPP Document Object v1.2</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ipppageoverride10-20031031-5100.6.pdf">PWG 5100.6</a>: IPP Page Overrides</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippjobext21-20230210-5100.7.pdf">PWG 5100.7</a>: IPP Job Extensions v2.1 (JOBEXT)</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippstate10-20090731-5100.9.pdf">PWG 5100.9</a>: IPP Printer State Extensions</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippepx20-20240315-5100.11.pdf">PWG 5100.11</a>: IPP Enterprise Printing Extensions v2.0 (EPX)</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/standards/std-ippbase23-20241108-5100.12.pdf">PWG 5100.12</a>: Internet Printing Protocol/2.x Fourth Edition</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippnodriver20-20230301-5100.13.pdf">PWG 5100.13</a>: IPP Driver Replacement Extensions v2.0 (NODRIVER)</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippeve11-20200515-5100.14.pdf">PWG 5100.14</a>: IPP Everywhere™ v1.1</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippinfra11-20250502-5100.18.pdf">PWG 5100.18</a>: IPP Shared Infrastructure Extensions v1.1 (INFRA)</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippsystem11-20250328-5100.22.pdf">PWG 5100.22</a>: IPP System Service v1.1 (SYSTEM) <em>(Partial Implementation)</em></p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippoauth10-20251017-5100.23.pdf">PWG 5100.23</a>: IPP OAuth Extensions v1.0 (OAUTH)</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-pwgmsn21-20230915-5101.1.pdf">PWG 5101.1</a>: PWG Media Standardized Names v2.1 (MSN)</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-ippraster10-20120420-5102.4.pdf">PWG 5102.4</a>: PWG Raster Format</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/candidates/cs-pwgmfdalerts11-20190412-5107.3.pdf">PWG 5107.3</a>: PWG MFD Alerts v1.1 (MFD Alerts)</p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/ipp/registrations/reg-ipplabel10-20200213.pdf">IPP Label Printing Extensions v1.0</a></p>
+</li>
+<li><p><a href="https://ftp.pwg.org/pub/pwg/ipp/registrations/reg-ippwifi10-20240912.pdf">IPP Wi-Fi Configuration Extensions v1.0</a></p>
+</li>
+</ul>
+<p>While the author cannot guarantee or warranty successful certification, a PAPPL-based printer application with a properly implemented printer driver and the necessary operating system support (mDNS/DNS-SD, IPv4/IPv4LL/IPv6, TCP/IP, TLS, etc.) and spool disk space can pass the AirPrint™, IPP Everywhere™, and Mopria® certifications.</p>
 <h3 class="title" id="requirements">Requirements</h3>
 <p>PAPPL requires Microsoft® Windows® 10 or higher or a POSIX-compliant host operating system such as Linux®, macOS®, or QNX®. On Windows, the provided project files require Visual Studio 2019 or higher. For POSIX hosts, a POSIX &quot;make&quot; utility that supports the <code>include</code> directive (like GNU make), a C99-compatible C compiler such as GCC or Clang, and the &quot;pkg-config&quot; utility are required along with the following support libraries:</p>
 <ul>
@@ -5920,10 +5978,17 @@ sub-types such as &quot;_print&quot; and &quot;_universal&quot;.<br>
 The &quot;spooldir&quot; argument specifies the location of job files.  If <code>NULL</code>, a
 temporary directory is created.<br>
 <br>
-The &quot;logfile&quot; argument specifies where to send log messages.  If <code>NULL</code>, the
-log messages are written to a temporary file.<br>
-<br>
-The &quot;loglevel&quot; argument specifies the initial logging level.<br>
+The &quot;logfile&quot; argument specifies where to send log messages.  Three special
+values are recognized:
+
+</p><ul>
+<li><code>NULL</code>: log messages are written to a temporary file.
+</li>
+<li>&quot;-&quot;: log messages are written to the standard error file.
+</li>
+<li>&quot;syslog&quot;: log messages are sent to the system logging daemon.</li>
+</ul>
+<p class="discussion">The &quot;loglevel&quot; argument specifies the initial logging level.<br>
 <br>
 The &quot;auth_service&quot; argument specifies a PAM authentication service name.  If
 <code>NULL</code>, no user authentication will be provided.<br>

@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2025-03-20" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2026-05-18" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -520,8 +520,15 @@ sub-types such as "_print" and "_universal".
 The "spooldir" argument specifies the location of job files.  If \fBNULL\fR, a
 temporary directory is created.
 .PP
-The "logfile" argument specifies where to send log messages.  If \fBNULL\fR, the
-log messages are written to a temporary file.
+The "logfile" argument specifies where to send log messages.  Three special
+values are recognized:
+.PP
+.IP \(bu 5
+\fBNULL\fR: log messages are written to a temporary file.
+.IP \(bu 5
+"-": log messages are written to the standard error file.
+.IP \(bu 5
+"syslog": log messages are sent to the system logging daemon.
 .PP
 The "loglevel" argument specifies the initial logging level.
 .PP

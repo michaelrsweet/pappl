@@ -9,6 +9,7 @@ v1.4.11 - YYYY-MM-DD
 - Fixed builds on FreeBSD and other systems without a sys/statfs.h header
   (Issue #411)
 - Fixed a truncation bug when decoding SNMP string values.
+- Fixed support for multiple finishings options.
 
 
 v1.4.10 - 2025-12-26

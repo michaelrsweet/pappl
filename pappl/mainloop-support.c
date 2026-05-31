@@ -1,7 +1,7 @@
 //
 // papplMainloop support functions for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -70,7 +70,7 @@ _papplMainloopAddOptions(
 
     if ((value = cupsGetOption("media-ready", num_options, options)) != NULL)
     {
-      size_t num_values;		// Number of values
+      size_t	num_values;		// Number of values
       char	*values[PAPPL_MAX_SOURCE],
 					// Pointers to size strings
 		*cvalue,		// Copied value
@@ -161,6 +161,9 @@ _papplMainloopAddOptions(
         if (kptr < (keyword + sizeof(keyword) - 1))
           *kptr = *value;
       }
+
+      if (*value)
+        value ++;
 
       *kptr = '\0';
       if (isdigit(keyword[0] & 255))

@@ -14,6 +14,7 @@ Contents
 - [Build System](#build-system)
 - [Version Numbering](#version-numbering)
 - [Coding Guidelines](#coding-guidelines)
+  - [Using Coding AI Tools](#using-ai-coding-tools)
   - [Source Files](#source-files)
   - [Header Files](#header-files)
   - [Comments](#comments)
@@ -112,6 +113,21 @@ same guidelines as allowed by the language.
 PAPPL requires at least C99 support for all C code.  Aside from adding the
 `bool` type and `//` comments, C99 also clarifies the `NULL` behavior of certain
 standard functions such as `free` and `realloc`.
+
+
+### Using AI Coding Tools
+
+The use of AI coding tools must be disclosed when you submit an issue or pull
+request.  In the interest of standardization, please include the Linux Kernel
+["Assisted-by"](https://docs.kernel.org/process/coding-assistants.html) tag in
+the description:
+
+    Assisted-by: AGENT_NAME:MODEL_VERSION [TOOL1] [TOOL2]
+
+> *Note:* Purely AI-generated code cannot be accepted for legal and ethical
+> reasons.  AI code contributions must be manually reviewed and submitted by
+> a person with the legal capacity to provide such code under the terms of the
+> PAPPL license.
 
 
 ### Source Files

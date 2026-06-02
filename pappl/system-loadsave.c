@@ -1,7 +1,7 @@
 //
 // System load/save functions for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -257,6 +257,35 @@ papplSystemLoadState(
             {
               case IPP_TAG_BOOLEAN :
                   ippAddBoolean(printer->driver_attrs, IPP_TAG_PRINTER, defname, !strcmp(value, "true"));
+                  break;
+
+              case IPP_TAG_ENUM :
+                  if (!strcmp(line, "finishings"))
+                  {
+                    char	*end;		// End of value
+                    cups_len_t	num_values = 0;	// Number of values
+                    int		values[32];	// "finishings-default" values
+
+                    while (num_values < 32 && value && *value)
+                    {
+                      values[num_values ++] = (int)strtol(value, &end, 10);
+
+                      if (errno == ERANGE)
+                      {
+                        num_values --;
+                        break;
+		      }
+                      else if (!end || !*end || *end != ',')
+                      {
+                        break;
+		      }
+
+		      value = end + 1;
+		    }
+
+                    if (num_values > 0)
+                      ippAddIntegers(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, defname, num_values, values);
+		  }
                   break;
 
               case IPP_TAG_INTEGER :

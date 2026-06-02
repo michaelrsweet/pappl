@@ -1,7 +1,7 @@
 //
 // Printer IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1939,6 +1939,69 @@ valid_job_attributes(
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+  }
+
+  if ((attr = ippFindAttribute(client->request, "finishings", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetValueTag(attr) != IPP_TAG_ENUM)
+    {
+      papplClientRespondIPPUnsupported(client, attr);
+      valid = false;
+    }
+    else
+    {
+      for (i = 0, count = ippGetCount(attr); i < count; i ++)
+      {
+        int			intvalue = ippGetInteger(attr, i);
+					// finishings value
+        pappl_finishings_t	f;	// finishings bit value
+
+        if (intvalue == IPP_FINISHINGS_NONE)
+          continue;
+
+        f = _papplFinishingsValue(ippEnumString("finishings", intvalue));
+        if (!(client->printer->driver_data.finishings & f))
+        {
+	  papplClientRespondIPPUnsupported(client, attr);
+	  valid = false;
+          break;
+        }
+      }
+    }
+
+    if ((attr = ippFindAttribute(client->request, "finishings-col", IPP_TAG_ZERO)) != NULL)
+    {
+      papplClientRespondIPPUnsupported(client, attr);
+      valid = false;
+    }
+  }
+  else if ((attr = ippFindAttribute(client->request, "finishings-col", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetValueTag(attr) != IPP_TAG_BEGIN_COLLECTION)
+    {
+      papplClientRespondIPPUnsupported(client, attr);
+      valid = false;
+    }
+    else
+    {
+      for (i = 0, count = ippGetCount(attr); i < count; i ++)
+      {
+        const char		*template = ippGetString(ippFindAttribute(ippGetCollection(attr, i), "finishing-template", IPP_TAG_ZERO), 0, NULL);
+					// finishing-template value
+        pappl_finishings_t	f;	// finishings bit value
+
+        if (template && !strcmp(template, "none"))
+          continue;
+
+        f = _papplFinishingsValue(template);
+        if (!(client->printer->driver_data.finishings & f))
+        {
+	  papplClientRespondIPPUnsupported(client, attr);
+	  valid = false;
+          break;
+        }
+      }
     }
   }
 

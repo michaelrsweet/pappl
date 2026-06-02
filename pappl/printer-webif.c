@@ -1,7 +1,7 @@
 //
 // Printer web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -343,6 +343,29 @@ _papplPrinterWebDefaults(
 	}
       }
 
+      if (data.finishings)
+      {
+        char		name[256],	// Form variable name
+			finishings[256],// Finishings value(s)
+			*finptr;	// Pointer into values string
+        pappl_finishings_t f;		// Current finishings value
+
+	for (f = PAPPL_FINISHINGS_PUNCH, finptr = finishings; f <= PAPPL_FINISHINGS_TRIM; f *= 2)
+	{
+	  snprintf(name, sizeof(name), "finishings.%s", _papplFinishingsString(f));
+	  if (cupsGetOption(name, (cups_len_t)num_form, form))
+	  {
+	    snprintf(finptr, sizeof(finishings) - (size_t)(finptr - finishings), "%s%d", finptr > finishings ? "," : "", (int)_papplFinishingsEnum(f));
+	    finptr += strlen(finptr);
+	  }
+	}
+
+	if (finptr > finishings)
+	  num_vendor = (int)cupsAddOption("finishings", finishings, (cups_len_t)num_vendor, &vendor);
+	else
+	  num_vendor = (int)cupsAddOption("finishings", "3", (cups_len_t)num_vendor, &vendor);
+      }
+
       for (i = 0; i < data.num_vendor; i ++)
       {
         char	supattr[128];		// xxx-supported
@@ -588,6 +611,29 @@ _papplPrinterWebDefaults(
         case IPP_TAG_BOOLEAN :
             papplClientHTMLPrintf(client, "<input type=\"checkbox\" name=\"%s\"%s>", data.vendor[i], !strcmp(defvalue, "true") ? " checked" : "");
             break;
+
+	case IPP_TAG_ENUM :
+	    if (!strcmp(data.vendor[i], "finishings"))
+	    {
+	      char		name[256],	// Form variable name
+				text[256];	// Form label
+	      pappl_finishings_t f;		// Current finishings
+
+	      for (f = PAPPL_FINISHINGS_PUNCH; f <= PAPPL_FINISHINGS_TRIM; f *= 2)
+	      {
+		if (data.finishings & f)
+		{
+		  snprintf(name, sizeof(name), "finishings.%s", _papplFinishingsString(f));
+		  snprintf(text, sizeof(text), "finishings.%d", (int)_papplFinishingsEnum(f));
+		  papplClientHTMLPrintf(client, "<input type=\"checkbox\" name=\"%s\"%s>%s<br>", name, ippContainsInteger(defattr, (int)_papplFinishingsEnum(f)) ? " checked" : "", papplClientGetLocString(client, text));
+		}
+	      }
+	    }
+	    else
+	    {
+	      papplClientHTMLPuts(client, "Unsupported value syntax.");
+	    }
+	    break;
 
         case IPP_TAG_INTEGER :
             papplClientHTMLPrintf(client, "<select name=\"%s\">", data.vendor[i]);

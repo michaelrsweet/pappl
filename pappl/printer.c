@@ -335,7 +335,7 @@ papplPrinterCreate(
 #ifdef HAVE_STATFS
   if (statfs(system->directory, &spoolinfo))
     k_supported = INT_MAX;
-  else if ((spoolsize = (double)spoolinfo.f_bsize * spoolinfo.f_blocks / 1024) > INT_MAX)
+  else if ((spoolsize = (double)spoolinfo.f_bsize * (double)spoolinfo.f_blocks / 1024.0) > INT_MAX)
     k_supported = INT_MAX;
   else
     k_supported = (int)spoolsize;

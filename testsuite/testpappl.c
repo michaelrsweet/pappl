@@ -1,7 +1,7 @@
 //
 // Main test suite file for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1456,9 +1456,9 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     ret = (void *)1;
 
   if (ret)
-    printf("\nFAILED: %d of %d output file(s), %.1fMB\n", files, output_count, total / 1048576.0);
+    printf("\nFAILED: %d of %d output file(s), %.1fMB\n", files, output_count, (double)total / 1048576.0);
   else
-    printf("\nPASSED: %d of %d output file(s), %.1fMB\n", files, output_count, total / 1048576.0);
+    printf("\nPASSED: %d of %d output file(s), %.1fMB\n", files, output_count, (double)total / 1048576.0);
 
   all_tests_done = true;
 
@@ -3738,7 +3738,7 @@ test_client_max(pappl_system_t *system,	// I - System
   secs = (double)(data.end.tv_sec - data.start.tv_sec) + 0.000001 * (data.end.tv_usec - data.start.tv_usec);
   i    = (size_t)cupsArrayGetCount(data.errors);
 
-  testEndMessage(i == 0, "%.3f seconds, %.0f requests/sec, %lu errors", secs, data.request_count / secs, (unsigned long)i);
+  testEndMessage(i == 0, "%.3f seconds, %.0f requests/sec, %lu errors", secs, (double)data.request_count / secs, (unsigned long)i);
   for (ptr = (const char *)cupsArrayGetFirst(data.errors); ptr; ptr = (const char *)cupsArrayGetNext(data.errors))
     fprintf(stderr, "%s: %s\n", name, ptr);
 

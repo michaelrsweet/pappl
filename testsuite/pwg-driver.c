@@ -250,9 +250,6 @@ pwg_callback(
   {
     papplCopyString(driver_data->make_and_model, "PWG 4-inch Label Printer", sizeof(driver_data->make_and_model));
 
-    // Cutter...
-    driver_data->finishings = PAPPL_FINISHINGS_TRIM;
-
     driver_data->kind       = PAPPL_KIND_LABEL | PAPPL_KIND_ROLL;
     driver_data->ppm        = 20;	// 20 labels per minute
     driver_data->left_right = 1;	// Not quite borderless left and right
@@ -321,6 +318,19 @@ pwg_callback(
     papplLog(system, PAPPL_LOGLEVEL_ERROR, "No dimension information in driver name '%s'.", driver_name);
     return (false);
   }
+
+  // Finishings...
+  driver_data->finishings = PAPPL_FINISHINGS_NONE;
+
+  if (strstr(driver_name, "-punch"))
+    driver_data->finishings |= PAPPL_FINISHINGS_PUNCH;
+  if (strstr(driver_name, "-staple"))
+    driver_data->finishings |= PAPPL_FINISHINGS_STAPLE;
+  if (strstr(driver_name, "-trim"))
+    driver_data->finishings |= PAPPL_FINISHINGS_TRIM;
+
+  if (driver_data->finishings)
+    driver_data->vendor[driver_data->num_vendor ++]  = "finishings";
 
   if (!strncmp(driver_name, "pwg_common-", 11))
   {
@@ -393,14 +403,25 @@ pwg_callback(
     driver_data->sides_supported = PAPPL_SIDES_ONE_SIDED;
     driver_data->sides_default   = PAPPL_SIDES_ONE_SIDED;
 
-    driver_data->num_vendor = 5;
-    driver_data->vendor[0]  = "vendor-boolean";
-    driver_data->vendor[1]  = "vendor-integer";
-    driver_data->vendor[2]  = "vendor-keyword";
-    driver_data->vendor[3]  = "vendor-range";
-    driver_data->vendor[4]  = "vendor-text";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-boolean";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-integer";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-keyword";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-range";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-text";
 
     *driver_attrs = ippNew();
+
+    if (driver_data->finishings)
+    {
+      // Add default finishings values - "trim" when supported, otherwise "none"...
+      ipp_t	*col = ippNew();	// finishings-col-default value
+
+      ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "finishing-template", /*lang*/NULL, (driver_data->finishings & PAPPL_FINISHINGS_TRIM) ? "trim" : "none");
+      ippAddCollection(*driver_attrs, IPP_TAG_ZERO, "finishings-col-default", col);
+      ippDelete(col);
+
+      ippAddInteger(*driver_attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-default", (driver_data->finishings & PAPPL_FINISHINGS_TRIM) ? IPP_FINISHINGS_TRIM : IPP_FINISHINGS_NONE);
+    }
 
     ippAddBoolean(*driver_attrs, IPP_TAG_PRINTER, "vendor-boolean-default", 1);
     ippAddBoolean(*driver_attrs, IPP_TAG_PRINTER, "vendor-boolean-supported", 1);

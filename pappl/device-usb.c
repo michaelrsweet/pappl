@@ -1,7 +1,7 @@
 //
 // USB device support code for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -141,7 +141,7 @@ get_serial_number(
   else if (langbuf[1] != LIBUSB_DT_STRING)
     goto fallback;			// Not a string
 
-  langid = langbuf[2] | (langbuf[3] << 8);
+  langid = (uint16_t)(langbuf[2] | (langbuf[3] << 8));
 
   // Then try to get the serial number string...
   if ((snlen = libusb_get_string_descriptor(device->handle, desc_index, langid, snbuf, sizeof(snbuf))) < 10)
@@ -155,7 +155,7 @@ get_serial_number(
   for (i = 2, bufptr = buffer, bufend = buffer + bufsize - 1; i < snlen && bufptr < bufend; i += 2)
   {
     // Get the current UCS-2 character...
-    snchar = snbuf[i] | (snbuf[i + 1] << 8);
+    snchar = (uint16_t)(snbuf[i] | (snbuf[i + 1] << 8));
 
     // Abort if not printable ASCII...
     if (snchar < 0x20 || snchar >= 0x7f)
@@ -398,7 +398,7 @@ pappl_usb_find(
 	    uint8_t	current;	// Current configuration
 
 	    // Opened the device, try to set the configuration...
-	    if (libusb_control_transfer(device->handle, LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_DEVICE, 8, /* GET_CONFIGURATION */ 0, 0, (unsigned char *)&current, 1, 5000) < 0)
+	    if (libusb_control_transfer(device->handle, (uint8_t)LIBUSB_REQUEST_TYPE_STANDARD | (uint8_t)LIBUSB_ENDPOINT_IN | (uint8_t)LIBUSB_RECIPIENT_DEVICE, 8, /* GET_CONFIGURATION */ 0, 0, (unsigned char *)&current, 1, 5000) < 0)
 	      current = 0;
 
 #ifdef __linux
@@ -449,7 +449,7 @@ pappl_usb_find(
             if (device->handle)
             {
               // Get the 1284 Device ID...
-              if ((err = libusb_control_transfer(device->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)device->conf, (uint16_t)((device->iface << 8) | device->altset), (unsigned char *)device_id_buf, sizeof(device_id_buf), 5000)) < 0)
+              if ((err = libusb_control_transfer(device->handle, (uint8_t)LIBUSB_REQUEST_TYPE_CLASS | (uint8_t)LIBUSB_ENDPOINT_IN | (uint8_t)LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)device->conf, (uint16_t)((device->iface << 8) | device->altset), (unsigned char *)device_id_buf, sizeof(device_id_buf), 5000)) < 0)
               {
 		_papplDeviceError(err_cb, err_data, "Unable to get IEEE-1284 device ID: %s", libusb_strerror((enum libusb_error)err));
                 device_id_buf[0] = '\0';
@@ -596,7 +596,7 @@ pappl_usb_getid(
   _PAPPL_DEBUG("pappl_usb_getid(device=%p, buffer=%p, bufsize=%ld) usb->conf=%d, ->iface=%d, ->altset=%d\n", device, buffer, (long)bufsize, usb->conf, usb->iface, usb->altset);
 
   // Get the 1284 Device ID...
-  if ((error = libusb_control_transfer(usb->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)usb->conf, (uint16_t)((usb->iface << 8) | usb->altset), (unsigned char *)buffer, (uint16_t)bufsize, 5000)) < 0)
+  if ((error = libusb_control_transfer(usb->handle, (uint8_t)LIBUSB_REQUEST_TYPE_CLASS | (uint8_t)LIBUSB_ENDPOINT_IN | (uint8_t)LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)usb->conf, (uint16_t)((usb->iface << 8) | usb->altset), (unsigned char *)buffer, (uint16_t)bufsize, 5000)) < 0)
   {
     papplDeviceError(device, "Unable to get IEEE-1284 device ID from USB port: %s", libusb_strerror((enum libusb_error)error));
     buffer[0] = '\0';
@@ -757,7 +757,7 @@ pappl_usb_status(pappl_device_t *device)// I - Device
   int			error;		// USB transfer error
 
 
-  if ((error = libusb_control_transfer(usb->handle, LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_ENDPOINT_IN | LIBUSB_RECIPIENT_INTERFACE, 1, 0, (uint16_t)(usb->iface << 8), &port_status, 1, 0)) < 0)
+  if ((error = libusb_control_transfer(usb->handle, (uint8_t)LIBUSB_REQUEST_TYPE_CLASS | (uint8_t)LIBUSB_ENDPOINT_IN | (uint8_t)LIBUSB_RECIPIENT_INTERFACE, 1, 0, (uint16_t)(usb->iface << 8), &port_status, 1, 0)) < 0)
   {
     papplDeviceError(device, "Unable to get USB port status: %s",  libusb_strerror((enum libusb_error)error));
   }

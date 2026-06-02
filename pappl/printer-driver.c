@@ -1,7 +1,7 @@
 //
 // Printer driver functions for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -192,6 +192,19 @@ papplPrinterSetDriverData(
   if (attrs)
     ippCopyAttributes(printer->driver_attrs, attrs, 0, NULL, NULL);
 
+  // Add finishings-col-default and finishings-default if missing...
+  if (!ippFindAttribute(printer->driver_attrs, "finishings-col-default", IPP_TAG_BEGIN_COLLECTION))
+  {
+    ipp_t	*col = ippNew();	// finishings-col-default value
+
+    ippAddString(col, IPP_TAG_ZERO, IPP_TAG_KEYWORD, "finishing-template", /*lang*/NULL, "none");
+    ippAddCollection(attrs, IPP_TAG_PRINTER, "finishing-col-default", col);
+    ippDelete(col);
+  }
+
+  if (!ippFindAttribute(printer->driver_attrs, "finishings-default", IPP_TAG_ENUM))
+    ippAddInteger(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-default", IPP_FINISHINGS_NONE);
+
   _papplRWUnlock(printer);
 
   return (true);
@@ -265,6 +278,52 @@ papplPrinterSetDriverDefaults(
     {
       switch (ippGetValueTag(supported))
       {
+        case IPP_TAG_ENUM : // "finishings"
+            if (!strcmp(data->vendor[i], "finishings"))
+            {
+              // Set finishings-col-default and finishings-default values...
+              cups_len_t j,		// Looping var
+			num_values = 0;	// Number of values
+              int	ivalues[32];	// "finishings-default" values
+              ipp_t	*cvalues[32];	// "finishings-col-default" values
+
+              ippDeleteAttribute(printer->driver_attrs, ippFindAttribute(printer->driver_attrs, "finishings-col-default", IPP_TAG_ZERO));
+
+              while (value && *value)
+              {
+                intvalue = (int)strtol(value, &end, 10);
+                if (errno == ERANGE || (end && *end && *end != ','))
+                  break;
+
+                if (num_values < 32)
+		{
+		  ivalues[num_values] = intvalue;
+		  cvalues[num_values] = ippNew();
+		  ippAddString(cvalues[num_values], IPP_TAG_ZERO, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", /*lang*/NULL, ippEnumString("finishings", intvalue));
+		  num_values ++;
+		}
+
+                if (end && *end == ',')
+                  value = end + 1;
+		else
+		  break;
+              }
+
+              if (num_values > 0)
+              {
+                ippAddCollections(printer->driver_attrs, IPP_TAG_PRINTER, "finishings-col-default", num_values, (const ipp_t **)cvalues);
+		ippAddIntegers(printer->driver_attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-default", num_values, ivalues);
+
+		for (j = 0; j < num_values; j ++)
+		  ippDelete(cvalues[j]);
+              }
+            }
+            else
+            {
+	      papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Driver '%s' attribute syntax not supported, only boolean, integer, keyword, and rangeOfInteger are supported.", supname);
+            }
+            break;
+
         case IPP_TAG_INTEGER :
         case IPP_TAG_RANGE :
             intvalue = (int)strtol(value, &end, 10);
@@ -523,14 +582,8 @@ make_attrs(
   // finishing-col-database
   ippAddCollections(attrs, IPP_TAG_PRINTER, "finishing-col-database", num_values, (const ipp_t **)cvalues);
 
-  // finishing-col-default
-  ippAddCollection(attrs, IPP_TAG_PRINTER, "finishing-col-default", cvalues[0]);
-
   // finishing-col-supported
   ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-col-supported", NULL, "finishing-template");
-
-  // finishings-default
-  ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-default", IPP_FINISHINGS_NONE);
 
   // finishings-supported
   ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-supported", num_values, ivalues);

@@ -178,7 +178,7 @@ _papplMainloopAddOptions(
 
     if (num_enumvalues > 0)
     {
-      _PAPPL_DEBUG("finishings: Adding %d finishings enums (%d, ...)\n", num_enumvalues, enumvalues[0]);
+      _PAPPL_DEBUG("finishings: Adding %u finishings enums (%d, ...)\n", (unsigned)num_enumvalues, enumvalues[0]);
       ippAddIntegers(request, group_tag, IPP_TAG_ENUM, is_default ? "finishings-default" : "finishings", num_enumvalues, enumvalues);
     }
   }

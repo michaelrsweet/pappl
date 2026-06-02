@@ -1,7 +1,7 @@
 //
 // Test suite header file for the Printer Application Framework
 //
-// Copyright © 2020 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -22,20 +22,22 @@
 // Globals...
 //
 
-extern pappl_pr_driver_t pwg_drivers[11];
+extern pappl_pr_driver_t pwg_drivers[13];
 #ifdef PWG_DRIVER
-pappl_pr_driver_t pwg_drivers[11] =
+pappl_pr_driver_t pwg_drivers[13] =
 {					// Drivers
   { "pwg_2inch-203dpi-black_1",		"PWG 2inch Label 203DPI Black",		NULL,	NULL },
   { "pwg_2inch-300dpi-black_1",		"PWG 2inch Label 300DPI Black",		NULL,	NULL },
   { "pwg_4inch-203dpi-black_1",		"PWG 4inch Label 203DPI Black",		NULL,	NULL },
   { "pwg_4inch-300dpi-black_1",		"PWG 4inch Label 300DPI Black",		NULL,	NULL },
+  { "pwg_4inch-300dpi-black_1-trim",	"PWG 4inch Label 300DPI Black w/Cutter",		NULL,	NULL },
   { "pwg_common-300dpi-black_1",	"PWG Office 300DPI Black",		NULL,	NULL },
   { "pwg_common-300dpi-sgray_8",	"PWG Office 300DPI sGray 8-bit",		NULL,	NULL },
   { "pwg_common-300dpi-srgb_8",		"PWG Office 300DPI sRGB 8-bit",		NULL,	NULL },
   { "pwg_common-300dpi-600dpi-black_1",	"PWG Office 300DPI 600DPI Black",		NULL,	NULL },
   { "pwg_common-300dpi-600dpi-sgray_8",	"PWG Office 300DPI 600DPI sGray 8-bit",		NULL,	NULL },
   { "pwg_common-300dpi-600dpi-srgb_8",	"PWG Office 300DPI 600DPI sRGB 8-bit",		NULL,	NULL },
+  { "pwg_common-300dpi-600dpi-srgb_8-punch-staple",	"PWG Office 300DPI 600DPI sRGB 8-bit w/Punch+Staple",		NULL,	NULL },
   { "pwg_fail-300dpi-black_1",	"PWG Always Fails 300DPI Black",		NULL,	NULL }
 };
 #endif // PWG_DRIVER

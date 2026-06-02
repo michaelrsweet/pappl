@@ -1,7 +1,7 @@
 //
 // Printer IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -81,6 +81,59 @@ _papplPrinterCopyAttributesNoLock(
       ippAddRange(client->response, IPP_TAG_PRINTER, "copies-supported", 1, 1);
     else
       ippAddRange(client->response, IPP_TAG_PRINTER, "copies-supported", 1, 999);
+  }
+
+  if (!ra || cupsArrayFind(ra, "finishings-col-default"))
+  {
+    // finishings-col-default
+    pappl_finishings_t	f;		// Current finishings value
+    ipp_t		*cvalues[32];	// finishings-col-default values
+
+    for (f = PAPPL_FINISHINGS_PUNCH, num_values = 0; f <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; f *= 2)
+    {
+      if (data->finishings_default & f)
+      {
+        // Add this finishings value...
+        cvalues[num_values] = ippNew();
+        ippAddString(cvalues[num_values], IPP_TAG_ZERO, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", /*lang*/NULL, _papplFinishingsString(f));
+        num_values ++;
+      }
+    }
+
+    if (num_values == 0)
+    {
+      cvalues[num_values] = ippNew();
+      ippAddString(cvalues[num_values], IPP_TAG_ZERO, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-template", /*lang*/NULL, "none");
+      num_values ++;
+    }
+
+    ippAddCollections(client->response, IPP_TAG_PRINTER, "finishings-col-default", num_values, (const ipp_t **)cvalues);
+    for (i = 0; i < num_values; i ++)
+      ippDelete(cvalues[i]);
+  }
+
+  if (!ra || cupsArrayFind(ra, "finishings-default"))
+  {
+    // finishings-default
+    pappl_finishings_t	f;		// Current finishings value
+
+    for (f = PAPPL_FINISHINGS_PUNCH, num_values = 0; f <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; f *= 2)
+    {
+      if (data->finishings_default & f)
+      {
+        // Add this finishings value...
+        ivalues[num_values] = (int)_papplFinishingsEnum(f);
+        num_values ++;
+      }
+    }
+
+    if (num_values == 0)
+    {
+      ivalues[num_values] = IPP_FINISHINGS_NONE;
+      num_values ++;
+    }
+
+    ippAddIntegers(client->response, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-default", num_values, ivalues);
   }
 
   if (!ra || cupsArrayFind(ra, "identify-actions-default"))
@@ -993,6 +1046,8 @@ _papplPrinterSetAttributes(
   static _pappl_attr_t	pattrs[] =	// Settable printer attributes
   {
     { "copies-default",			IPP_TAG_INTEGER,	1 },
+    { "finishings-col-default",		IPP_TAG_BEGIN_COLLECTION, 32 },
+    { "finishings-default",		IPP_TAG_ENUM,		32 },
     { "label-mode-configured",		IPP_TAG_KEYWORD,	1 },
     { "label-tear-off-configured",	IPP_TAG_INTEGER,	1 },
     { "media-col-default",		IPP_TAG_BEGIN_COLLECTION, 1 },
@@ -1091,6 +1146,69 @@ _papplPrinterSetAttributes(
       {
 	driver_data.copies_default = intvalue;
 	do_defaults = true;
+      }
+    }
+    else if (!strcmp(name, "finishings-col-default"))
+    {
+      pappl_finishings_t finishings = PAPPL_FINISHINGS_NONE;
+					// "finishings" bit values
+
+      for (i = 0, count = ippGetCount(rattr); i < count; i ++)
+      {
+        pappl_finishings_t f;		// Current "finishings" value
+
+        keyword = ippGetString(ippFindAttribute(ippGetCollection(rattr, i), "finishing-template", IPP_TAG_KEYWORD), 0, NULL);
+        f       = _papplFinishingsValue(keyword);
+
+        if (!keyword || (f && !(f & driver_data.finishings_supported)))
+        {
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"finishing-template\" value '%s'.", keyword);
+	  break;
+        }
+
+        finishings |= f;
+      }
+
+      if (i < count)
+      {
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.finishings_default = finishings;
+	do_defaults                    = true;
+      }
+    }
+    else if (!strcmp(name, "finishings-default"))
+    {
+      pappl_finishings_t finishings = PAPPL_FINISHINGS_NONE;
+					// "finishings" bit values
+
+      for (i = 0, count = ippGetCount(rattr); i < count; i ++)
+      {
+        pappl_finishings_t f;		// Current "finishings" value
+
+        intvalue = ippGetInteger(rattr, i);
+        keyword  = ippEnumString("finishings", intvalue);
+        f        = _papplFinishingsValue(keyword);
+
+        if (f && !(f & driver_data.finishings_supported))
+        {
+	  papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"finishings-default\" value %d ('%s').", intvalue, keyword);
+	  break;
+        }
+
+        finishings |= f;
+      }
+
+      if (i < count)
+      {
+        papplClientRespondIPPUnsupported(client, rattr);
+      }
+      else
+      {
+	driver_data.finishings_default = finishings;
+	do_defaults                    = true;
       }
     }
     else if (!strcmp(name, "identify-actions-default"))
@@ -2905,6 +3023,69 @@ valid_job_attributes(
     {
       papplClientRespondIPPUnsupported(client, attr);
       valid = false;
+    }
+  }
+
+  if ((attr = ippFindAttribute(client->request, "finishings", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetValueTag(attr) != IPP_TAG_ENUM)
+    {
+      papplClientRespondIPPUnsupported(client, attr);
+      valid = false;
+    }
+    else
+    {
+      for (i = 0, count = ippGetCount(attr); i < count; i ++)
+      {
+        int			intvalue = ippGetInteger(attr, i);
+					// finishings value
+        pappl_finishings_t	f;	// finishings bit value
+
+        if (intvalue == IPP_FINISHINGS_NONE)
+          continue;
+
+        f = _papplFinishingsValue(ippEnumString("finishings", intvalue));
+        if (!(client->printer->driver_data.finishings_supported & f))
+        {
+	  papplClientRespondIPPUnsupported(client, attr);
+	  valid = false;
+          break;
+        }
+      }
+    }
+
+    if ((attr = ippFindAttribute(client->request, "finishings-col", IPP_TAG_ZERO)) != NULL)
+    {
+      papplClientRespondIPPUnsupported(client, attr);
+      valid = false;
+    }
+  }
+  else if ((attr = ippFindAttribute(client->request, "finishings-col", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetValueTag(attr) != IPP_TAG_BEGIN_COLLECTION)
+    {
+      papplClientRespondIPPUnsupported(client, attr);
+      valid = false;
+    }
+    else
+    {
+      for (i = 0, count = ippGetCount(attr); i < count; i ++)
+      {
+        const char		*template = ippGetString(ippFindAttribute(ippGetCollection(attr, i), "finishing-template", IPP_TAG_ZERO), 0, NULL);
+					// finishing-template value
+        pappl_finishings_t	f;	// finishings bit value
+
+        if (template && !strcmp(template, "none"))
+          continue;
+
+        f = _papplFinishingsValue(template);
+        if (!(client->printer->driver_data.finishings_supported & f))
+        {
+	  papplClientRespondIPPUnsupported(client, attr);
+	  valid = false;
+          break;
+        }
+      }
     }
   }
 

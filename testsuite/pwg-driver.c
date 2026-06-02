@@ -1,7 +1,7 @@
 //
 // PWG test driver for the Printer Application Framework
 //
-// Copyright © 2020-2024 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -315,6 +315,19 @@ pwg_callback(
     return (false);
   }
 
+  // Finishings...
+  driver_data->finishings_supported = PAPPL_FINISHINGS_NONE;
+
+  if (strstr(driver_name, "-punch"))
+    driver_data->finishings_supported |= PAPPL_FINISHINGS_PUNCH;
+  if (strstr(driver_name, "-staple"))
+    driver_data->finishings_supported |= PAPPL_FINISHINGS_STAPLE;
+  if (strstr(driver_name, "-trim"))
+  {
+    driver_data->finishings_default   |= PAPPL_FINISHINGS_TRIM;
+    driver_data->finishings_supported |= PAPPL_FINISHINGS_TRIM;
+  }
+
   if (!strncmp(driver_name, "pwg_common-", 11))
   {
     driver_data->color_supported = PAPPL_COLOR_MODE_AUTO | PAPPL_COLOR_MODE_AUTO_MONOCHROME | PAPPL_COLOR_MODE_COLOR | PAPPL_COLOR_MODE_MONOCHROME;
@@ -386,12 +399,11 @@ pwg_callback(
     driver_data->sides_supported = PAPPL_SIDES_ONE_SIDED;
     driver_data->sides_default   = PAPPL_SIDES_ONE_SIDED;
 
-    driver_data->num_vendor = 5;
-    driver_data->vendor[0]  = "vendor-boolean";
-    driver_data->vendor[1]  = "vendor-integer";
-    driver_data->vendor[2]  = "vendor-keyword";
-    driver_data->vendor[3]  = "vendor-range";
-    driver_data->vendor[4]  = "vendor-text";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-boolean";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-integer";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-keyword";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-range";
+    driver_data->vendor[driver_data->num_vendor ++]  = "vendor-text";
 
     *driver_attrs = ippNew();
 

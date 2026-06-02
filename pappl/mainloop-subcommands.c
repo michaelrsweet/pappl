@@ -1,7 +1,7 @@
 //
 // Standard papplMainloop sub-commands for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -916,7 +916,7 @@ _papplMainloopShowJobs(
     cups_option_t *options)		// I - Options
 {
   const char	*printer_uri,		// Printer URI
-		*printer_name;		// Printer name
+		*printer_name = NULL;	// Printer name
   char		default_printer[256],	// Default printer
 		resource[1024];		// Resource path
   http_t	*http;			// Server connection
@@ -1200,7 +1200,8 @@ _papplMainloopShowStatus(
 {
   http_t		*http;		// HTTP connection
   const char		*printer_uri,	// Printer URI
-			*printer_name;	// Printer name
+			*printer_name = NULL;
+					// Printer name
   char			resource[1024];	// Resource path
   ipp_t			*request,	// IPP request
 			*response;	// IPP response
@@ -1241,8 +1242,6 @@ _papplMainloopShowStatus(
     // Connect to the remote printer...
     if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
       return (1);
-
-    printer_name = NULL;
   }
   else
   {

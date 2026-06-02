@@ -275,7 +275,7 @@ _papplPrinterWebDefaults(
     else
     {
       const char	*value;		// Value of form variable
-      char		*end;			// End of value
+      char		*end;		// End of value
 
       if ((value = cupsGetOption("orientation-requested", (cups_len_t)num_form, form)) != NULL)
       {
@@ -343,6 +343,20 @@ _papplPrinterWebDefaults(
 	    data.media_default = data.media_ready[i];
 	    break;
 	  }
+	}
+      }
+
+      if (data.finishings_supported)
+      {
+        char		name[256];	// Form variable name
+        pappl_finishings_t f;		// Current finishings value
+
+	data.finishings_default = PAPPL_FINISHINGS_NONE;
+	for (f = PAPPL_FINISHINGS_PUNCH; f <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; f *= 2)
+	{
+	  snprintf(name, sizeof(name), "finishings.%s", _papplFinishingsString(f));
+	  if (cupsGetOption(name, (cups_len_t)num_form, form))
+	    data.finishings_default |= f;
 	}
       }
 
@@ -562,6 +576,25 @@ _papplPrinterWebDefaults(
     papplClientHTMLPuts(client, "</select>");
   }
   papplClientHTMLPuts(client, "</td></tr>\n");
+
+  // Finishing options
+  if (data.finishings_supported)
+  {
+    char		name[256];	// Form variable name
+    pappl_finishings_t	f;		// Current finishings
+
+    papplClientHTMLPrintf(client, "              <tr><th>%s:</th><td>", papplClientGetLocString(client, "finishings"));
+
+    for (f = PAPPL_FINISHINGS_PUNCH; f <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; f *= 2)
+    {
+      if (data.finishings_supported & f)
+      {
+	snprintf(name, sizeof(name), "finishings.%s", _papplFinishingsString(f));
+	snprintf(text, sizeof(text), "finishings.%d", (int)_papplFinishingsEnum(f));
+	papplClientHTMLPrintf(client, "<input type=\"checkbox\" name=\"%s\"%s>%s<br>", name, (data.finishings_default & f) ? " checked" : "", papplClientGetLocString(client, text));
+      }
+    }
+  }
 
   // Vendor options
   _papplRWLockRead(printer);

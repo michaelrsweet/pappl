@@ -535,14 +535,8 @@ make_attrs(
   // finishing-col-database
   ippAddCollections(attrs, IPP_TAG_PRINTER, "finishing-col-database", num_values, (const ipp_t **)cvalues);
 
-  // finishing-col-default
-  ippAddCollection(attrs, IPP_TAG_PRINTER, "finishing-col-default", cvalues[0]);
-
   // finishing-col-supported
   ippAddString(attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "finishing-col-supported", NULL, "finishing-template");
-
-  // finishings-default
-  ippAddInteger(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-default", IPP_FINISHINGS_NONE);
 
   // finishings-supported
   ippAddIntegers(attrs, IPP_TAG_PRINTER, IPP_TAG_ENUM, "finishings-supported", num_values, ivalues);

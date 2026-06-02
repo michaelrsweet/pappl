@@ -100,28 +100,19 @@ papplJobCreatePrintOptions(
 
   if ((attr = ippFindAttribute(job->attrs, "finishings", IPP_TAG_ENUM)) != NULL)
   {
-    if (ippContainsInteger(attr, IPP_FINISHINGS_PUNCH))
-      options->finishings |= PAPPL_FINISHINGS_PUNCH;
-    if (ippContainsInteger(attr, IPP_FINISHINGS_STAPLE))
-      options->finishings |= PAPPL_FINISHINGS_STAPLE;
-    if (ippContainsInteger(attr, IPP_FINISHINGS_TRIM))
-      options->finishings |= PAPPL_FINISHINGS_TRIM;
+    pappl_finishings_t	f;			// Current finishings value
+
+    for (f = PAPPL_FINISHINGS_PUNCH; f <= PAPPL_FINISHINGS_STAPLE_DUAL_TOP; f *= 2)
+    {
+      if (ippContainsInteger(attr, (int)_papplFinishingsEnum(f)))
+        options->finishings |= f;
+    }
   }
   else if ((attr = ippFindAttribute(job->attrs, "finishings-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
   {
     for (i = 0, count = ippGetCount(attr); i < count; i ++)
     {
-      ipp_t *col = ippGetCollection(attr, i);
-					// "finishings-col" collection value
-      const char *template = ippGetString(ippFindAttribute(col, "finishing-template", IPP_TAG_ZERO), 0, NULL);
-					// "finishing-template" value
-
-      if (template && !strcmp(template, "punch"))
-        options->finishings |= PAPPL_FINISHINGS_PUNCH;
-      else if (template && !strcmp(template, "staple"))
-        options->finishings |= PAPPL_FINISHINGS_STAPLE;
-      else if (template && !strcmp(template, "trim"))
-        options->finishings |= PAPPL_FINISHINGS_TRIM;
+      options->finishings |= _papplFinishingsValue(ippGetString(ippFindAttribute(ippGetCollection(attr, i), "finishing-template", IPP_TAG_ZERO), 0, NULL));
     }
   }
 

@@ -154,18 +154,22 @@ _papplMainloopAddOptions(
     char	keyword[128],		// Current keyword/value
 		*kptr;			// Pointer into keyword/value
 
+    _PAPPL_DEBUG("finishings: value=\"%s\"\n", value);
+
     while (*value && num_enumvalues < (cups_len_t)(sizeof(enumvalues) / sizeof(enumvalues[0])))
     {
       for (kptr = keyword; *value && *value != ','; value ++)
       {
         if (kptr < (keyword + sizeof(keyword) - 1))
-          *kptr = *value;
+          *kptr++ = *value;
       }
 
       if (*value)
         value ++;
 
       *kptr = '\0';
+      _PAPPL_DEBUG("finishings: keyword=\"%s\"...\n", keyword);
+
       if (isdigit(keyword[0] & 255))
         enumvalues[num_enumvalues ++] = atoi(keyword);
       else if (keyword[0])
@@ -173,7 +177,10 @@ _papplMainloopAddOptions(
     }
 
     if (num_enumvalues > 0)
+    {
+      _PAPPL_DEBUG("finishings: Adding %d finishings enums (%d, ...)\n", num_enumvalues, enumvalues[0]);
       ippAddIntegers(request, group_tag, IPP_TAG_ENUM, is_default ? "finishings-default" : "finishings", num_enumvalues, enumvalues);
+    }
   }
 
   if (is_default && media_ready)

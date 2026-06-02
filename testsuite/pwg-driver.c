@@ -1,7 +1,7 @@
 //
 // PWG test driver for the Printer Application Framework
 //
-// Copyright © 2020-2021 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -249,6 +249,9 @@ pwg_callback(
   else if (!strncmp(driver_name, "pwg_4inch-", 10))
   {
     papplCopyString(driver_data->make_and_model, "PWG 4-inch Label Printer", sizeof(driver_data->make_and_model));
+
+    // Cutter...
+    driver_data->finishings = PAPPL_FINISHINGS_TRIM;
 
     driver_data->kind       = PAPPL_KIND_LABEL | PAPPL_KIND_ROLL;
     driver_data->ppm        = 20;	// 20 labels per minute

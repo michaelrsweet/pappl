@@ -6,6 +6,7 @@ v1.4.11 - YYYY-MM-DD
 --------------------
 
 - Updated the programmer's manual (Issue #418, Issue #419)
+- Updated Set-Printer-Attributes validations checks.
 - Fixed builds on FreeBSD and other systems without a sys/statfs.h header
   (Issue #411)
 - Fixed a truncation bug when decoding SNMP string values.

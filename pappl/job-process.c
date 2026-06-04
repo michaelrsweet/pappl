@@ -133,7 +133,17 @@ papplJobCreatePrintOptions(
   // finishings
   options->finishings = PAPPL_FINISHINGS_NONE;
 
-  if ((attr = ippFindAttribute(job->attrs, "finishings", IPP_TAG_ENUM)) != NULL)
+  if ((attr = ippFindAttribute(job->attrs, "finishings", IPP_TAG_ENUM)) == NULL)
+    attr = ippFindAttribute(job->attrs, "finishings-col", IPP_TAG_BEGIN_COLLECTION);
+
+  if (!attr)
+  {
+    // Nothing in the job ticket, try the default values...
+    if ((attr = ippFindAttribute(job->printer->driver_attrs, "finishings-default", IPP_TAG_ENUM)) == NULL)
+      attr = ippFindAttribute(job->printer->driver_attrs, "finishings-col-default", IPP_TAG_BEGIN_COLLECTION);
+  }
+
+  if (ippGetValueTag(attr) == IPP_TAG_ENUM)
   {
     pappl_finishings_t	f;			// Current finishings value
 
@@ -143,7 +153,7 @@ papplJobCreatePrintOptions(
         options->finishings |= f;
     }
   }
-  else if ((attr = ippFindAttribute(job->attrs, "finishings-col", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+  else if (ippGetValueTag(attr) == IPP_TAG_BEGIN_COLLECTION)
   {
     for (i = 0, count = ippGetCount(attr); i < count; i ++)
     {

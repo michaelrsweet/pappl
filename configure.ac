@@ -294,6 +294,70 @@ AS_IF([test "x$PKGCONFIG" != x -a x$enable_libusb != xno], [
 ])
 
 
+dnl D-Bus support (used for Bluetooth device discovery)...
+AC_ARG_ENABLE([dbus], AS_HELP_STRING([--disable-dbus], [build without D-Bus support, default=auto]))
+
+PKGCONFIG_DBUS=""
+AC_SUBST([PKGCONFIG_DBUS])
+
+have_dbus=no
+
+AS_IF([test "x$PKGCONFIG" != x -a x$enable_dbus != xno], [
+    AC_MSG_CHECKING([for D-Bus])
+    AS_IF([$PKGCONFIG --exists dbus-1], [
+        AC_MSG_RESULT([yes])
+        AC_DEFINE([HAVE_DBUS], 1, [Have D-Bus library?])
+        CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags dbus-1`"
+        LIBS="$($PKGCONFIG --libs dbus-1) $LIBS"
+        PKGCONFIG_DBUS="dbus-1,"
+        PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs dbus-1) $PKGCONFIG_LIBS_PRIVATE"
+        have_dbus=yes
+    ], [
+        AC_MSG_RESULT([no])
+        AS_IF([test "x$enable_dbus" = xyes], [
+            AC_MSG_ERROR([D-Bus is required for --enable-dbus.])
+        ])
+    ])
+], [test x$enable_dbus = xyes], [
+    AC_MSG_ERROR([pkg-config and dbus-1 are required for --enable-dbus.])
+])
+
+
+dnl bluez (libbluetooth) for Bluetooth SPP/RFCOMM support...
+dnl Requires both bluez (RFCOMM headers) and dbus-1 (device discovery).
+AC_ARG_ENABLE([bluetooth], AS_HELP_STRING([--enable-bluetooth], [use libbluetooth for Bluetooth printing, default=auto]))
+
+PKGCONFIG_LIBBLUETOOTH=""
+AC_SUBST([PKGCONFIG_LIBBLUETOOTH])
+
+have_bluetooth=no
+
+AS_IF([test "x$PKGCONFIG" != x -a x$enable_bluetooth != xno], [
+    AC_MSG_CHECKING([for Bluetooth support (bluez + D-Bus)])
+    AS_IF([$PKGCONFIG --exists bluez && test "x$have_dbus" = xyes], [
+        AC_MSG_RESULT([yes])
+        AC_DEFINE([HAVE_LIBBLUETOOTH], 1, [Have Bluetooth library?])
+        CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags bluez`"
+        LIBS="$($PKGCONFIG --libs bluez) $LIBS"
+        PKGCONFIG_LIBBLUETOOTH="bluez,"
+        PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs bluez) $PKGCONFIG_LIBS_PRIVATE"
+        have_bluetooth=yes
+    ], [
+        AC_MSG_RESULT([no])
+        AS_IF([test x$enable_bluetooth = xyes], [
+            AS_IF([test "x$have_dbus" != xyes], [
+                AC_MSG_ERROR([D-Bus is required for --enable-bluetooth.])
+            ])
+            AS_IF([! $PKGCONFIG --exists bluez], [
+                AC_MSG_ERROR([bluez is required for --enable-bluetooth.])
+            ])
+        ])
+    ])
+], [test x$enable_bluetooth = xyes], [
+    AC_MSG_ERROR([pkg-config, bluez, and dbus-1 are required for --enable-bluetooth.])
+])
+
+
 dnl PAM support...
 AC_ARG_ENABLE([libpam], AS_HELP_STRING([--disable-libpam], [do not use libpam for authentication, default=auto]))
 

@@ -19,6 +19,8 @@ LIBOBJS	=	\
 		client-webif.o \
 		contact.o \
 		device.o \
+		device-bt.o \
+		device-bt-spp.o \
 		device-file.o \
 		device-network.o \
 		device-usb.o \

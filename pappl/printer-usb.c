@@ -1,7 +1,7 @@
 //
 // USB printer class support for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1189,6 +1189,7 @@ run_ipp_usb_iface(
   const char	*hostptr;		// Pointer into buffer
   size_t	hostlen;		// Number of bytes in host buffer
   ssize_t	bytes;			// Bytes read
+  int		cstate;			// Thread cancellation state
 
 
   papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "IPP-USB%d: Starting.", iface->number);
@@ -1198,6 +1199,9 @@ run_ipp_usb_iface(
     // Wait for data from the host...
     if ((bytes = read(iface->ipp_to_device, hostbuf, sizeof(hostbuf))) > 0)
     {
+      // Pause thread cancellation...
+      pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cstate);
+
       // Got data from the host, send it to the local socket...
       if (iface->ipp_sock < 0)
       {
@@ -1230,7 +1234,7 @@ run_ipp_usb_iface(
       }
 
       if (iface->ipp_sock < 0)
-        continue;
+        goto resume;
 
       // Send the request data to the local service...
       papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_DEBUG, "IPP-USB%d: Sending %d bytes to socket %d.", iface->number, (int)bytes, iface->ipp_sock);
@@ -1240,7 +1244,7 @@ run_ipp_usb_iface(
 	papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_ERROR, "IPP-USB%d: Unable to send data to socket: %s", iface->number, strerror(errno));
 	close(iface->ipp_sock);
 	iface->ipp_sock = -1;
-	continue;
+	goto resume;
       }
 
       // If we are ready for a response, read it back...
@@ -1292,6 +1296,11 @@ run_ipp_usb_iface(
         close(iface->ipp_sock);
         iface->ipp_sock = -1;
       }
+
+      // Resume cancellation...
+      resume:
+
+      pthread_setcancelstate(cstate, NULL);
     }
   }
 

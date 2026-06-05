@@ -2,7 +2,7 @@ Changes in PAPPL
 ================
 
 
-v1.4.11 - YYYY-MM-DD
+v1.4.11 - 2026-06-05
 --------------------
 
 - Updated the programmer's manual (Issue #418, Issue #419)

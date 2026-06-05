@@ -9,6 +9,7 @@ v1.4.11 - YYYY-MM-DD
 - Updated Set-Printer-Attributes validations checks.
 - Fixed builds on FreeBSD and other systems without a sys/statfs.h header
   (Issue #411)
+- Fixed a deadlock issue in the USB gadget shutdown code (Issue #417)
 - Fixed a truncation bug when decoding SNMP string values.
 - Fixed the handling of the finishings option.
 

@@ -264,6 +264,13 @@ pwg_callback(
     driver_data->darkness_configured = 53;
     driver_data->darkness_supported  = 16;
     driver_data->speed_supported[1]  = 8 * 2540;
+
+    driver_data->mode_configured = PAPPL_LABEL_MODE_TEAR_OFF;
+    driver_data->mode_supported  = PAPPL_LABEL_MODE_APPLICATOR | PAPPL_LABEL_MODE_CUTTER | PAPPL_LABEL_MODE_CUTTER_DELAYED | PAPPL_LABEL_MODE_KIOSK | PAPPL_LABEL_MODE_PEEL_OFF | PAPPL_LABEL_MODE_PEEL_OFF_PREPEEL | PAPPL_LABEL_MODE_REWIND | PAPPL_LABEL_MODE_RFID | PAPPL_LABEL_MODE_TEAR_OFF;
+
+    driver_data->tear_offset_configured   = 0;
+    driver_data->tear_offset_supported[0] = -1500;
+    driver_data->tear_offset_supported[1] = 1500;
   }
   else if (!strncmp(driver_name, "pwg_common-", 11))
   {

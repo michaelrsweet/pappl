@@ -21,6 +21,7 @@
 /pappl/pappl-exec
 /pappl/parse-lock-log
 /Makedefs
+/testsuite/test.log
 /testsuite/testhttpmon
 /testsuite/testmainloop
 /testsuite/testpappl

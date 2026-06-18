@@ -763,6 +763,8 @@ pappl_usb_status(pappl_device_t *device)// I - Device
   }
   else
   {
+    papplDeviceError(device, "DEBUG: USB port status is 0x%02X.", port_status & 255);
+
     if (!(port_status & 0x08))
       status |= PAPPL_PREASON_OTHER;
     if (port_status & 0x20)

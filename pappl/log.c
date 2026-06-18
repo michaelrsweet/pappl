@@ -1,7 +1,7 @@
 //
 // Logging functions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -233,7 +233,10 @@ papplLogDevice(
 					// System
 
 
-  papplLog(system, PAPPL_LOGLEVEL_ERROR, "[Device] %s", message);
+  if (!strncmp(message, "DEBUG: ", 7))
+    papplLog(system, PAPPL_LOGLEVEL_DEBUG, "[Device] %s", message + 7);
+  else
+    papplLog(system, PAPPL_LOGLEVEL_ERROR, "[Device] %s", message);
 }
 
 

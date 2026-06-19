@@ -1302,6 +1302,10 @@ run_ipp_usb_iface(
 
       pthread_setcancelstate(cstate, NULL);
     }
+    else
+    {
+      sleep(1);
+    }
   }
 
   error:

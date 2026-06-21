@@ -598,6 +598,9 @@ pappl_usb_getid(
   // Get the 1284 Device ID...
   if ((error = libusb_control_transfer(usb->handle, (uint8_t)LIBUSB_REQUEST_TYPE_CLASS | (uint8_t)LIBUSB_ENDPOINT_IN | (uint8_t)LIBUSB_RECIPIENT_INTERFACE, 0, (uint16_t)usb->conf, (uint16_t)((usb->iface << 8) | usb->altset), (unsigned char *)buffer, (uint16_t)bufsize, 5000)) < 0)
   {
+    if (error == LIBUSB_ERROR_PIPE)
+      libusb_clear_halt(usb->handle, usb->read_endp);
+
     papplDeviceError(device, "Unable to get IEEE-1284 device ID from USB port: %s", libusb_strerror((enum libusb_error)error));
     buffer[0] = '\0';
     return (NULL);

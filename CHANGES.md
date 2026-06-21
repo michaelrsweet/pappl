@@ -6,6 +6,7 @@ v1.4.12 - YYYY-MM-DD
 --------------------
 
 - Added logging of the USB port status byte for USB-connected printers.
+- Now clear USB errors after a failed get device ID request.
 
 
 v1.4.11 - 2026-06-05

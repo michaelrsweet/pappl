@@ -1,7 +1,7 @@
 //
 // Common client IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -146,6 +146,13 @@ _papplClientProcessIPP(
         // Bad character set...
 	papplClientRespondIPP(client, IPP_STATUS_ERROR_CHARSET, "Unsupported character set '%s'.", ippGetString(charset, 0, NULL));
 	attr = ippCopyAttribute(client->response, charset, false);
+	ippSetGroupTag(client->response, &attr, IPP_TAG_UNSUPPORTED_GROUP);
+      }
+      else if (language && !ippValidateAttribute(language))
+      {
+        // Bad natural language...
+	papplClientRespondIPP(client, IPP_STATUS_ERROR_BAD_REQUEST, "Bad \"attributes-natural-language\" value '%s'.", ippGetString(language, 0, NULL));
+	attr = ippCopyAttribute(client->response, language, false);
 	ippSetGroupTag(client->response, &attr, IPP_TAG_UNSUPPORTED_GROUP);
       }
       else if (!charset || !language || (!uri && op != IPP_OP_CUPS_GET_DEFAULT && op != IPP_OP_CUPS_GET_PRINTERS))

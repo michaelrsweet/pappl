@@ -1,7 +1,7 @@
 //
 // DNS-SD support for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1319,7 +1319,8 @@ dns_sd_printer_callback(
 static void *				// O - Exit status
 dns_sd_run(void *data)			// I - System object
 {
-  int		err;			// Status
+  int		count,			// Number of poll file descriptors
+		err;			// Status
   pappl_system_t *system = (pappl_system_t *)data;
 					// System object
   struct pollfd	pfd;			// Poll data
@@ -1332,13 +1333,18 @@ dns_sd_run(void *data)			// I - System object
   {
     // Wait up to 1 second for new data...
 #  if _WIN32
-    if (poll(&pfd, 1, 1000) < 0 && WSAGetLastError() == WSAEINTR)
+    if ((count = poll(&pfd, 1, 1000)) < 0 && WSAGetLastError() == WSAEINTR)
 #  else
-    if (poll(&pfd, 1, 1000) < 0 && errno != EINTR && errno != EAGAIN)
+    if ((count = poll(&pfd, 1, 1000)) < 0 && errno != EINTR && errno != EAGAIN)
 #  endif // _WIN32
     {
       papplLog(system, PAPPL_LOGLEVEL_ERROR, "DNS-SD poll failed: %s", strerror(errno));
       break;
+    }
+    else if (count <= 0)
+    {
+      usleep(1);
+      continue;
     }
 
     if (pfd.revents & POLLIN)

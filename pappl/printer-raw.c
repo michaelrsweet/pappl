@@ -1,7 +1,7 @@
 //
 // Raw printing support for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -76,7 +76,7 @@ _papplPrinterRunRaw(
     pappl_printer_t *printer)		// I - Printer
 {
   int		i;			// Looping var
-  int		count;			// Return value from poll()
+  int		pcount;			// Return value from poll()
 
 
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Socket listener thread starting with %d listeners.", printer->num_raw_listeners);
@@ -103,8 +103,15 @@ _papplPrinterRunRaw(
     if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
       break;
 
-    // Wait 1 second for new connections...
-    if ((count = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 250)) > 0)
+    // Wait 1/4 second for new connections...
+    if ((pcount = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 250)) < 0)
+    {
+      if (errno != EAGAIN && errno != EINTR)
+	break;
+
+      usleep(1);
+    }
+    else if (pcount > 0)
     {
       if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
 	break;
@@ -170,10 +177,16 @@ _papplPrinterRunRaw(
 
             if ((bytes = poll(&sockp, 1, 1000)) <= 0)
 	    {
+	      if (bytes < 0 && errno != EAGAIN && errno != EINTR)
+	        break;
+
 	      if ((time(NULL) - activity) >= 60)
 	        break;
-	      else
-	        continue;
+
+	      if (bytes < 0)
+                usleep(1);
+
+	      continue;
 	    }
 
             if (sockp.revents & POLLIN)
@@ -231,8 +244,6 @@ _papplPrinterRunRaw(
         }
       }
     }
-    else if (count < 0 && errno != EAGAIN)
-      break;
   }
 
   _papplRWLockWrite(printer);

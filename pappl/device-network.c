@@ -1,7 +1,7 @@
 //
 // Network device support code for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2007-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1764,7 +1764,7 @@ pappl_socket_read(
   if ((sock = papplDeviceGetData(device)) == NULL)
     return (-1);
 
-  // Only read if we have data to read within 100ms...
+  // Only read if we have data to read within 10 seconds...
   data.fd      = sock->fd;
   data.events  = POLLIN;
   data.revents = 0;

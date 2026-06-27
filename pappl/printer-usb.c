@@ -103,7 +103,7 @@ _papplPrinterRunUSB(
   int		i;			// Looping var
   struct pollfd	data[NUM_IPP_USB + 1];	// USB printer gadget listeners
   _ipp_usb_iface_t ifaces[NUM_IPP_USB];	// IPP-USB gadget interfaces
-  int		count;			// Number of file descriptors from poll()
+  int		pcount;			// Number of file descriptors from poll()
   pappl_device_t *device = NULL;	// Printer port data
   char		buffer[8192];		// Print data buffer
   ssize_t	bytes;			// Bytes in buffer
@@ -156,9 +156,10 @@ _papplPrinterRunUSB(
 
     while (!papplPrinterIsDeleted(printer) && !_papplSystemIsShutdownNoLock(printer->system))
     {
-      if ((count = poll(data, NUM_IPP_USB + 1, 1000)) < 0)
+      if ((pcount = poll(data, NUM_IPP_USB + 1, 1000)) < 0)
       {
-	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
+        if (errno != EAGAIN && errno != EINTR)
+	  papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "USB poll failed: %s", strerror(errno));
 
 	if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
 	  break;
@@ -169,9 +170,9 @@ _papplPrinterRunUSB(
       {
 	break;
       }
-      else if (count > 0)
+      else if (pcount > 0)
       {
-	papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d, revents=[%d %d %d %d].", count, data[0].revents, data[1].revents, data[2].revents, data[3].revents);
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d, revents=[%d %d %d %d].", pcount, data[0].revents, data[1].revents, data[2].revents, data[3].revents);
 
         if (data[0].revents & (POLLERR | POLLHUP))
         {

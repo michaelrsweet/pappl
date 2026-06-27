@@ -76,7 +76,7 @@
 
 typedef unsigned long useconds_t;
 #define sleep(X)	Sleep(1000 * (X))
-#define usleep(X)	Sleep((X)/1000)
+#define usleep(X)	Sleep((X+999)/1000)
 
 
 //

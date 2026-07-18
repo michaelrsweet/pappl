@@ -687,7 +687,8 @@ create_printer(
   if (system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
   {
     // Make sure printer names that start with a digit have a resource path
-    // containing an underscore...
+    // containing an underscore, otherwise we might confuse a printer that
+    // starts with a number with a job ID for the default printer...
     if (isdigit(*printer_name & 255))
       snprintf(resource, sizeof(resource), "/ipp/print/_%s", printer_name);
     else
@@ -701,8 +702,7 @@ create_printer(
     }
 
     // Eliminate duplicate and trailing underscores...
-    resptr = resource + 11;
-    while (*resptr)
+    for (resptr = resource + 11; *resptr;)
     {
       if (resptr[0] == '_' && resptr[1] == '_')
         memmove(resptr, resptr + 1, strlen(resptr));

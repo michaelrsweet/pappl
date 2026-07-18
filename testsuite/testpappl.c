@@ -836,18 +836,21 @@ main(int  argc,				// I - Number of command-line arguments
 
   cupsCopyString(output_directory, outdir, sizeof(output_directory));
 
-  // Initialize a heartbeat interval timer...
 #if !_WIN32
-  struct itimerval tval;		// Interval timer value
+  if (cupsArrayGetCount(testdata.names) > 0)
+  {
+    // Initialize a heartbeat interval timer...
+    struct itimerval tval;		// Interval timer value
 
-  signal(SIGALRM, heartbeat_handler);
+    signal(SIGALRM, heartbeat_handler);
 
-  tval.it_interval.tv_sec  = _PAPPL_HEARTBEAT_INTERVAL;
-  tval.it_interval.tv_usec = 0;
-  tval.it_value.tv_sec     = 2 * _PAPPL_HEARTBEAT_INTERVAL;
-  tval.it_value.tv_usec    = 0;
+    tval.it_interval.tv_sec  = _PAPPL_HEARTBEAT_INTERVAL;
+    tval.it_interval.tv_usec = 0;
+    tval.it_value.tv_sec     = 2 * _PAPPL_HEARTBEAT_INTERVAL;
+    tval.it_value.tv_usec    = 0;
 
-  setitimer(ITIMER_REAL, &tval, /*ovalue*/NULL);
+    setitimer(ITIMER_REAL, &tval, /*ovalue*/NULL);
+  }
 #endif // !_WIN32
 
   // Initialize the system and any printers...
@@ -1168,7 +1171,9 @@ infra_register_cb(
     pappl_printer_t *requested_printer,	// I - Requested printer, if any
     void            *data)		// I - Callback data
 {
-  pappl_printer_t *printer = NULL;
+  char		printer_name[128];	// Cloud printer name
+  pappl_printer_t *printer = NULL;	// Printer to use
+
 
   (void)data;
 
@@ -1197,7 +1202,9 @@ infra_register_cb(
   else if (papplSystemGetNumberOfPrinters(papplClientGetSystem(client)) < 32)
   {
     // Return new printer
-    return (papplPrinterCreateInfra(papplClientGetSystem(client), /*printer_id*/0, /*printer_name*/device_uuid + 9, /*num_device_uuids*/1, &device_uuid));
+    snprintf(printer_name, sizeof(printer_name), "cloud-%s", device_uuid + 9);
+
+    return (papplPrinterCreateInfra(papplClientGetSystem(client), /*printer_id*/0, printer_name, /*num_device_uuids*/1, &device_uuid));
   }
   else
   {

@@ -1,7 +1,7 @@
 //
 // IPP subscription processing for the Printer Application Framework
 //
-// Copyright © 2022-2025 by Michael R Sweet.
+// Copyright © 2022-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -327,6 +327,8 @@ _papplSubscriptionIPPGetNotifications(
   int			seq_num;	// Sequence number
   ipp_t			*event;		// Current event
   int			num_events = 0;	// Number of events returned
+  int			get_interval = 30;
+					// When for a client to check again
 
 
   // Authorize access...
@@ -388,6 +390,16 @@ _papplSubscriptionIPPGetNotifications(
 	continue;
       }
 
+      if ((sub->mask & PAPPL_EVENT_JOB_ALL) && sub->printer)
+      {
+        // If we have a subscription for job events and active jobs, have the
+        // client/proxy check back randomly in 1-15 seconds...
+        _papplRWLockRead(sub->printer);
+        if (cupsArrayGetCount(sub->printer->active_jobs) > 0)
+          get_interval = (cupsGetRand() % 15) + 1;
+        _papplRWUnlock(sub->printer);
+      }
+
       // Copy events to the output...
       for (event = (ipp_t *)cupsArrayGetElement(sub->events, (size_t)(seq_num - sub->first_sequence)); event; event = (ipp_t *)cupsArrayGetNext(sub->events))
       {
@@ -395,7 +407,7 @@ _papplSubscriptionIPPGetNotifications(
 	{
 	  // This is the first event in the notification...
 	  papplClientRespondIPP(client, IPP_STATUS_OK, NULL);
-	  ippAddInteger(client->response, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-get-interval", 30);
+	  ippAddInteger(client->response, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "notify-get-interval", get_interval);
 	  if (client->printer)
 	    ippAddInteger(client->response, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "printer-up-time", (int)(time(NULL) - client->printer->start_time));
 	  else
@@ -435,6 +447,13 @@ _papplSubscriptionIPPGetNotifications(
     }
   }
   while (num_events == 0);
+
+  // Control whether to direct the client to close its connection...
+  if (get_interval >= 30)
+  {
+    // Next check is in 30 seconds or more, so tell the client to close...
+    client->close_it = true;
+  }
 }
 
 

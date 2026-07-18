@@ -1,7 +1,7 @@
 //
 // Client processing code for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -540,7 +540,8 @@ papplClientRespond(
   httpSetField(client->http, HTTP_FIELD_SERVER, papplSystemGetServerHeader(client->system));
   if (last_modified)
     httpSetField(client->http, HTTP_FIELD_LAST_MODIFIED, httpGetDateString(last_modified, last_str, sizeof(last_str)));
-
+  if (client->close_it)
+    httpSetField(client->http, HTTP_FIELD_CONNECTION, "close");
   if (code == HTTP_STATUS_METHOD_NOT_ALLOWED || client->operation == HTTP_STATE_OPTIONS)
     httpSetField(client->http, HTTP_FIELD_ALLOW, "GET, HEAD, OPTIONS, POST");
 
@@ -694,6 +695,9 @@ _papplClientRun(
     }
 
     if (!_papplClientProcessHTTP(client))
+      break;
+
+    if (client->close_it)
       break;
 
     _papplClientCleanTempFiles(client);

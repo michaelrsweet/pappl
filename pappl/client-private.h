@@ -1,7 +1,7 @@
 //
 // Private client header file for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -27,6 +27,7 @@ struct _pappl_client_s			// Client data
   http_t		*http;			// HTTP connection
   ipp_t			*request,		// IPP request
 			*response;		// IPP response
+  bool			close_it;		// `true` if the client should be closed
   time_t		start;			// Request start time
   http_state_t		operation;		// Request operation
   ipp_op_t		operation_id;		// IPP operation-id

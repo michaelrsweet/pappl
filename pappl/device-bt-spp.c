@@ -114,6 +114,33 @@ _papplBluetoothSppParseURI(
 // Allocate 64 for safety margin.
 #define _PAPPL_BT_SPP_MAX_URI		64
 
+// Linux and some printers need a short recovery interval before reopening a
+// recently closed RFCOMM channel.  Make one delayed retry with a fresh socket.
+#define _PAPPL_BT_SPP_BUSY_RETRY_DELAY	1500000
+#define _PAPPL_BT_SPP_RESET_RETRY_DELAY	1000000
+
+
+//
+// '_papplBluetoothSppRetryDelay()' - Return the delay for a retryable error.
+//
+
+unsigned int				// O - Retry delay in microseconds or `0`
+_papplBluetoothSppRetryDelay(
+    int error)				// I - Connection error
+{
+  switch (error)
+  {
+    case EBUSY :
+        return (_PAPPL_BT_SPP_BUSY_RETRY_DELAY);
+
+    case ECONNRESET :
+        return (_PAPPL_BT_SPP_RESET_RETRY_DELAY);
+
+    default :
+        return (0);
+  }
+}
+
 
 //
 // Local types...
@@ -221,6 +248,7 @@ pappl_bt_spp_open(
 
   char	addr[_PAPPL_BT_ADDR_SIZE];	// Normalized Bluetooth MAC
   int	channel;			// RFCOMM channel number
+  unsigned int retry_delay;		// Delay before retrying in microseconds
   int	sock;				// RFCOMM socket fd
 
 
@@ -233,6 +261,12 @@ pappl_bt_spp_open(
 
   // Connect via RFCOMM...
   sock = pappl_bt_spp_rfcomm_connect(addr, channel);
+
+  if (sock < 0 && (retry_delay = _papplBluetoothSppRetryDelay(errno)) > 0)
+  {
+    usleep((useconds_t)retry_delay);
+    sock = pappl_bt_spp_rfcomm_connect(addr, channel);
+  }
 
   if (sock < 0)
   {
@@ -331,6 +365,9 @@ pappl_bt_spp_rfcomm_connect(
 
 
 #  ifdef __linux__
+  int flags;                            // Original socket flags
+
+
   // Create the RFCOMM socket...
   sock = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
@@ -340,12 +377,15 @@ pappl_bt_spp_rfcomm_connect(
   // Set non-blocking so we can enforce a connect timeout.  RFCOMM
   // connect() can block for 20+ seconds when the printer is out of
   // range or powered off, which is too long for comfort
+  if ((flags = fcntl(sock, F_GETFL, 0)) < 0 ||
+      fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
   {
-    int flags = fcntl(sock, F_GETFL, 0);
+    int error = errno;
 
 
-    if (flags >= 0)
-      fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+    close(sock);
+    errno = error;
+    return (-1);
   }
 
   // Build the remote address and connect...
@@ -375,9 +415,11 @@ pappl_bt_spp_rfcomm_connect(
 
         if (ret <= 0)
         {
+          int error = ret == 0 ? ETIMEDOUT : errno;
+
+
           close(sock);
-          if (ret == 0)
-            errno = ETIMEDOUT;
+          errno = error;
           return (-1);
         }
 
@@ -387,27 +429,43 @@ pappl_bt_spp_rfcomm_connect(
           socklen_t len = (socklen_t)sizeof(err);
 
 
-          if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &err, &len) < 0 || err != 0)
+          if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &err, &len) < 0)
+          {
+            int error = errno;
+
+
+            close(sock);
+            errno = error;
+            return (-1);
+          }
+          else if (err != 0)
           {
             close(sock);
+            errno = err;
             return (-1);
           }
         }
       }
       else
       {
+        int error = errno;
+
+
         close(sock);
+        errno = error;
         return (-1);
       }
     }
 
     // Restore blocking mode for normal I/O...
+    if (fcntl(sock, F_SETFL, flags) < 0)
     {
-      int flags = fcntl(sock, F_GETFL, 0);
+      int error = errno;
 
 
-      if (flags >= 0)
-        fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
+      close(sock);
+      errno = error;
+      return (-1);
     }
   }
 #  else

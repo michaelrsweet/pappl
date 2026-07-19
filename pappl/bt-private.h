@@ -75,6 +75,7 @@ extern bool _papplBluetoothEnumerateDevices(_pappl_bt_enum_cb_t cb, void *data) 
 //
 
 extern bool _papplBluetoothSppParseURI(const char *uri, char *address, size_t address_size, int *channel) _PAPPL_PRIVATE;
+extern unsigned int _papplBluetoothSppRetryDelay(int error) _PAPPL_PRIVATE;
 
 
 //

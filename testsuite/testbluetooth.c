@@ -11,7 +11,7 @@
 #include <pappl/bt-private.h>
 #include "test.h"
 
-#if defined(HAVE_LIBBLUETOOTH) && defined(HAVE_DBUS)
+#include <errno.h>
 
 
 //
@@ -206,6 +206,28 @@ static void test_papplBluetoothMakeDeviceId(void)
 }
 
 
+#if defined(HAVE_LIBBLUETOOTH) && defined(HAVE_DBUS)
+
+
+//
+// _papplBluetoothSppRetryDelay tests...
+//
+
+static void test_papplBluetoothSppRetryDelay(void)
+{
+  testBegin("_papplBluetoothSppRetryDelay");
+  testEnd(_papplBluetoothSppRetryDelay(0) == 0 &&
+          _papplBluetoothSppRetryDelay(EBUSY) == 1500000 &&
+          _papplBluetoothSppRetryDelay(ECONNRESET) == 1000000 &&
+          _papplBluetoothSppRetryDelay(EINPROGRESS) == 0 &&
+          _papplBluetoothSppRetryDelay(ETIMEDOUT) == 0 &&
+          _papplBluetoothSppRetryDelay(EINVAL) == 0);
+}
+
+
+#endif // HAVE_LIBBLUETOOTH && HAVE_DBUS
+
+
 //
 // 'main()' - Test the Bluetooth address/URI functions.
 //
@@ -218,19 +240,9 @@ main(void)
   test_papplBluetoothAddrToBare();
   test_papplBluetoothSppParseURI();
 
+#if defined(HAVE_LIBBLUETOOTH) && defined(HAVE_DBUS)
+  test_papplBluetoothSppRetryDelay();
+#endif // HAVE_LIBBLUETOOTH && HAVE_DBUS
+
   return (testsPassed ? 0 : 1);
 }
-
-
-#else // !(HAVE_LIBBLUETOOTH && HAVE_DBUS)
-
-
-int					// O - Exit status
-main(void)
-{
-  // Bluetooth support not compiled in: nothing to test.
-  return (0);
-}
-
-
-#endif // HAVE_LIBBLUETOOTH && HAVE_DBUS

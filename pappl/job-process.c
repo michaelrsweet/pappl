@@ -725,7 +725,7 @@ _papplJobProcessRaster(
           if (header.cupsColorSpace == CUPS_CSPACE_K)
           {
             // Black...
-	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
+	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth && x < options->header.cupsWidth; x ++, pixptr ++)
 	    {
 	      if (*pixptr > dither[x & 15])
 	        byte |= bit;
@@ -746,7 +746,7 @@ _papplJobProcessRaster(
 	  else
 	  {
 	    // Grayscale to black...
-	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth; x ++, pixptr ++)
+	    for (x = 0, lineptr = line, pixptr = pixels, bit = 128, byte = 0; x < header.cupsWidth && x < options->header.cupsWidth; x ++, pixptr ++)
 	    {
 	      if (*pixptr <= dither[x & 15])
 	        byte |= bit;

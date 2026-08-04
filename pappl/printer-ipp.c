@@ -1120,7 +1120,7 @@ _papplPrinterSetAttributes(
     {
       count = ippGetCount(rattr);
 
-      for (i = 0; i < count; i ++)
+      for (i = 0; i < count && i < driver_data.num_source; i ++)
         _papplMediaColImport(ippGetCollection(rattr, i), driver_data.media_ready + i);
 
       for (; i < PAPPL_MAX_SOURCE; i ++)
@@ -1143,7 +1143,7 @@ _papplPrinterSetAttributes(
     {
       count = ippGetCount(rattr);
 
-      for (i = 0; i < count; i ++)
+      for (i = 0; i < count && i < driver_data.num_source; i ++)
       {
         if ((pwg = pwgMediaForPWG(ippGetString(rattr, i, NULL))) != NULL)
         {

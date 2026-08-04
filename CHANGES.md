@@ -6,6 +6,7 @@ v1.4.12 - YYYY-MM-DD
 --------------------
 
 - CVE-2026-NNNNN: Added overflow protection to the dithering code paths.
+- CVE-2026-NNNNN: Added overflow protection for setting ready media values.
 - Added logging of the USB port status byte for USB-connected printers.
 - Now clear USB errors after a failed get device ID request.
 - Updated poll error handling and forced sleep to be consistent throughout.

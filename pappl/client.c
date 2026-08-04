@@ -1,7 +1,7 @@
 //
 // Client processing code for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -680,6 +680,9 @@ _papplClientRun(
       break;
 
     _papplClientCleanTempFiles(client);
+
+    // Limit maximum CPU usage by a single client...
+    usleep(1000);
   }
 
   // Close the connection to the client and return...

@@ -659,7 +659,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       // Limit CPU usage
       if (ptimeout > 0)
-	usleep(1);
+	usleep(1000);
 
       // Resume listening
       _papplRWLockRead(system);

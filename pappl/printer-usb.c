@@ -170,8 +170,14 @@ _papplPrinterRunUSB(
       {
 	break;
       }
-      else if (pcount > 0)
+      else if (pcount == 0)
       {
+	// No new data, sleep 1ms to prevent excessive CPU usage...
+	usleep(1000);
+      }
+      else
+      {
+        // Check for new data
 	papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "USB poll returned %d, revents=[%d %d %d %d].", pcount, data[0].revents, data[1].revents, data[2].revents, data[3].revents);
 
         if (data[0].revents & (POLLERR | POLLHUP))
@@ -329,11 +335,6 @@ _papplPrinterRunUSB(
 	    }
 	  }
 	}
-      }
-      else
-      {
-	// No new data, sleep 1ms to prevent excessive CPU usage...
-	usleep(1000);
       }
 
       if (device && (time(NULL) - device_time) > 5)

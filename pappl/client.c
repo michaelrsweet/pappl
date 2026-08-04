@@ -701,6 +701,9 @@ _papplClientRun(
       break;
 
     _papplClientCleanTempFiles(client);
+
+    // Limit maximum CPU usage by a single client...
+    usleep(1000);
   }
 
   // Close the connection to the client and return...

@@ -734,7 +734,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     {
       // Limit CPU usage
       if (ptimeout > 0)
-	usleep(1);
+	usleep(1000);
 
       // Resume listening
       if (system->num_clients < system->max_clients)

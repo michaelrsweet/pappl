@@ -103,19 +103,31 @@ _papplPrinterRunRaw(
     if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
       break;
 
-    // Wait 1/4 second for new connections...
-    if ((pcount = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 250)) < 0)
+    // Wait a second for new connections...
+    if ((pcount = poll(printer->raw_listeners, (nfds_t)printer->num_raw_listeners, 1000)) < 0)
     {
       if (errno != EAGAIN && errno != EINTR)
+      {
+	papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Raw poll failed: %s", strerror(errno));
 	break;
+      }
 
-      usleep(1);
-    }
-    else if (pcount > 0)
-    {
       if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
 	break;
 
+      sleep(1);
+    }
+    else if (papplPrinterIsDeleted(printer) || _papplSystemIsShutdownNoLock(printer->system))
+    {
+      break;
+    }
+    else if (pcount == 0)
+    {
+      // No new connections, sleep for 1ms to avoid hogging the CPU...
+      usleep(1000);
+    }
+    else if (pcount > 0)
+    {
       // Got a new connection request, accept from the corresponding listener...
       for (i = 0; i < printer->num_raw_listeners; i ++)
       {

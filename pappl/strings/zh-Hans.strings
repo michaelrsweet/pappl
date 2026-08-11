@@ -159,3 +159,4 @@
 "printer-state.4" = "正在处理";
 "printer-state.5" = "已停止";
 "sides" = "双面印刷";
+"  -d PRINTER       Specify printer." = "  -d PRINTER       指定打印机。";

@@ -127,6 +127,18 @@ struct _pappl_system_s			// System data
   pappl_pr_create_cb_t	create_cb;		// Printer driver creation callback
   pappl_pr_driver_cb_t	driver_cb;		// Printer driver initialization callback
   void			*driver_cbdata;		// Printer driver callback data
+
+  // Scanner management (fully separate from printer management)...
+  cups_rwlock_t		scanners_rwlock;	// Scanner array reader/writer lock
+  cups_array_t		*scanners;		// Array of scanners
+  int			default_scanner_id;	// Default scanner-id
+  int			next_scanner_id;	// Next scanner-id (separate ID space)
+  size_t		num_sc_drivers;		// Number of scanner drivers
+  pappl_sc_driver_t	*sc_drivers;		// Scanner drivers
+  pappl_sc_autoadd_cb_t	sc_autoadd_cb;		// Scanner auto-add callback
+  pappl_sc_create_cb_t	sc_create_cb;		// Scanner creation callback
+  pappl_sc_driver_cb_t	sc_driver_cb;		// Scanner driver init callback
+  void			*sc_driver_cbdata;	// Scanner driver callback data
   ipp_t			*attrs;			// Static attributes for system
   char			*auth_scheme;		// Authentication scheme
   pappl_auth_cb_t	auth_cb;		// Authentication callback
@@ -200,6 +212,7 @@ extern void		_papplSystemAddEventNoLockv(pappl_system_t *system, pappl_printer_t
 extern void		_papplSystemAddLoc(pappl_system_t *system, pappl_loc_t *loc) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinter(pappl_system_t *system, pappl_printer_t *printer, int printer_id) _PAPPL_PRIVATE;
 extern void		_papplSystemAddPrinterIcons(pappl_system_t *system, pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern void		_papplSystemAddScanner(pappl_system_t *system, pappl_scanner_t *scanner, int scanner_id) _PAPPL_PRIVATE;
 extern bool		_papplSystemAddSubscription(pappl_system_t *system, pappl_subscription_t *sub, int sub_id) _PAPPL_PRIVATE;
 
 extern void		_papplSystemCleanSubscriptions(pappl_system_t *system, bool clean_all) _PAPPL_PRIVATE;
@@ -211,6 +224,7 @@ extern _pappl_mime_filter_t *_papplSystemFindMIMEFilter(pappl_system_t *system, 
 extern _pappl_mime_inspector_t *_papplSystemFindMIMEInspector(pappl_system_t *system, const char *type) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResourceForLanguage(pappl_system_t *system, const char *language) _PAPPL_PRIVATE;
 extern _pappl_resource_t *_papplSystemFindResourceForPath(pappl_system_t *system, const char *path) _PAPPL_PRIVATE;
+extern pappl_scanner_t	*_papplSystemFindScanner(pappl_system_t *system, const char *resource, int scanner_id, const char *device_uri) _PAPPL_PRIVATE;
 
 extern bool		_papplSystemIsShutdownNoLock(pappl_system_t *system) _PAPPL_PRIVATE;
 

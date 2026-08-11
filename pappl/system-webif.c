@@ -693,6 +693,15 @@ _papplSystemWebHome(
 
   papplSystemIteratePrinters(system, (pappl_printer_cb_t)_papplPrinterWebIteratorCallback, client);
 
+  // Show scanners if any exist...
+  if (papplSystemGetNumberOfScanners(system) > 0)
+  {
+    papplClientHTMLPrintf(client,
+			  "          <h1 class=\"title\">%s</h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Scanners")));
+
+    papplSystemIterateScanners(system, (pappl_scanner_cb_t)_papplScannerWebIteratorCallback, client);
+  }
+
   papplClientHTMLPuts(client,
                       "        </div>\n"
                       "      </div>\n");

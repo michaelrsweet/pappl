@@ -108,6 +108,78 @@ _papplMainloopAddPrinter(
 
 
 //
+// '_papplMainloopAddScanner()' - Add a scanner.
+//
+
+int					// O - Exit status
+_papplMainloopAddScanner(
+    const char    *base_name,		// I - Base name
+    size_t    num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
+{
+  http_t	*http;			// Connection to server
+  ipp_t		*request;		// Create-Printer request
+  const char	*device_uri,		// Device URI
+		*driver_name,		// Name of driver
+		*scanner_name,		// Name of scanner
+		*printer_uri;		// Printer URI
+
+
+  // Get required values...
+  device_uri   = cupsGetOption("smi55357-device-uri", num_options, options);
+  driver_name  = cupsGetOption("smi55357-driver", num_options, options);
+  scanner_name = cupsGetOption("printer-name", num_options, options);
+
+  if (!device_uri || !driver_name || !scanner_name)
+  {
+    if (!scanner_name)
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d SCANNER'."), base_name);
+    if (!driver_name)
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-m DRIVER-NAME'."), base_name);
+    if (!device_uri)
+      _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-v DEVICE-URI'."), base_name);
+
+    return (1);
+  }
+
+  if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
+  {
+    char	resource[1024];		// Resource path
+
+    // Connect to the remote printer...
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
+  }
+  else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+  {
+    return (1);
+  }
+
+  // Send a Create-Printer request to the server with scanner service type...
+  request = ippNewRequest(IPP_OP_CREATE_PRINTER);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "printer-service-type", NULL, "scan");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD, "smi55357-driver", NULL, driver_name);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "smi55357-device-uri", NULL, device_uri);
+  ippAddString(request, IPP_TAG_PRINTER, IPP_TAG_NAME, "printer-name", NULL, scanner_name);
+
+  _papplMainloopAddOptions(request, num_options, options, NULL);
+
+  ippDelete(cupsDoRequest(http, request, "/ipp/system"));
+
+  httpClose(http);
+
+  if (cupsGetError() != IPP_STATUS_OK)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to add scanner: %s"), base_name, cupsGetErrorString());
+    return (1);
+  }
+
+  return (0);
+}
+
+
+//
 // '_papplMainloopAutoAddPrinters()' - Automatically add printers.
 //
 
@@ -293,6 +365,78 @@ _papplMainloopDeletePrinter(
   if (cupsGetError() != IPP_STATUS_OK)
   {
     _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to delete printer: %s"), base_name, cupsGetErrorString());
+    return (1);
+  }
+
+  return (0);
+}
+
+
+//
+// '_papplMainloopDeleteScanner()' - Delete a scanner.
+//
+
+int					// O - Exit status
+_papplMainloopDeleteScanner(
+    const char    *base_name,		// I - Base name
+    size_t    num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
+{
+  const char	*printer_uri,		// Printer URI
+		*scanner_name;		// Scanner name
+  http_t	*http;			// Server connection
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  char		resource[1024];		// Resource path
+  int		scanner_id;		// scanner-id value
+  static const char *pattrs = "printer-id";
+					// Requested attributes
+
+
+  // Connect to/start up the server and get the destination scanner...
+  if ((printer_uri = cupsGetOption("printer-uri", num_options, options)) != NULL)
+  {
+    // Connect to the remote printer...
+    if ((http = _papplMainloopConnectURI(base_name, printer_uri, resource, sizeof(resource))) == NULL)
+      return (1);
+
+    scanner_name = NULL;
+  }
+  else if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+  {
+    return (1);
+  }
+  else if ((scanner_name = cupsGetOption("printer-name", num_options, options)) == NULL)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Missing '-d SCANNER'."), base_name);
+    httpClose(http);
+    return (1);
+  }
+
+  // Get the printer-id for the scanner we are deleting...
+  response   = get_printer_attributes(http, printer_uri, scanner_name, resource, 1, &pattrs);
+  scanner_id = ippGetInteger(ippFindAttribute(response, "printer-id", IPP_TAG_INTEGER), 0);
+  ippDelete(response);
+
+  if (scanner_id == 0)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to get information for scanner: %s"), base_name, cupsGetErrorString());
+    httpClose(http);
+    return (1);
+  }
+
+  // Now that we have the printer-id, delete it from the system service...
+  request = ippNewRequest(IPP_OP_DELETE_PRINTER);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "printer-id", scanner_id);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  ippDelete(cupsDoRequest(http, request, "/ipp/system"));
+  httpClose(http);
+
+  if (cupsGetError() != IPP_STATUS_OK)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to delete scanner: %s"), base_name, cupsGetErrorString());
     return (1);
   }
 
@@ -672,6 +816,10 @@ _papplMainloopRunServer(
   if (system->num_drivers == 0 && num_drivers > 0 && drivers && driver_cb)
     papplSystemSetPrinterDrivers(system, num_drivers, drivers, autoadd_cb, /* create_cb */NULL, driver_cb, data);
 
+  // Set the scanner driver info as needed...
+  if (system->num_sc_drivers == 0 && _papplMainloopNumSCDrivers > 0 && _papplMainloopSCDrivers && _papplMainloopSCDriverCB)
+    papplSystemSetScannerDrivers(system, _papplMainloopNumSCDrivers, _papplMainloopSCDrivers, _papplMainloopSCAutoaddCB, /* create_cb */NULL, _papplMainloopSCDriverCB, data);
+
 #if _WIN32
   // Save the TCP/IP socket for the server in the registry so other processes
   // can find us...
@@ -754,6 +902,10 @@ _papplMainloopRunServer(
     {
       // If there is no state file, auto-add locally-connected printers...
       papplSystemCreatePrinters(system, PAPPL_DEVTYPE_LOCAL, /*cb*/NULL, /*cb_data*/NULL);
+
+      // Also auto-add locally-connected scanners if scanner drivers are set...
+      if (_papplMainloopSCAutoaddCB)
+        papplSystemCreateScanners(system, PAPPL_DEVTYPE_LOCAL, /*cb*/NULL, /*cb_data*/NULL);
     }
   }
 
@@ -1169,6 +1321,78 @@ _papplMainloopShowPrinters(
   (void)options;
 
   // Connect to/start up the server and get the list of printers...
+  if ((http = _papplMainloopConnect(base_name, true)) == NULL)
+    return (1);
+
+  request = ippNewRequest(IPP_OP_GET_PRINTERS);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "system-uri", NULL, "ipp://localhost/ipp/system");
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+
+  response = cupsDoRequest(http, request, "/ipp/system");
+
+  for (attr = ippFindAttribute(response, "printer-name", IPP_TAG_NAME); attr; attr = ippFindNextAttribute(response, "printer-name", IPP_TAG_NAME))
+    puts(ippGetString(attr, 0, NULL));
+
+  ippDelete(response);
+  httpClose(http);
+
+  return (0);
+}
+
+
+//
+// '_papplMainloopShowScannerDrivers()' - Show available scanner drivers.
+//
+
+int					// O - Exit status
+_papplMainloopShowScannerDrivers(
+    const char    *base_name,		// I - Basename of application
+    size_t    num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
+{
+  size_t		i;		// Looping variable
+
+
+  (void)base_name;
+  (void)num_options;
+  (void)options;
+
+  // Show scanner drivers registered via papplMainloopSetScannerDrivers()...
+  if (_papplMainloopNumSCDrivers == 0 || !_papplMainloopSCDrivers)
+  {
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: No scanner drivers available."), base_name);
+    return (1);
+  }
+
+  for (i = 0; i < _papplMainloopNumSCDrivers; i ++)
+  {
+    printf("%s \"%s\" \"%s\"\n", _papplMainloopSCDrivers[i].name, _papplMainloopSCDrivers[i].description ? _papplMainloopSCDrivers[i].description : "", _papplMainloopSCDrivers[i].device_id ? _papplMainloopSCDrivers[i].device_id : "");
+  }
+
+  return (0);
+}
+
+
+//
+// '_papplMainloopShowScanners()' - Show scanner queues.
+//
+
+int					// O - Exit status
+_papplMainloopShowScanners(
+    const char    *base_name,		// I - Base name
+    size_t    num_options,		// I - Number of options
+    cups_option_t *options)		// I - Options
+{
+  http_t	*http;			// Server connection
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  ipp_attribute_t *attr;		// Current attribute
+
+
+  (void)num_options;
+  (void)options;
+
+  // Connect to/start up the server and get the list of scanners...
   if ((http = _papplMainloopConnect(base_name, true)) == NULL)
     return (1);
 

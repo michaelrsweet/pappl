@@ -28,6 +28,7 @@ LIBOBJS	=	\
 		job-filter.o \
 		job-ipp.o \
 		job-process.o \
+		job-scan.o \
 		job.o \
 		link.o \
 		loc.o \
@@ -50,6 +51,12 @@ LIBOBJS	=	\
 		qrcode-base.o \
 		qrcode-bb.o \
 		qrcode-dataurl.o \
+		scanner.o \
+		scanner-accessors.o \
+		scanner-driver.o \
+		scanner-escl.o \
+		scanner-ipp.o \
+		scanner-webif.o \
 		snmp.o \
 		subscription.o \
 		subscription-ipp.o \
@@ -60,6 +67,7 @@ LIBOBJS	=	\
 		system-loadsave.o \
 		system-loc.o \
 		system-printer.o \
+		system-scanner.o \
 		system-subscription.o \
 		system-webif.o \
 		util.o
@@ -77,6 +85,7 @@ HEADERS	=	\
 		mainloop.h \
 		pappl.h \
 		printer.h \
+		scanner.h \
 		subscription.h \
 		system.h
 

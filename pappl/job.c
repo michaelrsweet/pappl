@@ -263,6 +263,7 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 
   free(job->message);
   free(job->log_prefix);
+  free(job->scan_options);
 
   // Only remove the job file (document) if the job is in a terminating state...
   if (job->state >= IPP_JSTATE_CANCELED)

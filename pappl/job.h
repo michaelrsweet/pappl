@@ -105,6 +105,11 @@ extern void		papplJobSetMessage(pappl_job_t *job, const char *message, ...) _PAP
 extern void		papplJobSetReasons(pappl_job_t *job, pappl_jreason_t add, pappl_jreason_t remove) _PAPPL_PUBLIC;
 extern void		papplJobSuspend(pappl_job_t *job, pappl_jreason_t add) _PAPPL_PUBLIC;
 
+// Scan job functions...
+extern pappl_sc_options_t *papplJobCreateScanOptions(pappl_job_t *job) _PAPPL_PUBLIC;
+extern void		papplJobDeleteScanOptions(pappl_sc_options_t *options) _PAPPL_PUBLIC;
+extern pappl_scanner_t	*papplJobGetScanner(pappl_job_t *job) _PAPPL_PUBLIC;
+
 
 #  ifdef __cplusplus
 }

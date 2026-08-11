@@ -4433,6 +4433,35 @@ fi
 
 
 
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for Mini-XML library v4.x" >&5
+printf %s "checking for Mini-XML library v4.x... " >&6; }
+if $PKGCONFIG --exists mxml4
+then :
+
+    MXML_VERSION="$($PKGCONFIG --modversion mxml4)"
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes, v$MXML_VERSION" >&5
+printf "%s\n" "yes, v$MXML_VERSION" >&6; }
+    CPPFLAGS="$($PKGCONFIG --cflags mxml4) $CPPFLAGS"
+    LIBS="$($PKGCONFIG --libs mxml4) $LIBS"
+    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs mxml4) $PKGCONFIG_LIBS_PRIVATE"
+    MXML_LIBDIR="$($PKGCONFIG --variable=libdir mxml4)"
+    if test "x$MXML_LIBDIR" != x -a "x$MXML_LIBDIR" != x/usr/lib -a "x$MXML_LIBDIR" != x/usr/lib64
+then :
+
+        LDFLAGS="$LDFLAGS -Wl,-rpath,$MXML_LIBDIR"
+        DSOFLAGS="$DSOFLAGS -Wl,-rpath,$MXML_LIBDIR"
+
+fi
+
+else $as_nop
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    as_fn_error $? "Sorry, Mini-XML >= 4.0 is required for eSCL scanner support. Get it from https://www.msweet.org/mxml/" "$LINENO" 5
+
+fi
+
+
 # Check whether --enable-libjpeg was given.
 if test ${enable_libjpeg+y}
 then :

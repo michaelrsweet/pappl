@@ -144,6 +144,16 @@ typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 					// Save callback function
 
+typedef void (*pappl_scanner_cb_t)(pappl_scanner_t *scanner, void *data);
+					// Scanner iterator callback function
+
+typedef const char *(*pappl_sc_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
+					// Scanner auto-add callback
+typedef void (*pappl_sc_create_cb_t)(pappl_scanner_t *scanner, void *data);
+					// Scanner creation callback
+typedef bool (*pappl_sc_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_sc_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+					// Scanner driver callback function
+
 typedef bool (*pappl_timer_cb_t)(pappl_system_t *system, void *cb_data);
 					// Timer callback function
 
@@ -182,18 +192,21 @@ extern bool		papplSystemAddTimerCallback(pappl_system_t *system, time_t start, i
 extern void		papplSystemCleanJobs(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_system_t	*papplSystemCreate(pappl_soptions_t options, const char *name, int port, const char *subtypes, const char *spooldir, const char *logfile, pappl_loglevel_t loglevel, const char *auth_service, bool tls_only) _PAPPL_PUBLIC;
 extern bool		papplSystemCreatePrinters(pappl_system_t *system, pappl_devtype_t types, pappl_pr_create_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
+extern bool		papplSystemCreateScanners(pappl_system_t *system, pappl_devtype_t types, pappl_sc_create_cb_t cb, void *cb_data) _PAPPL_PUBLIC;
 
 extern void		papplSystemDelete(pappl_system_t *system) _PAPPL_PUBLIC;
 
 extern pappl_printer_t	*papplSystemFindInfraPrinter(pappl_system_t *system, const char *device_uuid) _PAPPL_PUBLIC;
 extern pappl_loc_t	*papplSystemFindLoc(pappl_system_t *system, const char *language) _PAPPL_PUBLIC;
 extern pappl_printer_t	*papplSystemFindPrinter(pappl_system_t *system, const char *resource, int printer_id, const char *device_uri) _PAPPL_PUBLIC;
+extern pappl_scanner_t	*papplSystemFindScanner(pappl_system_t *system, const char *resource, int scanner_id, const char *device_uri) _PAPPL_PUBLIC;
 extern pappl_subscription_t *papplSystemFindSubscription(pappl_system_t *system, int sub_id) _PAPPL_PUBLIC;
 
 extern char		*papplSystemGetAdminGroup(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetAuthService(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_contact_t	*papplSystemGetContact(pappl_system_t *system, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern int		papplSystemGetDefaultPrinterID(pappl_system_t *system) _PAPPL_PUBLIC;
+extern int		papplSystemGetDefaultScannerID(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetDefaultPrintGroup(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetDNSSDName(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern const char	*papplSystemGetFooterHTML(pappl_system_t *system) _PAPPL_PUBLIC;
@@ -209,7 +222,9 @@ extern size_t		papplSystemGetMaxLogSize(pappl_system_t *system) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetMaxSubscriptions(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetName(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern int		papplSystemGetNextPrinterID(pappl_system_t *system) _PAPPL_PUBLIC;
+extern int		papplSystemGetNextScannerID(pappl_system_t *system) _PAPPL_PUBLIC;
 extern size_t		papplSystemGetNumberOfPrinters(pappl_system_t *system) _PAPPL_PUBLIC;
+extern size_t		papplSystemGetNumberOfScanners(pappl_system_t *system) _PAPPL_PUBLIC;
 extern pappl_soptions_t	papplSystemGetOptions(pappl_system_t *system) _PAPPL_PUBLIC;
 extern char		*papplSystemGetOrganization(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
 extern char		*papplSystemGetOrganizationalUnit(pappl_system_t *system, char *buffer, size_t bufsize) _PAPPL_PUBLIC;
@@ -225,6 +240,7 @@ extern char		*papplSystemHashPassword(pappl_system_t *system, const char *salt, 
 extern bool		papplSystemIsRunning(pappl_system_t *system) _PAPPL_PUBLIC;
 extern bool		papplSystemIsShutdown(pappl_system_t *system) _PAPPL_PUBLIC;
 extern void		papplSystemIteratePrinters(pappl_system_t *system, pappl_printer_cb_t cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemIterateScanners(pappl_system_t *system, pappl_scanner_cb_t cb, void *data) _PAPPL_PUBLIC;
 
 extern bool		papplSystemLoadState(pappl_system_t *system, const char *filename) _PAPPL_PUBLIC;
 
@@ -241,6 +257,7 @@ extern void		papplSystemSetAdminGroup(pappl_system_t *system, const char *value)
 extern void		papplSystemSetAuthCallback(pappl_system_t *system, const char *auth_scheme, pappl_auth_cb_t auth_cb, void *auth_cbdata) _PAPPL_PUBLIC;
 extern void		papplSystemSetContact(pappl_system_t *system, pappl_contact_t *contact) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrinterID(pappl_system_t *system, int default_printer_id) _PAPPL_PUBLIC;
+extern void		papplSystemSetDefaultScannerID(pappl_system_t *system, int default_scanner_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetDefaultPrintGroup(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetDNSSDName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetEventCallback(pappl_system_t *system, pappl_event_cb_t event_cb, void *event_data) _PAPPL_PUBLIC;
@@ -258,11 +275,13 @@ extern void		papplSystemSetMaxSubscriptions(pappl_system_t *system, size_t max_s
 extern void		papplSystemSetMIMECallback(pappl_system_t *system, pappl_mime_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetNetworkCallbacks(pappl_system_t *system, pappl_network_get_cb_t get_cb, pappl_network_set_cb_t set_cb, void *cb_data) _PAPPL_PUBLIC;
 extern void		papplSystemSetNextPrinterID(pappl_system_t *system, int next_printer_id) _PAPPL_PUBLIC;
+extern void		papplSystemSetNextScannerID(pappl_system_t *system, int next_scanner_id) _PAPPL_PUBLIC;
 extern void		papplSystemSetOperationCallback(pappl_system_t *system, pappl_ipp_op_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetOrganization(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetOrganizationalUnit(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetPassword(pappl_system_t *system, const char *hash) _PAPPL_PUBLIC;
 extern void		papplSystemSetPrinterDrivers(pappl_system_t *system, size_t num_drivers, pappl_pr_driver_t *drivers, pappl_pr_autoadd_cb_t autoadd_cb, pappl_pr_create_cb_t create_cb, pappl_pr_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
+extern void		papplSystemSetScannerDrivers(pappl_system_t *system, size_t num_drivers, pappl_sc_driver_t *drivers, pappl_sc_autoadd_cb_t autoadd_cb, pappl_sc_create_cb_t create_cb, pappl_sc_driver_cb_t driver_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetRegisterCallbacks(pappl_system_t *system, pappl_pr_register_cb_t reg_cb, pappl_pr_deregister_cb_t dereg_cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetSaveCallback(pappl_system_t *system, pappl_save_cb_t cb, void *data) _PAPPL_PUBLIC;
 extern void		papplSystemSetUUID(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;

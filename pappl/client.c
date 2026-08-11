@@ -493,6 +493,7 @@ _papplClientProcessHTTP(
 // - `HTTP_STATUS_FORBIDDEN`: Authenticated but not allowed.
 // - `HTTP_STATUS_METHOD_NOT_ALLOWED`: The HTTP method is not supported for the
 //   given URI.
+// - `HTTP_STATUS_NOT_FOUND`: The resource was not found.
 // - `HTTP_STATUS_UNAUTHORIZED`: Not authenticated.
 // - `HTTP_STATUS_UPGRADE_REQUIRED`: Redirects the client to a secure page.
 //

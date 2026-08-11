@@ -781,7 +781,9 @@ papplPrinterDelete(
 
   // Remove the printer from the system object...
   _papplRWLockWrite(system);
+  pthread_rwlock_wrlock(&system->printers_rwlock);
   cupsArrayRemove(system->printers, printer);
+  pthread_rwlock_unlock(&system->printers_rwlock);
   _papplRWUnlock(system);
 
   _papplPrinterDelete(printer);

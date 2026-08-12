@@ -378,7 +378,8 @@ _papplClientProcessHTTP(
 	}
 
         // If we get here the resource wasn't found...
-	return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
+	papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
+	return (false);
 
     case HTTP_STATE_GET :
         // See if we have a matching resource to serve...
@@ -431,7 +432,8 @@ _papplClientProcessHTTP(
 	}
 
         // If we get here then the resource wasn't found...
-	return (papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0));
+	papplClientRespond(client, HTTP_STATUS_NOT_FOUND, NULL, NULL, 0, 0);
+	return (false);
 
     case HTTP_STATE_POST :
         if (!strcmp(httpGetField(client->http, HTTP_FIELD_CONTENT_TYPE), "application/ipp"))
@@ -463,13 +465,15 @@ _papplClientProcessHTTP(
           else
           {
             // Otherwise you can't POST to a resource...
-	    return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+	    papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
+	    return (false);
           }
         }
         else
         {
 	  // Not an IPP request or form, return an error...
-	  return (papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0));
+	  papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
+	  return (false);
 	}
 
     default :
@@ -541,7 +545,7 @@ papplClientRespond(
   httpSetField(client->http, HTTP_FIELD_SERVER, papplSystemGetServerHeader(client->system));
   if (last_modified)
     httpSetField(client->http, HTTP_FIELD_LAST_MODIFIED, httpGetDateString(last_modified, last_str, sizeof(last_str)));
-  if (client->close_it)
+  if (client->close_it || code >= HTTP_STATUS_BAD_REQUEST)
     httpSetField(client->http, HTTP_FIELD_CONNECTION, "close");
   if (code == HTTP_STATUS_METHOD_NOT_ALLOWED || client->operation == HTTP_STATE_OPTIONS)
     httpSetField(client->http, HTTP_FIELD_ALLOW, "GET, HEAD, OPTIONS, POST");

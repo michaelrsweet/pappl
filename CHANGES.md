@@ -10,6 +10,7 @@ v1.4.12 - YYYY-MM-DD
 - Added logging of the USB port status byte for USB-connected printers.
 - Now clear USB errors after a failed get device ID request.
 - Updated poll error handling and forced sleep to be consistent throughout.
+- Now close HTTP connections immediately after returning an error (Issue #431)
 - Fixed a locking issue when deleting a printer (Issue #433)
 
 

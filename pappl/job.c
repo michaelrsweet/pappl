@@ -498,7 +498,7 @@ papplJobOpenFile(
   if ((job_name = ippGetString(ippFindAttribute(job->attrs, "job-name", IPP_TAG_NAME), 0, NULL)) == NULL)
     job_name = "untitled";
 
-  if ((nameptr = strrchr(job_name, '/')) != NULL && nameptr[1])
+  if ((nameptr = (char *)strrchr(job_name, '/')) != NULL && nameptr[1])
     job_name = nameptr + 1;
 
   for (nameptr = name; *job_name && nameptr < (name + sizeof(name) - 1); job_name ++)

@@ -120,7 +120,7 @@ static inline char *win32_realpath(const char *relpath, char *abspath)
 
 #define _PAPPL_DEFAULT_CLIENTS	100
 #define _PAPPL_DEFAULT_REQUESTS	1000
-#define _PAPPL_HEARTBEAT_INTERVAL 30
+#define _PAPPL_HEARTBEAT_INTERVAL 60
 #define _PAPPL_MAX_CLIENTS	1000
 #define _PAPPL_MAX_REQUESTS	100000
 #define _PAPPL_MAX_TIMER_COUNT	32

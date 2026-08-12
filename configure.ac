@@ -405,7 +405,7 @@ AS_IF([test -n "$GCC"], [
     WARNINGS="-Wall -Wunused"
 
     dnl Drop some not-useful/unreliable warnings...
-    for warning in char-subscripts format-truncation format-y2k switch unused-result; do
+    for warning in char-subscripts format-truncation format-y2k bidi-chars switch unused-result; do
 	AC_MSG_CHECKING([whether compiler supports -Wno-$warning])
 
 	OLDCFLAGS="$CFLAGS"

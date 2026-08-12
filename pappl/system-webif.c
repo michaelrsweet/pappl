@@ -1,7 +1,7 @@
 //
 // System web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -720,7 +720,7 @@ _papplSystemWebLogFile(
     ssize_t		bytes;		// Bytes read/written
     size_t		length = 0;	// Log length
     const char		*value;		// Range Field value
-    char		*rangeptr;	// Pointer into range...
+    const char		*rangeptr;	// Pointer into range...
     char		buffer[8192];	// Copy buffer
     int			fd;		// Resource file descriptor
     long		low = 0,	// Log lower range
@@ -731,7 +731,7 @@ _papplSystemWebLogFile(
     // If range exists, send log content from low to high
     if (value && *value && (rangeptr = strstr(value, "bytes=")) != NULL)
     {
-      if ((low = strtol(rangeptr + 6, &rangeptr, 10)) < 0)
+      if ((low = strtol(rangeptr + 6, (char **)&rangeptr, 10)) < 0)
         low = 0;
       else if (rangeptr && *rangeptr == '-' && isdigit(rangeptr[1] & 255))
         high = strtol(rangeptr + 1, NULL, 10);

@@ -22,6 +22,7 @@
 /pappl/parse-lock-log
 /Makedefs
 /testsuite/test.log
+/testsuite/testbluetooth
 /testsuite/testhttpmon
 /testsuite/testmainloop
 /testsuite/testpappl

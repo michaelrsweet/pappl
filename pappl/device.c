@@ -1128,6 +1128,9 @@ pappl_create_schemes_no_lock(void)
   _papplDeviceAddFileSchemeNoLock();
   _papplDeviceAddNetworkSchemesNoLock();
   _papplDeviceAddUSBSchemeNoLock();
+#if defined(HAVE_LIBBLUETOOTH) && defined(HAVE_DBUS)
+  _papplDeviceAddBluetoothSchemesNoLock();
+#endif // HAVE_LIBBLUETOOTH && HAVE_DBUS
 }
 
 

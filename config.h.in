@@ -42,6 +42,14 @@
 #undef HAVE_LIBUSB
 
 
+// D-Bus
+#undef HAVE_DBUS
+
+
+// Bluetooth
+#undef HAVE_LIBBLUETOOTH
+
+
 // libpam
 #undef HAVE_LIBPAM
 #undef HAVE_SECURITY_PAM_APPL_H

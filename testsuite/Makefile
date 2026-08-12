@@ -12,12 +12,14 @@ include ../Makedefs
 
 OBJS	=	\
 		pwg-driver.o \
+		testbluetooth.o \
 		testhttpmon.o \
 		testmainloop.o \
 		testpappl.o \
 		testqrcode.o
 
 TARGETS	=	\
+		testbluetooth \
 		testhttpmon \
 		testmainloop \
 		testpappl \
@@ -47,11 +49,13 @@ install:
 
 
 # Test everything
-test:		testpappl
+test:		testpappl testbluetooth
 	$(RM) testpappl.log
 	$(RM) -r testpappl.output
 	$(MKDIR) testpappl.output
 	date >test.log
+	echo "./testbluetooth"
+	./testbluetooth 2>>test.log
 	echo "./testhttpmon"
 	./testhttpmon 2>>test.log
 	echo "./testqrcode"
@@ -79,6 +83,13 @@ testmainloop:	testmainloop.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
 testpappl:	testpappl.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
 	echo Linking $@...
 	$(CC) $(LDFLAGS) -o $@ testpappl.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
+	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
+
+
+# Bluetooth unit test
+testbluetooth:	testbluetooth.o ../pappl/$(LINKPAPPL_STATIC)
+	echo Linking $@...
+	$(CC) $(LDFLAGS) -o $@ testbluetooth.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 

@@ -2,7 +2,7 @@ Changes in PAPPL
 ================
 
 
-v1.4.12 - YYYY-MM-DD
+v1.4.12 - 2026-08-20
 --------------------
 
 - CVE-2026-NNNNN: Added overflow protection to the dithering code paths.

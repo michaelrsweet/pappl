@@ -1,7 +1,7 @@
 //
 // Common device support code for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1085,7 +1085,7 @@ papplDeviceWrite(
   if (!device)
     return (-1);
 
-  if ((device->bufused + bytes) > sizeof(device->buffer))
+  if (device->bufused > 0 && (device->bufused + bytes) > sizeof(device->buffer))
   {
     // Flush the write buffer...
     if (pappl_write(device, device->buffer, device->bufused) < 0)

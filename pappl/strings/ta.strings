@@ -1,3 +1,11 @@
+"   --help                  Show program help." = "   --help                  Show program help.";
+"   --version               Show PAPPL version." = "   --version               Show PAPPL version.";
+"   -R/--read-only PATH     Allow read access to the specified file or directory." = "   -R/--read-only PATH     Allow read access to the specified file or directory.";
+"   -W/--read-write PATH    Allow read/write access to the specified file or directory." = "   -W/--read-write PATH    Allow read/write access to the specified file or directory.";
+"   -X/--read-exec PATH     Allow read/execute access to the specified file or directory." = "   -X/--read-exec PATH     Allow read/execute access to the specified file or directory.";
+"   -g/--group GROUP        Specify run group." = "   -g/--group GROUP        Specify run group.";
+"   -n/--allow-networking   Allow outgoing network connections." = "   -n/--allow-networking   Allow outgoing network connections.";
+"   -u/--user USER          Specify run user." = "   -u/--user USER          Specify run user.";
 "  -a               Cancel all jobs (cancel)." = "  எல்லா வேலைகளையும் நீக்கறல் (ரத்துசெய்).";
 "  -c COPIES" = "  -C பிரதிகள்";
 "  -d PRINTER       Specify printer." = "  -d அச்சுப்பொறி அச்சுப்பொறியைக் குறிப்பிடவும்.";
@@ -111,6 +119,7 @@
 "Aruba" = "அரூபா";
 "Australia" = "ஆச்திரேலியா";
 "Austria" = "ஆச்திரியா";
+"Authorization Required" = "Authorization Required";
 "Auto" = "தானி";
 "Auto-Detect Driver" = "தானாக கண்டறியும் இயக்கி";
 "Azerbaijan" = "அசர்பைசான்";
@@ -155,6 +164,7 @@
 "Certificate request created." = "சான்றிதழ் கோரிக்கை உருவாக்கப்பட்டது.";
 "Chad" = "சாட்";
 "Change Access Password" = "அணுகல் கடவுச்சொல்லை மாற்றவும்";
+"Change Hostname" = "Change Hostname";
 "Change Log Level" = "பதிவு அளவை மாற்றவும்";
 "Change Network Settings" = "பிணைய அமைப்புகளை மாற்றவும்";
 "Change Wi-Fi Network" = "வைஃபை நெட்வொர்க்கை மாற்றவும்";
@@ -163,7 +173,9 @@
 "Chile" = "சிலி";
 "China" = "சீனா";
 "Christmas Island" = "கிறிச்துமச் தீவு";
-"City/Locality" = "நகரம்/இடம்";
+"City/town name" = "City/town name";
+"Cloud Printer URI:" = "Cloud Printer URI:";
+"Cloud Printing" = "Cloud Printing";
 "Cocos (Keeling) Islands" = "கோகோச்(கீலிங்) தீவு";
 "Colombia" = "கொலம்பியா";
 "Comoros" = "கோமரோச்";
@@ -174,8 +186,10 @@
 "Confirm Delete Printer" = "நீக்கு அச்சுப்பொறியை உறுதிப்படுத்தவும்";
 "Congo" = "காங்கோ";
 "Congo, Democratic Republic of the" = "காங்கோ, சனநாயக குடியரசு";
+"Connect" = "Connect";
 "Contact" = "தொடர்பு";
 "Cook Islands" = "குக் தீவு";
+"Copy the following code:" = "Copy the following code:";
 "Costa Rica" = "கோச்டாரிகா";
 "Create Certificate Signing Request" = "சான்றிதழ் கையொப்பமிடும் கோரிக்கையை உருவாக்கவும்";
 "Create New Certificate" = "புதிய சான்றிதழை உருவாக்கவும்";
@@ -197,6 +211,7 @@
 "Delete" = "நீக்கு";
 "Delete Printer" = "அச்சுப்பொறியை நீக்கு";
 "Denmark" = "டென்மார்க்";
+"Disconnect" = "Disconnect";
 "Djibouti" = "சிபூட்டி";
 "Domain Name" = "டொமைன் பெயர்";
 "Dominica" = "டொமினிக்கா";
@@ -259,6 +274,7 @@
 "IPv6 Prefix Length" = "IPv6 முன்னொட்டு நீளம்";
 "Iceland" = "ஐச்லாந்து";
 "Identify Printer" = "அச்சுப்பொறியை அடையாளம் காணவும்";
+"Idle" = "Idle";
 "India" = "இந்தியா";
 "Indonesia" = "இந்தோனேசியா";
 "Informational" = "செய்தி";
@@ -328,8 +344,11 @@
 "Mexico" = "மெக்சிகோ";
 "Micronesia (Federated States of)" = "மைக்ரோனேசியா (கூட்டாட்சி மாநிலங்கள்)";
 "Missing action." = "நடவடிக்கை இல்லை.";
+"Missing cloud provider." = "Missing cloud provider.";
 "Missing job ID." = "வேலை அடையாளம் காணவில்லை.";
 "Missing network name." = "பிணையம் பெயரைக் காணவில்லை.";
+"Missing printer-uuid attribute in registration response." = "Missing printer-uuid attribute in registration response.";
+"Missing printer-xri-supported attribute in registration response." = "Missing printer-xri-supported attribute in registration response.";
 "Missing private key." = "தனியார் விசையை காணவில்லை.";
 "Moldova, Republic of" = "மோல்ட்வா குடியரசு";
 "Monaco" = "மொனாக்கோ";
@@ -359,6 +378,7 @@
 "North Macedonia" = "வடக்கு மாசிடோனியா";
 "Northern Mariana Islands" = "வட மரியானா தீவுகள்";
 "Norway" = "நார்வே";
+"Not Connected" = "Not Connected";
 "Not set" = "அமைக்கப்படவில்லை";
 "Off" = "அணை";
 "Offset" = "ஈடுசெய்யும்";
@@ -366,6 +386,7 @@
 "Options:" = "விருப்பங்கள்:";
 "Organization" = "அமைப்பு";
 "Organization Name" = "அமைப்பு பெயர்";
+"Other Provider" = "Other Provider";
 "Other Settings" = "பிற அமைப்புகள்";
 "Pakistan" = "பாகிச்தான்";
 "Palau" = "பலாவு";
@@ -375,6 +396,7 @@
 "Paraguay" = "பராகுவே";
 "Password" = "கடவுச்சொல்";
 "Password changed." = "கடவுச்சொல் மாற்றப்பட்டது.";
+"Password cleared." = "Password cleared.";
 "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit." = "கடவுச்சொல் குறைந்தது எட்டு எழுத்துக்கள் நீளமாக இருக்க வேண்டும் மற்றும் குறைந்தது ஒரு பெரிய எழுத்து, ஒரு சிறிய எழுத்து மற்றும் ஒரு இலக்கத்தைக் கொண்டிருக்க வேண்டும்.";
 "Passwords do not match." = "கடவுச்சொற்கள் பொருந்தவில்லை.";
 "Pause Printing" = "இடைநிறுத்தம் அச்சிடுதல்";
@@ -401,6 +423,7 @@
 "Printer pausing." = "அச்சுப்பொறி இடைநிறுத்தம்.";
 "Printer resuming." = "அச்சுப்பொறி மீண்டும் தொடங்குகிறது.";
 "Printers" = "அச்சுப்பொறிகள்";
+"Printing" = "Printing";
 "Printing Defaults" = "இயல்புநிலைகளை அச்சிடுதல்";
 "Puerto Rico" = "போர்ட்டோ ரீக்கோ";
 "Qatar" = "கதார்";
@@ -501,6 +524,7 @@
 "Updating Network Configuration" = "பிணைய உள்ளமைவைப் புதுப்பித்தல்";
 "Uruguay" = "உருகுவே";
 "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n" = "பயன்பாடு: %s துணை கட்டளை [விருப்பங்கள்] [கோப்பு பெயர்]\n";
+"Usage: pappl-exec [OPTIONS] PROGRAM ARGUMENT(S)\n" = "Usage: pappl-exec [OPTIONS] PROGRAM ARGUMENT(S)\n";
 "Use My Position" = "எனது நிலையைப் பயன்படுத்துங்கள்";
 "Users" = "பயனர்கள்";
 "Uzbekistan" = "உச்பெகிச்தான்";
@@ -521,6 +545,7 @@
 "Yemen" = "யேமன்";
 "Zambia" = "சாம்பியா";
 "Zimbabwe" = "சிம்பாப்வே";
+"and go to the following URL:" = "and go to the following URL:";
 "at %02d:%02d:%02d" = "%02d இல்:%02d:%02d";
 "copies" = "பிரதிகளின் எண்ணிக்கை";
 "default printer" = "இயல்புநிலை அச்சுப்பொறி";
@@ -950,6 +975,7 @@
 "not visible" = "தெரியவில்லை";
 "off" = "அணை";
 "on" = "ஆன்";
+"or scan/tap the QR code below:" = "or scan/tap the QR code below:";
 "orientation-requested" = "நோக்குநிலை";
 "orientation-requested.3" = "உருவப்படம்";
 "orientation-requested.4" = "நிலப்பரப்பு";
@@ -1000,6 +1026,27 @@
 "output-bin.tray-7" = "தட்டு 7";
 "output-bin.tray-8" = "தட்டு 8";
 "output-bin.tray-9" = "தட்டு 9";
+"pappl-exec: Group '%s' not found." = "pappl-exec: Group '%s' not found.";
+"pappl-exec: Invalid group ID '%s'." = "pappl-exec: Invalid group ID '%s'.";
+"pappl-exec: Invalid user ID '%s'." = "pappl-exec: Invalid user ID '%s'.";
+"pappl-exec: Landlock does not appear to be supported by the running kernel." = "pappl-exec: Landlock does not appear to be supported by the running kernel.";
+"pappl-exec: Missing group name after '%s'." = "pappl-exec: Missing group name after '%s'.";
+"pappl-exec: Missing path after '%s'." = "pappl-exec: Missing path after '%s'.";
+"pappl-exec: Missing user name after '%s'." = "pappl-exec: Missing user name after '%s'.";
+"pappl-exec: No program or arguments specified." = "pappl-exec: No program or arguments specified.";
+"pappl-exec: Unable to access '%s' for rule: %s" = "pappl-exec: Unable to access '%s' for rule: %s";
+"pappl-exec: Unable to access '%s' for sandbox profile: %s" = "pappl-exec: Unable to access '%s' for sandbox profile: %s";
+"pappl-exec: Unable to add '%s' to rule set: %s" = "pappl-exec: Unable to add '%s' to rule set: %s";
+"pappl-exec: Unable to apply landlock rule set: %s" = "pappl-exec: Unable to apply landlock rule set: %s";
+"pappl-exec: Unable to apply sandbox profile '%s': %s" = "pappl-exec: Unable to apply sandbox profile '%s': %s";
+"pappl-exec: Unable to create landlock rule set: %s" = "pappl-exec: Unable to create landlock rule set: %s";
+"pappl-exec: Unable to create sandbox profile: %s" = "pappl-exec: Unable to create sandbox profile: %s";
+"pappl-exec: Unable to execute '%s': %s" = "pappl-exec: Unable to execute '%s': %s";
+"pappl-exec: Unable to find program '%s' for sandbox profile." = "pappl-exec: Unable to find program '%s' for sandbox profile.";
+"pappl-exec: Unable to prepare landlock rule set: %s" = "pappl-exec: Unable to prepare landlock rule set: %s";
+"pappl-exec: Unknown option '%s'." = "pappl-exec: Unknown option '%s'.";
+"pappl-exec: Unknown option '-%c'." = "pappl-exec: Unknown option '-%c'.";
+"pappl-exec: User '%s' not found." = "pappl-exec: User '%s' not found.";
 "print-color-mode" = "அச்சு பயன்முறை";
 "print-color-mode.auto" = "தானியங்கி";
 "print-color-mode.auto-monochrome" = "ஆட்டோ மோனோக்ரோம்";

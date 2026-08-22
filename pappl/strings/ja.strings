@@ -1,3 +1,11 @@
+"   --help                  Show program help." = "   --help                  Show program help.";
+"   --version               Show PAPPL version." = "   --version               Show PAPPL version.";
+"   -R/--read-only PATH     Allow read access to the specified file or directory." = "   -R/--read-only PATH     Allow read access to the specified file or directory.";
+"   -W/--read-write PATH    Allow read/write access to the specified file or directory." = "   -W/--read-write PATH    Allow read/write access to the specified file or directory.";
+"   -X/--read-exec PATH     Allow read/execute access to the specified file or directory." = "   -X/--read-exec PATH     Allow read/execute access to the specified file or directory.";
+"   -g/--group GROUP        Specify run group." = "   -g/--group GROUP        Specify run group.";
+"   -n/--allow-networking   Allow outgoing network connections." = "   -n/--allow-networking   Allow outgoing network connections.";
+"   -u/--user USER          Specify run user." = "   -u/--user USER          Specify run user.";
 "  -a               Cancel all jobs (cancel)." = "  -a すべてのジョブをキャンセル (cancel)";
 "  -c COPIES" = "  -c コピー";
 "  -d PRINTER       Specify printer." = "  -dプリンターを指定する";
@@ -116,6 +124,7 @@
 "Aruba" = "アルバ";
 "Australia" = "オーストラリア";
 "Austria" = "オーストリア";
+"Authorization Required" = "Authorization Required";
 "Auto" = "自動車";
 "Auto-Detect Driver" = "自動検出の運転者";
 "Azerbaijan" = "アゼルバイジャン";
@@ -160,6 +169,7 @@
 "Certificate request created." = "証明書作成リクエスト";
 "Chad" = "チャド";
 "Change Access Password" = "アクセスパスワードの変更";
+"Change Hostname" = "Change Hostname";
 "Change Log Level" = "ログレベルを変更する";
 "Change Network Settings" = "Change Network Settings";
 "Change Wi-Fi Network" = "Wi-Fiネットワークの変更";
@@ -168,7 +178,9 @@
 "Chile" = "チリ";
 "China" = "中国の";
 "Christmas Island" = "クリスマス島";
-"City/Locality" = "City/Locality";
+"City/town name" = "City/town name";
+"Cloud Printer URI:" = "Cloud Printer URI:";
+"Cloud Printing" = "Cloud Printing";
 "Cocos (Keeling) Islands" = "ココス諸島(ケイリング)";
 "Colombia" = "コロンビア";
 "Comoros" = "コモロ";
@@ -179,8 +191,10 @@
 "Confirm Delete Printer" = "プリンターの削除を確認する";
 "Congo" = "コンゴ";
 "Congo, Democratic Republic of the" = "コンゴ、民主共和国";
+"Connect" = "Connect";
 "Contact" = "お問い合わせ";
 "Cook Islands" = "クック諸島";
+"Copy the following code:" = "Copy the following code:";
 "Costa Rica" = "コスタリカ";
 "Create Certificate Signing Request" = "証明書署名リクエストを作成する";
 "Create New Certificate" = "新しい証明書を作成する";
@@ -202,6 +216,7 @@
 "Delete" = "削除";
 "Delete Printer" = "プリンターの削除";
 "Denmark" = "デンマーク";
+"Disconnect" = "Disconnect";
 "Djibouti" = "ジブチ";
 "Domain Name" = "Domain Name";
 "Dominica" = "ドミニカ";
@@ -264,6 +279,7 @@
 "IPv6 Prefix Length" = "IPv6 Prefix Length";
 "Iceland" = "アイスランド";
 "Identify Printer" = "プリンターの識別";
+"Idle" = "Idle";
 "India" = "インド";
 "Indonesia" = "インドネシア";
 "Informational" = "インフォメーション";
@@ -333,8 +349,11 @@
 "Mexico" = "メキシコ";
 "Micronesia (Federated States of)" = "マイクロネシア(連邦)";
 "Missing action." = "行動を欠く。";
+"Missing cloud provider." = "Missing cloud provider.";
 "Missing job ID." = "Missing job ID.";
 "Missing network name." = "Missing network name.";
+"Missing printer-uuid attribute in registration response." = "Missing printer-uuid attribute in registration response.";
+"Missing printer-xri-supported attribute in registration response." = "Missing printer-xri-supported attribute in registration response.";
 "Missing private key." = "プライベートキーを欠く。";
 "Moldova, Republic of" = "モルドバ共和国";
 "Monaco" = "メニュー";
@@ -364,6 +383,7 @@
 "North Macedonia" = "北マケドニア";
 "Northern Mariana Islands" = "北マリアナ諸島";
 "Norway" = "ノルウェー";
+"Not Connected" = "Not Connected";
 "Not set" = "セットなし";
 "Off" = "Off";
 "Offset" = "オフセット";
@@ -371,6 +391,7 @@
 "Options:" = "オプション:";
 "Organization" = "社会招聘";
 "Organization Name" = "組織名称";
+"Other Provider" = "Other Provider";
 "Other Settings" = "その他の設定";
 "Pakistan" = "パキスタン";
 "Palau" = "パラオ";
@@ -407,6 +428,7 @@
 "Printer pausing." = "プリンター ペーパー。";
 "Printer resuming." = "プリンター再開。";
 "Printers" = "プリンター";
+"Printing" = "Printing";
 "Printing Defaults" = "印刷のデフォルト";
 "Puerto Rico" = "プエルトリコ";
 "Qatar" = "カタール";
@@ -508,6 +530,7 @@
 "Updating Network Configuration" = "Updating Network Configuration";
 "Uruguay" = "ウルグアイ";
 "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n" = "使用法: %s サブコマンド [操作] [ユーザー名]\n";
+"Usage: pappl-exec [OPTIONS] PROGRAM ARGUMENT(S)\n" = "Usage: pappl-exec [OPTIONS] PROGRAM ARGUMENT(S)\n";
 "Use My Position" = "マイポジションを使用する";
 "Users" = "ユーザ名";
 "Uzbekistan" = "ウズベキスタン";
@@ -528,6 +551,7 @@
 "Yemen" = "イエメン";
 "Zambia" = "ザンビア";
 "Zimbabwe" = "ジンバブエ";
+"and go to the following URL:" = "and go to the following URL:";
 "at %02d:%02d:%02d" = "at %02d:%02d:%02d";
 /* IPP attribute, keyword, and enum (integer) localizations */
 "copies" = "コピーの数";
@@ -958,6 +982,7 @@
 "not visible" = "見えない";
 "off" = "オフ";
 "on" = "お問い合わせ";
+"or scan/tap the QR code below:" = "or scan/tap the QR code below:";
 "orientation-requested" = "オリエンテーション";
 "orientation-requested.3" = "ポートレート";
 "orientation-requested.4" = "ニュース";
@@ -1008,6 +1033,27 @@
 "output-bin.tray-7" = "トレイ 7";
 "output-bin.tray-8" = "トレイ 8";
 "output-bin.tray-9" = "トレイ 9";
+"pappl-exec: Group '%s' not found." = "pappl-exec: Group '%s' not found.";
+"pappl-exec: Invalid group ID '%s'." = "pappl-exec: Invalid group ID '%s'.";
+"pappl-exec: Invalid user ID '%s'." = "pappl-exec: Invalid user ID '%s'.";
+"pappl-exec: Landlock does not appear to be supported by the running kernel." = "pappl-exec: Landlock does not appear to be supported by the running kernel.";
+"pappl-exec: Missing group name after '%s'." = "pappl-exec: Missing group name after '%s'.";
+"pappl-exec: Missing path after '%s'." = "pappl-exec: Missing path after '%s'.";
+"pappl-exec: Missing user name after '%s'." = "pappl-exec: Missing user name after '%s'.";
+"pappl-exec: No program or arguments specified." = "pappl-exec: No program or arguments specified.";
+"pappl-exec: Unable to access '%s' for rule: %s" = "pappl-exec: Unable to access '%s' for rule: %s";
+"pappl-exec: Unable to access '%s' for sandbox profile: %s" = "pappl-exec: Unable to access '%s' for sandbox profile: %s";
+"pappl-exec: Unable to add '%s' to rule set: %s" = "pappl-exec: Unable to add '%s' to rule set: %s";
+"pappl-exec: Unable to apply landlock rule set: %s" = "pappl-exec: Unable to apply landlock rule set: %s";
+"pappl-exec: Unable to apply sandbox profile '%s': %s" = "pappl-exec: Unable to apply sandbox profile '%s': %s";
+"pappl-exec: Unable to create landlock rule set: %s" = "pappl-exec: Unable to create landlock rule set: %s";
+"pappl-exec: Unable to create sandbox profile: %s" = "pappl-exec: Unable to create sandbox profile: %s";
+"pappl-exec: Unable to execute '%s': %s" = "pappl-exec: Unable to execute '%s': %s";
+"pappl-exec: Unable to find program '%s' for sandbox profile." = "pappl-exec: Unable to find program '%s' for sandbox profile.";
+"pappl-exec: Unable to prepare landlock rule set: %s" = "pappl-exec: Unable to prepare landlock rule set: %s";
+"pappl-exec: Unknown option '%s'." = "pappl-exec: Unknown option '%s'.";
+"pappl-exec: Unknown option '-%c'." = "pappl-exec: Unknown option '-%c'.";
+"pappl-exec: User '%s' not found." = "pappl-exec: User '%s' not found.";
 "print-color-mode" = "プリントモード";
 "print-color-mode.auto" = "オートマチック";
 "print-color-mode.auto-monochrome" = "自動モノクロ";

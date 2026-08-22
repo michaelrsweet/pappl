@@ -1,3 +1,11 @@
+"   --help                  Show program help." = "   --help                  Show program help.";
+"   --version               Show PAPPL version." = "   --version               Show PAPPL version.";
+"   -R/--read-only PATH     Allow read access to the specified file or directory." = "   -R/--read-only PATH     Allow read access to the specified file or directory.";
+"   -W/--read-write PATH    Allow read/write access to the specified file or directory." = "   -W/--read-write PATH    Allow read/write access to the specified file or directory.";
+"   -X/--read-exec PATH     Allow read/execute access to the specified file or directory." = "   -X/--read-exec PATH     Allow read/execute access to the specified file or directory.";
+"   -g/--group GROUP        Specify run group." = "   -g/--group GROUP        Specify run group.";
+"   -n/--allow-networking   Allow outgoing network connections." = "   -n/--allow-networking   Allow outgoing network connections.";
+"   -u/--user USER          Specify run user." = "   -u/--user USER          Specify run user.";
 "  -a               Cancel all jobs (cancel)." = "  -a               Cancelar todos los trabajos (cancelar).";
 "  -c COPIES" = "  -c COPIAS";
 "  -d PRINTER       Specify printer." = "  -d PRINTER       Especifique la impresora.";
@@ -116,6 +124,7 @@
 "Aruba" = "Aruba";
 "Australia" = "Australia";
 "Austria" = "Austria";
+"Authorization Required" = "Authorization Required";
 "Auto" = "Auto";
 "Auto-Detect Driver" = "Auto-Detect Driver";
 "Azerbaijan" = "Azerbaiyán";
@@ -160,6 +169,7 @@
 "Certificate request created." = "Solicitud de certificado creada.";
 "Chad" = "Chad";
 "Change Access Password" = "Cambiar contraseña";
+"Change Hostname" = "Change Hostname";
 "Change Log Level" = "Nivel de registro de cambios";
 "Change Network Settings" = "Cambiar la configuración de la red";
 "Change Wi-Fi Network" = "Cambiar red Wi-Fi";
@@ -168,7 +178,9 @@
 "Chile" = "Chile";
 "China" = "China";
 "Christmas Island" = "Isla de Navidad";
-"City/Locality" = "Ciudad/Localidad";
+"City/town name" = "City/town name";
+"Cloud Printer URI:" = "Cloud Printer URI:";
+"Cloud Printing" = "Cloud Printing";
 "Cocos (Keeling) Islands" = "Islas Cocos (Keeling)";
 "Colombia" = "Colombia";
 "Comoros" = "Comoras";
@@ -179,8 +191,10 @@
 "Confirm Delete Printer" = "Confirmar la impresora";
 "Congo" = "Congo";
 "Congo, Democratic Republic of the" = "Congo, República Democrática del Congo";
+"Connect" = "Connect";
 "Contact" = "Contacto";
 "Cook Islands" = "Islas Cook";
+"Copy the following code:" = "Copy the following code:";
 "Costa Rica" = "Costa Rica";
 "Create Certificate Signing Request" = "Crear solicitud de registro de certificados";
 "Create New Certificate" = "Crear nuevo certificado";
@@ -202,6 +216,7 @@
 "Delete" = "Suprimir";
 "Delete Printer" = "Eliminar la impresora";
 "Denmark" = "Dinamarca";
+"Disconnect" = "Disconnect";
 "Djibouti" = "Djibouti";
 "Domain Name" = "Nombre del dominio";
 "Dominica" = "Dominica";
@@ -264,6 +279,7 @@
 "IPv6 Prefix Length" = "Longitud del prefijo IPv6";
 "Iceland" = "Islandia";
 "Identify Printer" = "Identifique la impresora";
+"Idle" = "Idle";
 "India" = "India";
 "Indonesia" = "Indonesia";
 "Informational" = "Información";
@@ -333,8 +349,11 @@
 "Mexico" = "México";
 "Micronesia (Federated States of)" = "Micronesia (Estados Federados de)";
 "Missing action." = "Falta de acción.";
+"Missing cloud provider." = "Missing cloud provider.";
 "Missing job ID." = "Falta el identificador del trabajo.";
 "Missing network name." = "Falta el nombre de la red.";
+"Missing printer-uuid attribute in registration response." = "Missing printer-uuid attribute in registration response.";
+"Missing printer-xri-supported attribute in registration response." = "Missing printer-xri-supported attribute in registration response.";
 "Missing private key." = "Falta la llave privada.";
 "Moldova, Republic of" = "República de Moldova";
 "Monaco" = "Mónaco";
@@ -364,6 +383,7 @@
 "North Macedonia" = "North Macedonia";
 "Northern Mariana Islands" = "Islas Marianas del Norte";
 "Norway" = "Noruega";
+"Not Connected" = "Not Connected";
 "Not set" = "No está listo.";
 "Off" = "Apagado";
 "Offset" = "Offset";
@@ -371,6 +391,7 @@
 "Options:" = "Opciones:";
 "Organization" = "Organización";
 "Organization Name" = "Nombre de la Organización";
+"Other Provider" = "Other Provider";
 "Other Settings" = "Otras configuraciones";
 "Pakistan" = "Pakistán";
 "Palau" = "Palau";
@@ -407,6 +428,7 @@
 "Printer pausing." = "Impresora pausando.";
 "Printer resuming." = "Reanuda la impresora.";
 "Printers" = "Impresoras";
+"Printing" = "Printing";
 "Printing Defaults" = "Impresos";
 "Puerto Rico" = "Puerto Rico";
 "Qatar" = "Qatar";
@@ -508,6 +530,7 @@
 "Updating Network Configuration" = "Actualizar la configuración de red";
 "Uruguay" = "Uruguay";
 "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n" = "Usage: %s SUB-COMMAND [OPTIONS] [FILENAME]\n";
+"Usage: pappl-exec [OPTIONS] PROGRAM ARGUMENT(S)\n" = "Usage: pappl-exec [OPTIONS] PROGRAM ARGUMENT(S)\n";
 "Use My Position" = "Usar mi posición";
 "Users" = "Usuarios";
 "Uzbekistan" = "Uzbekistán";
@@ -528,6 +551,7 @@
 "Yemen" = "Yemen";
 "Zambia" = "Zambia";
 "Zimbabwe" = "Zimbabwe";
+"and go to the following URL:" = "and go to the following URL:";
 "at %02d:%02d:%02d" = "en %02d:%02d:%02d";
 /* IPP attribute, keyword, and enum (integer) localizations */
 "copies" = "Número de copias";
@@ -958,6 +982,7 @@
 "not visible" = "no visible";
 "off" = "apagado";
 "on" = "on";
+"or scan/tap the QR code below:" = "or scan/tap the QR code below:";
 "orientation-requested" = "Orientación";
 "orientation-requested.3" = "Retrato";
 "orientation-requested.4" = "Paisaje";
@@ -1008,6 +1033,27 @@
 "output-bin.tray-7" = "Tray 7";
 "output-bin.tray-8" = "Tray 8";
 "output-bin.tray-9" = "Tray 9";
+"pappl-exec: Group '%s' not found." = "pappl-exec: Group '%s' not found.";
+"pappl-exec: Invalid group ID '%s'." = "pappl-exec: Invalid group ID '%s'.";
+"pappl-exec: Invalid user ID '%s'." = "pappl-exec: Invalid user ID '%s'.";
+"pappl-exec: Landlock does not appear to be supported by the running kernel." = "pappl-exec: Landlock does not appear to be supported by the running kernel.";
+"pappl-exec: Missing group name after '%s'." = "pappl-exec: Missing group name after '%s'.";
+"pappl-exec: Missing path after '%s'." = "pappl-exec: Missing path after '%s'.";
+"pappl-exec: Missing user name after '%s'." = "pappl-exec: Missing user name after '%s'.";
+"pappl-exec: No program or arguments specified." = "pappl-exec: No program or arguments specified.";
+"pappl-exec: Unable to access '%s' for rule: %s" = "pappl-exec: Unable to access '%s' for rule: %s";
+"pappl-exec: Unable to access '%s' for sandbox profile: %s" = "pappl-exec: Unable to access '%s' for sandbox profile: %s";
+"pappl-exec: Unable to add '%s' to rule set: %s" = "pappl-exec: Unable to add '%s' to rule set: %s";
+"pappl-exec: Unable to apply landlock rule set: %s" = "pappl-exec: Unable to apply landlock rule set: %s";
+"pappl-exec: Unable to apply sandbox profile '%s': %s" = "pappl-exec: Unable to apply sandbox profile '%s': %s";
+"pappl-exec: Unable to create landlock rule set: %s" = "pappl-exec: Unable to create landlock rule set: %s";
+"pappl-exec: Unable to create sandbox profile: %s" = "pappl-exec: Unable to create sandbox profile: %s";
+"pappl-exec: Unable to execute '%s': %s" = "pappl-exec: Unable to execute '%s': %s";
+"pappl-exec: Unable to find program '%s' for sandbox profile." = "pappl-exec: Unable to find program '%s' for sandbox profile.";
+"pappl-exec: Unable to prepare landlock rule set: %s" = "pappl-exec: Unable to prepare landlock rule set: %s";
+"pappl-exec: Unknown option '%s'." = "pappl-exec: Unknown option '%s'.";
+"pappl-exec: Unknown option '-%c'." = "pappl-exec: Unknown option '-%c'.";
+"pappl-exec: User '%s' not found." = "pappl-exec: User '%s' not found.";
 "print-color-mode" = "Modo de impresión";
 "print-color-mode.auto" = "Automático";
 "print-color-mode.auto-monochrome" = "Auto monocromo";

@@ -380,6 +380,7 @@ static const char *he_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"Paraguay\" = \"פרגוואי\";\n"
 "\"Password\" = \"סיסמה\";\n"
 "\"Password changed.\" = \"הסיסמה הוחלפה.\";\n"
+"\"Password cleared.\" = \"הסיסמה נוקתה.\";\n"
 "\"Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.\" = \"אורך הסיסמה חייב להיות שמונה תווים לפחות ועליה להכין לפחות אות גדולה אחת, אות קטנה אחת וספרה אחת.\";\n"
 "\"Passwords do not match.\" = \"הסיסמאות אינן תואמות.\";\n"
 "\"Pause Printing\" = \"השהיית הדפסה\";\n"

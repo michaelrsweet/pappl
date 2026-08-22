@@ -1365,6 +1365,12 @@ _papplSystemWebSecurity(
       {
         status = _PAPPL_LOC("Passwords do not match.");
       }
+      else if (!*new_password && !*new_password2)
+      {
+        // Empty passwords reset the password...
+        papplSystemSetPassword(system, "");
+        status = _PAPPL_LOC("Password cleared.");
+      }
       else
       {
         const char	*passptr;	// Pointer into password

@@ -380,6 +380,7 @@
 "Paraguay" = "Paraguay";
 "Password" = "Password";
 "Password changed." = "Password changed.";
+"Password cleared." = "Password cleared.";
 "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit." = "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.";
 "Passwords do not match." = "Passwords do not match.";
 "Pause Printing" = "Pause Printing";

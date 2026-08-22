@@ -380,6 +380,7 @@ static const char *de_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"Paraguay\" = \"Paraguay\";\n"
 "\"Password\" = \"Passwort\";\n"
 "\"Password changed.\" = \"Passwort geändert.\";\n"
+"\"Password cleared.\" = \"Passwort gelöscht.\";\n"
 "\"Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.\" = \"Das Passwort muss mindestens acht Zeichen lang sein und mindestens einen Großbuchstaben, einen Kleinbuchstaben und eine Ziffer enthalten.\";\n"
 "\"Passwords do not match.\" = \"Passwörter passen nicht.\";\n"
 "\"Pause Printing\" = \"Drucken pausieren\";\n"

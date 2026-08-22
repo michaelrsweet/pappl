@@ -380,6 +380,7 @@ static const char *ja_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"Paraguay\" = \"パラグアイ\";\n"
 "\"Password\" = \"パスワード\";\n"
 "\"Password changed.\" = \"パスワードが変更されました。\";\n"
+"\"Password cleared.\" = \"パスワードがクリアされました。\";\n"
 "\"Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.\" = \"パスワードは、少なくとも8文字以上で、少なくとも1つの大文字、小文字、および1つの数字を含む必要があります。\";\n"
 "\"Passwords do not match.\" = \"パスワードは一致しません。\";\n"
 "\"Pause Printing\" = \"ペーパー印刷\";\n"

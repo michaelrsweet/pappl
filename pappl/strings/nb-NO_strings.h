@@ -380,6 +380,7 @@ static const char *nb_NO_strings = "\"  -a               Cancel all jobs (cancel
 "\"Paraguay\" = \"Paraguay\";\n"
 "\"Password\" = \"Passord\";\n"
 "\"Password changed.\" = \"Passord endret.\";\n"
+"\"Password cleared.\" = \"Passord slettet.\";\n"
 "\"Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.\" = \"Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.\";\n"
 "\"Passwords do not match.\" = \"Passordene samsvarer ikke.\";\n"
 "\"Pause Printing\" = \"Pause Printing\";\n"

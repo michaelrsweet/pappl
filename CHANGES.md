@@ -7,6 +7,7 @@ v1.4.13 - YYYY-MM-DD
 
 - `papplDeviceWrite` could produce a 0-length write call, which is problematic
   for some USB printers (Issue #434)
+- Fixed issues with password authentication in the web interface (Issue #435)
 
 
 v1.4.12 - 2026-08-20

@@ -161,6 +161,8 @@ _papplClientDelete(
   // Free memory...
   httpClose(client->http);
 
+  free(client->cookies);
+
   ippDelete(client->request);
   ippDelete(client->response);
 
@@ -186,6 +188,7 @@ _papplClientProcessHTTP(
   http_status_t		http_status;	// HTTP status
   http_version_t	http_version;	// HTTP version
   ipp_state_t		ipp_state;	// State of IPP transfer
+  const char		*cookies;	// Cookie values
   char			scheme[32],	// Method/scheme
 			userpass[128],	// Username:password
 			hostname[HTTP_MAX_HOST];
@@ -198,9 +201,11 @@ _papplClientProcessHTTP(
 
 
   // Clear state variables...
+  free(client->cookies);
   ippDelete(client->request);
   ippDelete(client->response);
 
+  client->cookies   = NULL;
   client->loc       = NULL;
   client->request   = NULL;
   client->response  = NULL;
@@ -255,6 +260,12 @@ _papplClientProcessHTTP(
     papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "http_status=%d", http_status);
     papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
     return (false);
+  }
+
+  if ((cookies = httpGetCookie(client->http)) != NULL)
+  {
+    client->cookies = strdup(cookies);
+    httpClearCookie(client->http);
   }
 
   http_version = httpGetVersion(client->http);

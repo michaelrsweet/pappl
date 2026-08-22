@@ -1,7 +1,7 @@
 //
 // Private client header file for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -25,6 +25,7 @@ struct _pappl_client_s			// Client data
   int			number;			// Connection number
   pthread_t		thread_id;		// Thread ID
   http_t		*http;			// HTTP connection
+  char			*cookies;		// Request cookies, if any
   ipp_t			*request,		// IPP request
 			*response;		// IPP response
   time_t		start;			// Request start time

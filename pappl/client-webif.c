@@ -1,7 +1,7 @@
 //
 // Core client web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -37,8 +37,7 @@ papplClientGetCookie(
     char           *buffer,		// I - Value buffer
     size_t         bufsize)		// I - Size of value buffer
 {
-  const char	*cookie = httpGetCookie(client->http);
-					// Cookies from client
+  const char	*cookie;		// Cookies from client
   char		temp[256],		// Temporary string
 		*ptr,			// Pointer into temporary string
 	        *end;			// End of temporary string
@@ -49,12 +48,12 @@ papplClientGetCookie(
   // cookies...
   *buffer = '\0';
 
-  if (!cookie)
+  if (!client->cookies)
     return (NULL);
 
   // Scan the cookie string for 'name=value' or 'name="value"', separated by
   // semicolons...
-  while (*cookie)
+  for (cookie = client->cookies; *cookie;)
   {
     while (*cookie && isspace(*cookie & 255))
       cookie ++;
@@ -1406,30 +1405,17 @@ papplClientSetCookie(
     const char     *value,		// I - Cookie value
     int            expires)		// I - Expiration in seconds from now, `0` for a session cookie
 {
-  const char	*client_cookie = httpGetCookie(client->http);
-					// Current cookie
-  char		buffer[1024],		// New cookie buffer
-		cookie[256],		// New authorization cookie
+  char		cookie[256],		// New authorization cookie
 		expireTime[64];		// Expiration date/time
 
-  if (!name)
+
+  if (!name || !value)
     return;
 
   if (expires > 0)
-    snprintf(cookie, sizeof(cookie), "%s=%s; path=/; expires=%s; httponly; secure;", name, value, httpGetDateString(time(NULL) + expires, expireTime, sizeof(expireTime)));
+    snprintf(cookie, sizeof(cookie), "%s=%s; expires=%s; httponly;%s", name, value, httpGetDateString(time(NULL) + expires, expireTime, sizeof(expireTime)), httpIsEncrypted(client->http) ? " secure;" : "");
   else
-    snprintf(cookie, sizeof(cookie), "%s=%s; path=/; httponly; secure;", name, value);
+    snprintf(cookie, sizeof(cookie), "%s=%s; httponly; %s", name, value, httpIsEncrypted(client->http) ? " secure;" : "");
 
-  if (!client_cookie || !*client_cookie)
-  {
-    // No other cookies set...
-    httpSetCookie(client->http, cookie);
-  }
-  else
-  {
-    // Append the new cookie with a Set-Cookie: header since libcups only
-    // directly supports setting a single Set-Cookie header...
-    snprintf(buffer, sizeof(buffer), "%s\r\nSet-Cookie: %s", client_cookie, cookie);
-    httpSetCookie(client->http, buffer);
-  }
+  httpSetCookie(client->http, cookie);
 }

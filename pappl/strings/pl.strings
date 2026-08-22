@@ -380,6 +380,7 @@
 "Paraguay" = "Paragwaj";
 "Password" = "Hasło";
 "Password changed." = "Hasło zostało zmienione.";
+"Password cleared." = "Hasło zostało wyczyszczone.";
 "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit." = "Hasło musi mieć co najmniej osiem znaków i zawierać co najmniej jedną wielką literę, jedną małą literę i jedną cyfrę.";
 "Passwords do not match." = "Hasła nie pasują do siebie.";
 "Pause Printing" = "Wstrzymaj drukowanie";

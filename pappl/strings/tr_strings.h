@@ -380,6 +380,7 @@ static const char *tr_strings = "\"  -a               Cancel all jobs (cancel).\
 "\"Paraguay\" = \"Paraguay\";\n"
 "\"Password\" = \"Parola\";\n"
 "\"Password changed.\" = \"Parola değiştirildi.\";\n"
+"\"Password cleared.\" = \"Şifre silindi.\";\n"
 "\"Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.\" = \"Parola en az sekiz karakter uzunluğunda olmalı ve en az bir büyük harf, bir küçük harf ve bir rakam içermelidir.\";\n"
 "\"Passwords do not match.\" = \"Parolalar eşleşmiyor.\";\n"
 "\"Pause Printing\" = \"Yazdırmayı Duraklat\";\n"

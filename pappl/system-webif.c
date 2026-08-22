@@ -1,7 +1,7 @@
 //
 // System web interface functions for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -1395,6 +1395,12 @@ _papplSystemWebSecurity(
       else if (!new_password || !new_password2 || !_papplIsEqual(new_password, new_password2))
       {
         status = _PAPPL_LOC("Passwords do not match.");
+      }
+      else if (!*new_password && !*new_password2)
+      {
+        // Empty passwords reset the password...
+        papplSystemSetPassword(system, "");
+        status = _PAPPL_LOC("Password cleared.");
       }
       else
       {

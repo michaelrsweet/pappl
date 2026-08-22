@@ -380,6 +380,7 @@
 "Paraguay" = "Paraguay";
 "Password" = "Passord";
 "Password changed." = "Passord endret.";
+"Password cleared." = "Passord slettet.";
 "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit." = "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit.";
 "Passwords do not match." = "Passordene samsvarer ikke.";
 "Pause Printing" = "Pause Printing";

@@ -380,6 +380,7 @@
 "Paraguay" = "Paraguay";
 "Password" = "Contraseña";
 "Password changed." = "La contraseña cambió.";
+"Password cleared." = "La contraseña borrada.";
 "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit." = "La contraseña debe tener al menos ocho caracteres de largo y contener al menos una letra mayúscula, una letra minúscula y un dígito.";
 "Passwords do not match." = "Las contraseñas no coinciden.";
 "Pause Printing" = "Impresión de pausa";

@@ -25,6 +25,7 @@ struct _pappl_client_s			// Client data
   int			number;			// Connection number
   cups_thread_t		thread_id;		// Thread ID
   http_t		*http;			// HTTP connection
+  char			*cookies;		// Request cookies, if any
   ipp_t			*request,		// IPP request
 			*response;		// IPP response
   bool			close_it;		// `true` if the client should be closed

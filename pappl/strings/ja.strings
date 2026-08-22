@@ -380,7 +380,6 @@
 "Paraguay" = "パラグアイ";
 "Password" = "パスワード";
 "Password changed." = "パスワードが変更されました。";
-"Password cleared." = "パスワードがクリアされました。";
 "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit." = "パスワードは、少なくとも8文字以上で、少なくとも1つの大文字、小文字、および1つの数字を含む必要があります。";
 "Passwords do not match." = "パスワードは一致しません。";
 "Pause Printing" = "ペーパー印刷";

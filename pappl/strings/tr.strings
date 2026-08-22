@@ -380,7 +380,6 @@
 "Paraguay" = "Paraguay";
 "Password" = "Parola";
 "Password changed." = "Parola değiştirildi.";
-"Password cleared." = "Şifre silindi.";
 "Password must be at least eight characters long and contain at least one uppercase letter, one lowercase letter, and one digit." = "Parola en az sekiz karakter uzunluğunda olmalı ve en az bir büyük harf, bir küçük harf ve bir rakam içermelidir.";
 "Passwords do not match." = "Parolalar eşleşmiyor.";
 "Pause Printing" = "Yazdırmayı Duraklat";

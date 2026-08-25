@@ -75,8 +75,6 @@ if test $snapshot = 0; then
     git push origin v$version
 fi
 
-exit 0
-
 # Make source archives...
 echo Creating pappl-$version.tar.gz...
 git archive --format tar --prefix=pappl-$version/ HEAD | gzip -v9 >pappl-$version.tar.gz

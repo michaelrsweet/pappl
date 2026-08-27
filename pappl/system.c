@@ -743,7 +743,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	  system->listeners[i].events = POLLIN;
       }
     }
-    else if (pcount > 0)
+    else
     {
       // Accept client connections as needed...
       time(&idletime);

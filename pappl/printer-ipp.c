@@ -39,6 +39,8 @@ static void		ipp_update_output_device_attributes(pappl_client_t *client);
 static void		ipp_validate_job(pappl_client_t *client);
 
 static bool		valid_job_attributes(pappl_client_t *client, const char **format);
+static bool		valid_media_col(pappl_client_t *client, ipp_attribute_t *media_col, bool exact);
+static bool		valid_media_size(pappl_client_t *client, ipp_attribute_t *media, bool exact);
 
 
 //
@@ -2982,11 +2984,12 @@ valid_job_attributes(
     pappl_client_t *client,		// I - Client
     const char     **format)		// O - Document format
 {
-  size_t		i,		// Looping var
+  cups_len_t		i,		// Looping var
 			count;		// Number of values
   bool			valid = true,	// Valid attributes?
 			exact;		// Need attribute fidelity?
   ipp_attribute_t	*attr,		// Current attribute
+			*media_col,	// "media-col" attribute
 			*supported;	// xxx-supported attribute
 
 
@@ -3159,126 +3162,25 @@ valid_job_attributes(
     }
   }
 
-  if ((attr = ippFindAttribute(client->request, "media", IPP_TAG_ZERO)) != NULL)
-  {
-    if (ippGetCount(attr) != 1 || (ippGetValueTag(attr) != IPP_TAG_NAME && ippGetValueTag(attr) != IPP_TAG_NAMELANG && ippGetValueTag(attr) != IPP_TAG_KEYWORD))
-    {
-      papplClientRespondIPPUnsupported(client, attr);
-      valid = false;
-    }
-    else
-    {
-      supported = ippFindAttribute(client->printer->driver_attrs, "media-supported", IPP_TAG_KEYWORD);
+  attr      = ippFindAttribute(client->request, "media", IPP_TAG_ZERO);
+  media_col = ippFindAttribute(client->request, "media-col", IPP_TAG_ZERO);
 
-      if (!ippContainsString(supported, ippGetString(attr, 0, NULL)))
-      {
-        if (exact)
-        {
-	  papplClientRespondIPPUnsupported(client, attr);
-	  valid = false;
-	}
-	else
-	{
-	  _papplClientRespondIPPIgnored(client, attr);
-	  ippDeleteAttribute(client->request, attr);
-	}
-      }
-    }
+  if (attr && media_col)
+  {
+    // Can't specify both "media" and "media-col"...
+    papplClientRespondIPPUnsupported(client, attr);
+    papplClientRespondIPPUnsupported(client, media_col);
+    valid = false;
   }
-
-  if ((attr = ippFindAttribute(client->request, "media-col", IPP_TAG_ZERO)) != NULL)
+  else if (attr)
   {
-    ipp_t		*col,		// media-col collection
-			*size;		// media-size collection
-    ipp_attribute_t	*member,	// Member attribute
-			*x_dim,		// x-dimension
-			*y_dim;		// y-dimension
-    int			x_value,	// y-dimension value
-			y_value;	// x-dimension value
-
-    if (ippGetCount(attr) != 1 || ippGetValueTag(attr) != IPP_TAG_BEGIN_COLLECTION)
-    {
-      papplClientRespondIPPUnsupported(client, attr);
-      valid = false;
-    }
-
-    col = ippGetCollection(attr, 0);
-
-    if ((member = ippFindAttribute(col, "media-size-name", IPP_TAG_ZERO)) != NULL)
-    {
-      if (ippGetCount(member) != 1 || (ippGetValueTag(member) != IPP_TAG_NAME && ippGetValueTag(member) != IPP_TAG_NAMELANG && ippGetValueTag(member) != IPP_TAG_KEYWORD))
-      {
-	papplClientRespondIPPUnsupported(client, attr);
-	valid = false;
-      }
-      else
-      {
-	supported = ippFindAttribute(client->printer->driver_attrs, "media-supported", IPP_TAG_KEYWORD);
-
-	if (!ippContainsString(supported, ippGetString(member, 0, NULL)))
-	{
-	  if (exact)
-	  {
-	    papplClientRespondIPPUnsupported(client, attr);
-	    valid = false;
-	  }
-	  else
-	  {
-	    _papplClientRespondIPPIgnored(client, attr);
-	    ippDeleteAttribute(client->request, attr);
-	  }
-	}
-      }
-    }
-    else if ((member = ippFindAttribute(col, "media-size", IPP_TAG_BEGIN_COLLECTION)) != NULL)
-    {
-      if (ippGetCount(member) != 1)
-      {
-	papplClientRespondIPPUnsupported(client, attr);
-	valid = false;
-      }
-      else
-      {
-	size = ippGetCollection(member, 0);
-
-	if ((x_dim = ippFindAttribute(size, "x-dimension", IPP_TAG_INTEGER)) == NULL || ippGetCount(x_dim) != 1 || (y_dim = ippFindAttribute(size, "y-dimension", IPP_TAG_INTEGER)) == NULL || ippGetCount(y_dim) != 1)
-	{
-	  papplClientRespondIPPUnsupported(client, attr);
-	  valid = false;
-	}
-	else
-	{
-	  x_value   = ippGetInteger(x_dim, 0);
-	  y_value   = ippGetInteger(y_dim, 0);
-	  supported = ippFindAttribute(client->printer->driver_attrs, "media-size-supported", IPP_TAG_BEGIN_COLLECTION);
-	  count     = ippGetCount(supported);
-
-	  for (i = 0; i < count ; i ++)
-	  {
-	    size  = ippGetCollection(supported, i);
-	    x_dim = ippFindAttribute(size, "x-dimension", IPP_TAG_ZERO);
-	    y_dim = ippFindAttribute(size, "y-dimension", IPP_TAG_ZERO);
-
-	    if (ippContainsInteger(x_dim, x_value) && ippContainsInteger(y_dim, y_value))
-	      break;
-	  }
-
-	  if (i >= count)
-	  {
-	    if (exact)
-	    {
-	      papplClientRespondIPPUnsupported(client, attr);
-	      valid = false;
-	    }
-	    else
-	    {
-	      _papplClientRespondIPPIgnored(client, attr);
-	      ippDeleteAttribute(client->request, attr);
-	    }
-	  }
-	}
-      }
-    }
+    // Validate "media" size...
+    valid = valid_media_size(client, attr, exact);
+  }
+  else if (media_col)
+  {
+    // Validate "media-col"...
+    valid = valid_media_col(client, media_col, exact);
   }
 
   if ((attr = ippFindAttribute(client->request, "multiple-document-handling", IPP_TAG_ZERO)) != NULL)
@@ -3515,4 +3417,333 @@ valid_job_attributes(
   _papplRWUnlock(client->printer);
 
   return (valid);
+}
+
+
+//
+// 'valid_media_col()' - Determine whether the specified media attribute contains a supported size.
+//
+
+static bool				// O - `true` if valid, `false` otherwise
+valid_media_col(
+    pappl_client_t  *client,		// I - Client
+    ipp_attribute_t *media_col,		// I - "media" or "media-size" attribute
+    bool            exact)		// I - Exact match needed?
+{
+  cups_len_t		i;		// Looping var
+  ipp_t			*col;		// Collection value
+  ipp_attribute_t	*member;	// Member attribute
+  const char		*value;		// Member string value
+  int			intvalue;	// Member integer value
+
+
+  if (!valid_media_size(client, media_col, exact))
+    return (false);
+
+  // Validate other "media-xxx" values, if supplied...
+  col = ippGetCollection(media_col, 0);
+
+  if ((member = ippFindAttribute(col, "media-bottom-margin", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(member) != 1 || ippGetValueTag(member) != IPP_TAG_INTEGER || ippGetInteger(member, 0) < 0)
+    {
+      papplClientRespondIPPUnsupported(client, media_col);
+      return (false);
+    }
+  }
+
+  if ((member = ippFindAttribute(col, "media-left-margin", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(member) != 1 || ippGetValueTag(member) != IPP_TAG_INTEGER || ippGetInteger(member, 0) < 0)
+    {
+      papplClientRespondIPPUnsupported(client, media_col);
+      return (false);
+    }
+  }
+
+  if ((member = ippFindAttribute(col, "media-left-offset", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(member) != 1 || ippGetValueTag(member) != IPP_TAG_INTEGER)
+    {
+      papplClientRespondIPPUnsupported(client, media_col);
+      return (false);
+    }
+    else
+    {
+      intvalue = ippGetInteger(member, 0);
+
+      if (intvalue < client->printer->driver_data.left_offset_supported[0] || intvalue > client->printer->driver_data.left_offset_supported[1])
+      {
+	if (exact)
+	{
+	  papplClientRespondIPPUnsupported(client, media_col);
+	}
+	else
+	{
+	  _papplClientRespondIPPIgnored(client, media_col);
+	  ippDeleteAttribute(client->request, media_col);
+	}
+
+	return (false);
+      }
+    }
+  }
+
+  if ((member = ippFindAttribute(col, "media-right-margin", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(member) != 1 || ippGetValueTag(member) != IPP_TAG_INTEGER || ippGetInteger(member, 0) < 0)
+    {
+      papplClientRespondIPPUnsupported(client, media_col);
+      return (false);
+    }
+  }
+
+  if ((member = ippFindAttribute(col, "media-source", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(member) != 1 || (ippGetValueTag(member) != IPP_TAG_NAME && ippGetValueTag(member) != IPP_TAG_NAMELANG && ippGetValueTag(member) != IPP_TAG_KEYWORD))
+    {
+      papplClientRespondIPPUnsupported(client, media_col);
+      return (false);
+    }
+    else
+    {
+      value = ippGetString(member, 0, NULL);
+
+      for (i = 0; i < client->printer->driver_data.num_source; i ++)
+      {
+	if (!strcmp(value, client->printer->driver_data.source[i]))
+	  break;
+      }
+
+      if (i >= client->printer->driver_data.num_source)
+      {
+	if (exact)
+	{
+	  papplClientRespondIPPUnsupported(client, media_col);
+	}
+	else
+	{
+	  _papplClientRespondIPPIgnored(client, media_col);
+	  ippDeleteAttribute(client->request, media_col);
+	}
+
+	return (false);
+      }
+    }
+  }
+
+  if ((member = ippFindAttribute(col, "media-top-margin", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(member) != 1 || ippGetValueTag(member) != IPP_TAG_INTEGER || ippGetInteger(member, 0) < 0)
+    {
+      papplClientRespondIPPUnsupported(client, media_col);
+      return (false);
+    }
+  }
+
+  if ((member = ippFindAttribute(col, "media-top-offset", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(member) != 1 || ippGetValueTag(member) != IPP_TAG_INTEGER)
+    {
+      papplClientRespondIPPUnsupported(client, media_col);
+      return (false);
+    }
+    else
+    {
+      intvalue = ippGetInteger(member, 0);
+
+      if (intvalue < client->printer->driver_data.top_offset_supported[0] || intvalue > client->printer->driver_data.top_offset_supported[1])
+      {
+	if (exact)
+	{
+	  papplClientRespondIPPUnsupported(client, media_col);
+	}
+	else
+	{
+	  _papplClientRespondIPPIgnored(client, media_col);
+	  ippDeleteAttribute(client->request, media_col);
+	}
+
+	return (false);
+      }
+    }
+  }
+
+  if ((member = ippFindAttribute(col, "media-tracking", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(member) != 1 || ippGetValueTag(member) != IPP_TAG_KEYWORD)
+    {
+      papplClientRespondIPPUnsupported(client, media_col);
+      return (false);
+    }
+    else if (!(client->printer->driver_data.tracking_supported & _papplMediaTrackingValue(ippGetString(member, 0, NULL))))
+    {
+      if (exact)
+      {
+	papplClientRespondIPPUnsupported(client, media_col);
+      }
+      else
+      {
+	_papplClientRespondIPPIgnored(client, media_col);
+	ippDeleteAttribute(client->request, media_col);
+      }
+
+      return (false);
+    }
+  }
+
+  if ((member = ippFindAttribute(col, "media-type", IPP_TAG_ZERO)) != NULL)
+  {
+    if (ippGetCount(member) != 1 || (ippGetValueTag(member) != IPP_TAG_NAME && ippGetValueTag(member) != IPP_TAG_NAMELANG && ippGetValueTag(member) != IPP_TAG_KEYWORD))
+    {
+      papplClientRespondIPPUnsupported(client, media_col);
+      return (false);
+    }
+    else
+    {
+      value = ippGetString(member, 0, NULL);
+
+      for (i = 0; i < client->printer->driver_data.num_type; i ++)
+      {
+	if (!strcmp(value, client->printer->driver_data.type[i]))
+	  break;
+      }
+
+      if (i >= client->printer->driver_data.num_type)
+      {
+	if (exact)
+	{
+	  papplClientRespondIPPUnsupported(client, media_col);
+	}
+	else
+	{
+	  _papplClientRespondIPPIgnored(client, media_col);
+	  ippDeleteAttribute(client->request, media_col);
+	}
+
+	return (false);
+      }
+    }
+  }
+
+  return (true);
+}
+
+
+//
+// 'valid_media_size()' - Determine whether the specified media attribute contains a supported size.
+//
+
+static bool				// O - `true` if valid, `false` otherwise
+valid_media_size(
+    pappl_client_t  *client,		// I - Client
+    ipp_attribute_t *media,		// I - "media" or "media-size" attribute
+    bool            exact)		// I - Exact match needed?
+{
+  ipp_attribute_t *supported;		// "media-size-supported" attribute
+  cups_len_t	i,			// Looping var
+		count;			// Number of values
+  ipp_attribute_t *size_attr;		// "media-size" or "media-size-name" attribute
+  ipp_t		*size_col;		// "media-size" collection
+  ipp_attribute_t *x_dim,		// "x-dimension"
+		*y_dim;			// "y-dimension"
+  pwg_media_t	*pwg;			// PWG media information
+  int		width,			// Width in hundredths of millimeters
+		length;			// Length in hundredths of millimeters
+
+
+  // Get the requested size...
+  if (!strcmp(ippGetName(media), "media-col") && ippGetValueTag(media) == IPP_TAG_BEGIN_COLLECTION && ippGetCount(media) == 1)
+  {
+    // Get media dimensions from the "media-size" or "media-size-name" member attributes...
+    if ((size_attr = ippFindAttribute(ippGetCollection(media, 0), "media-size", IPP_TAG_BEGIN_COLLECTION)) != NULL)
+    {
+      // Extract dimensions from "media-size" member attributes...
+      if (ippGetCount(size_attr) != 1)
+      {
+	papplClientRespondIPPUnsupported(client, media);
+	return (false);
+      }
+
+      size_col = ippGetCollection(size_attr, 0);
+
+      if ((x_dim = ippFindAttribute(size_col, "x-dimension", IPP_TAG_INTEGER)) == NULL || ippGetCount(x_dim) != 1 || (y_dim = ippFindAttribute(size_col, "y-dimension", IPP_TAG_INTEGER)) == NULL || ippGetCount(y_dim) != 1)
+      {
+	papplClientRespondIPPUnsupported(client, media);
+	return (false);
+      }
+
+      width  = ippGetInteger(x_dim, 0);
+      length = ippGetInteger(y_dim, 0);
+    }
+    else if ((size_attr = ippFindAttribute(ippGetCollection(media, 0), "media-size-name", IPP_TAG_ZERO)) != NULL)
+    {
+      // Decode "media-size-name" name to get dimensions...
+      if (ippGetCount(size_attr) != 1 || (ippGetValueTag(size_attr) != IPP_TAG_NAME && ippGetValueTag(size_attr) != IPP_TAG_NAMELANG && ippGetValueTag(size_attr) != IPP_TAG_KEYWORD))
+      {
+	papplClientRespondIPPUnsupported(client, media);
+	return (false);
+      }
+
+      if ((pwg = pwgMediaForPWG(ippGetString(size_attr, 0, NULL))) == NULL)
+      {
+	papplClientRespondIPPUnsupported(client, media);
+	return (false);
+      }
+
+      width  = pwg->width;
+      length = pwg->length;
+    }
+    else
+    {
+      // No dimensions in collection, which is technically valid since we have
+      // defaults...
+      return (true);
+    }
+  }
+  else if (!strcmp(ippGetName(media), "media") && ippGetCount(media) == 1 && (ippGetValueTag(media) == IPP_TAG_NAME || ippGetValueTag(media) == IPP_TAG_NAMELANG || ippGetValueTag(media) == IPP_TAG_KEYWORD))
+  {
+    // Decode "media" name to get dimensions...
+    if ((pwg = pwgMediaForPWG(ippGetString(media, 0, NULL))) == NULL)
+    {
+      papplClientRespondIPPUnsupported(client, media);
+      return (false);
+    }
+
+    width  = pwg->width;
+    length = pwg->length;
+  }
+  else
+  {
+    // No usable media size, report the unsupported attribute and return false...
+    papplClientRespondIPPUnsupported(client, media);
+    return (false);
+  }
+
+  // Check that the size is supported...
+  supported = ippFindAttribute(client->printer->driver_attrs, "media-size-supported", IPP_TAG_BEGIN_COLLECTION);
+  count     = ippGetCount(supported);
+
+  for (i = 0; i < count ; i ++)
+  {
+    size_col = ippGetCollection(supported, i);
+    x_dim    = ippFindAttribute(size_col, "x-dimension", IPP_TAG_ZERO);
+    y_dim    = ippFindAttribute(size_col, "y-dimension", IPP_TAG_ZERO);
+
+    if (ippContainsInteger(x_dim, width) && ippContainsInteger(y_dim, length))
+      return (true);
+  }
+
+  // Media is not supported, report the issue and remove if ignored...
+  if (exact)
+  {
+    papplClientRespondIPPUnsupported(client, media);
+  }
+  else
+  {
+    _papplClientRespondIPPIgnored(client, media);
+    ippDeleteAttribute(client->request, media);
+  }
+
+  return (false);
 }

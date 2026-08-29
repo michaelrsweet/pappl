@@ -5,7 +5,7 @@ Changes in PAPPL
 Changes in v2.0b1 (YYYY-MM-DD)
 ------------------------------
 
-- Now require libcups v3 or higher.
+- Now require CUPS 2.5 or libcups 3.0 or higher.
 - Increased `PAPPL_MAX_TYPE` to 128 (Issue #268)
 - Added `PAPPL_SOPTIONS_NO_DNS_SD` system option to disable DNS-SD registrations
   (Issue #303)

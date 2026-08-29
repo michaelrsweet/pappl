@@ -28,6 +28,8 @@ Changes in v2.0b1 (YYYY-MM-DD)
 - Updated PAPPL to use the CUPS X.509 APIs (Issue #366)
 - Updated the "media" and "media-col" validation code when accepting a new
   print job (Issue #412)
+- Updated the network connection and status update timers for printers
+  (Issue #420)
 - Fixed potential crash while listing devices (Issue #296)
 - Fixed potential deadlock issue (Issue #297)
 - Fixed loading of previous state (Issue #298)

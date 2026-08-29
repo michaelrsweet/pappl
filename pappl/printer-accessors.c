@@ -1,7 +1,7 @@
 //
 // Printer accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2024 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -689,10 +689,15 @@ papplPrinterGetReasons(
     {
       // Update printer status...
       _papplRWUnlock(printer);
-      (printer->driver_data.status_cb)(printer);
+
+      bool status_result = (printer->driver_data.status_cb)(printer);
 
       _papplRWLockRead(printer);
-      printer->status_time = time(NULL);
+
+      if (status_result)
+        printer->status_time = time(NULL);
+      else
+        printer->status_time = time(NULL) + 60;
     }
 
     ret = printer->state_reasons;

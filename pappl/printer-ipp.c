@@ -2207,12 +2207,15 @@ ipp_get_printer_attributes(
     _papplRWUnlock(printer);
     _papplRWUnlock(printer->system);
 
-    (printer->driver_data.status_cb)(printer);
+    bool status_result = (printer->driver_data.status_cb)(printer);
 
     _papplRWLockRead(printer->system);
     _papplRWLockWrite(printer);
 
-    printer->status_time = time(NULL);
+    if (status_result)
+      printer->status_time = time(NULL);
+    else
+      printer->status_time = time(NULL) + 60;
   }
 
   // Send the attributes...

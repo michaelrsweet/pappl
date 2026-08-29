@@ -22,8 +22,9 @@
 // Local constants...
 //
 
+#define _PAPPL_CONN_TIMEOUT	10000	// Connection timeout (milliseconds)
 #define _PAPPL_MAX_SNMP_SUPPLY	32	// Maximum number of SNMP supplies
-#define _PAPPL_SNMP_TIMEOUT	2.0	// Timeout for SNMP queries
+#define _PAPPL_SNMP_TIMEOUT	2.0	// Timeout for SNMP queries (seconds)
 
 // Generic enum values
 #define _PAPPL_TC_other			1
@@ -1664,8 +1665,8 @@ pappl_socket_open(
 	goto error;
       }
 
-      // Wait up to 30 seconds for the resolve to complete...
-      for (i = 0; i < 30000 && !sock->host; i ++)
+      // Wait for the resolve to complete...
+      for (i = 0; i < _PAPPL_CONN_TIMEOUT && !sock->host; i ++)
 	usleep(1000);
 
       cupsDNSSDResolveDelete(resolve);
@@ -1700,7 +1701,7 @@ pappl_socket_open(
   }
 
   sock->fd   = -1;
-  sock->addr = httpAddrConnect(sock->list, &sock->fd, 30000, NULL);
+  sock->addr = httpAddrConnect(sock->list, &sock->fd, _PAPPL_CONN_TIMEOUT, NULL);
 
   if (sock->fd < 0)
   {

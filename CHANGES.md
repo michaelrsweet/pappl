@@ -13,8 +13,10 @@ v1.4.13 - YYYY-MM-DD
 v1.4.12 - 2026-08-20
 --------------------
 
-- CVE-2026-NNNNN: Added overflow protection to the dithering code paths.
-- CVE-2026-NNNNN: Added overflow protection for setting ready media values.
+- SECURITY-4.3: Added overflow protection to the dithering code paths
+  (GHSA-p9wg-4p56-7xp6)
+- SECURITY-3.3: Added overflow protection for setting ready media values
+  (GHSA-g59w-rq3j-wfj3)
 - Added logging of the USB port status byte for USB-connected printers.
 - Now clear USB errors after a failed get device ID request.
 - Updated poll error handling and forced sleep to be consistent throughout.

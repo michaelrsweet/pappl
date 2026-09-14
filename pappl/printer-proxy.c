@@ -58,6 +58,7 @@ _papplPrinterConnectProxyNoLock(
 		*key;			// Private key, if any
 //  char		*token;			// OAuth 2.0 access token, if any
 //  time_t	token_expires;		// Access token expiration date/time
+  bool		require_ca;		// Need a CA-signed cert?
 
 
   // Copy the Infrastructure Printer URI...
@@ -72,7 +73,9 @@ _papplPrinterConnectProxyNoLock(
   // Connect to the Infrastructure Printer...
   papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Connecting to Infrastructure Printer '%s'.", uri);
 
-  if ((http = httpConnectURI(uri, /*host*/NULL, /*hsize*/0, /*port*/NULL, resource, ressize, /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/false)) == NULL)
+  require_ca = strstr(uri, "://localhost") == NULL && strstr(uri, ".local:") == NULL && strstr(uri, ".local.:") == NULL && strstr(uri, ".local/") == NULL && strstr(uri, ".local./") == NULL;
+
+  if ((http = httpConnectURI(uri, /*host*/NULL, /*hsize*/0, /*port*/NULL, resource, ressize, /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/require_ca)) == NULL)
   {
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "Unable to connect to infrastructure printer '%s': %s", printer->proxy_infra_uri, cupsGetErrorString());
     return (NULL);

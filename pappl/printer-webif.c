@@ -1595,6 +1595,7 @@ infra_register(pappl_printer_t *printer)// I - Printer
   char		host[256],		// Hostname
 		resource[1024];		// Resource path
   int		port;			// Port number
+  bool		require_ca;		// Need a CA-signed cert?
   size_t	i,			// Looping var
 		count;			// Number of values
   ipp_t		*request,		// Current request
@@ -1621,7 +1622,9 @@ infra_register(pappl_printer_t *printer)// I - Printer
   printer->proxy_state_message = NULL;
 
   // Connect to system...
-  if ((http = httpConnectURI(printer->proxy_provider_uri, host, sizeof(host), &port, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, /*require_ca*/strstr(printer->proxy_provider_uri, "://localhost") == NULL)) == NULL)
+  require_ca = strstr(printer->proxy_provider_uri, "://localhost") == NULL && strstr(printer->proxy_provider_uri, ".local:") == NULL && strstr(printer->proxy_provider_uri, ".local.:") == NULL && strstr(printer->proxy_provider_uri, ".local/") == NULL && strstr(printer->proxy_provider_uri, ".local./") == NULL;
+
+  if ((http = httpConnectURI(printer->proxy_provider_uri, host, sizeof(host), &port, resource, sizeof(resource), /*blocking*/true, /*msec*/30000, /*cancel*/NULL, require_ca)) == NULL)
   {
     // Unable to connect to system...
     printer->proxy_state_message = cupsGetErrorString();

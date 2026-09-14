@@ -319,6 +319,12 @@ papplClientGetForm(
     snprintf(bstring, sizeof(bstring), "\r\n--%s", boundary + 9);
     blen = strlen(bstring);
 
+    if (blen >= body_size)
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Invalid multipart form data.");
+      goto done;
+    }
+
     // Parse lines in the message body...
     name[0] = '\0';
     filename[0] = '\0';
@@ -414,6 +420,8 @@ papplClientGetForm(
       }
     }
   }
+
+  done:
 
   free(body);
 

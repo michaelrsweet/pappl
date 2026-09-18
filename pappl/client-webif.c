@@ -300,7 +300,7 @@ papplClientGetForm(
       num_form = (size_t)cupsAddOption(name, value, (cups_len_t)num_form, form);
     }
   }
-  else if (!strncmp(content_type, "multipart/form-data; ", 21) && (boundary = strstr(content_type, "boundary=")) != NULL)
+  else if (!strncmp(content_type, "multipart/form-data; ", 21) && (boundary = strstr(content_type, "boundary=")) != NULL && boundary[9])
   {
     // Read multi-part form data...
     char	name[1024],		// Form variable name
@@ -346,14 +346,14 @@ papplClientGetForm(
       if (!*line)
       {
         // End of headers, grab value...
-        if (!name[0])
+        if (!name[0] || (bend = bodyend - blen) < bodyptr)
         {
-          // No name value...
+          // No name value or bad value...
 	  papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Invalid multipart form data.");
 	  break;
 	}
 
-	for (bend = bodyend - blen, ptr = memchr(bodyptr, '\r', (size_t)(bend - bodyptr)); ptr; ptr = memchr(ptr + 1, '\r', (size_t)(bend - ptr - 1)))
+	for (ptr = memchr(bodyptr, '\r', (size_t)(bend - bodyptr)); ptr; ptr = memchr(ptr + 1, '\r', (size_t)(bend - ptr - 1)))
 	{
 	  // Check for boundary string...
 	  if (!memcmp(ptr, bstring, blen))

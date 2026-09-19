@@ -26,6 +26,8 @@
 // Types and structures...
 //
 
+typedef struct pappl_sc_options_s pappl_sc_options_t;	// Forward declaration for eSCL scan options
+
 typedef struct _pappl_doc_s		// Document data
 {
   ipp_t			*attrs;			// Template/Description attributes
@@ -47,6 +49,7 @@ struct _pappl_job_s			// Job data
   cups_rwlock_t		rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
   pappl_printer_t	*printer;		// Containing printer
+  pappl_scanner_t	*scanner;		// Containing scanner (NULL for print jobs)
   int			job_id;			// "job-id" value
   _pappl_odevice_t	*output_device;		// "output-device-assigned" value
   const char		*name,			// "job-name" value
@@ -78,6 +81,11 @@ struct _pappl_job_s			// Job data
   int			fd;			// Print file descriptor
   bool			streaming;		// Streaming job?
   void			*data;			// Per-job driver data
+  bool			is_scan_job;		// Is this a scan job?
+  pappl_sc_options_t	*scan_options;		// eSCL scan job options (canonical)
+  int			scan_pages_ready;	// Number of scanned pages ready
+  int			scan_pages_sent;	// Number of pages sent to client
+  bool			scan_complete;		// All pages scanned?
   cups_mutex_t		proxy_mutex;		// Mutex for proxy connectio9
   http_t		*proxy_http;		// Connection to Infrastructure Printer for status updates
   char			*proxy_resource;	// Resource path for connection
@@ -128,6 +136,14 @@ extern void		_papplJobSetState(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIV
 extern void		_papplJobSetStateNoLock(pappl_job_t *job, ipp_jstate_t state) _PAPPL_PRIVATE;
 extern void		_papplJobSubmitFile(pappl_job_t *job, const char *filename, const char *format, ipp_t *attrs, bool last_document) _PAPPL_PRIVATE;
 extern bool		_papplJobValidateDocumentAttributes(pappl_client_t *client, const char **format) _PAPPL_PRIVATE;
+
+// Scan job functions...
+extern pappl_job_t	*_papplJobCreateScan(pappl_scanner_t *scanner, const char *username, pappl_sc_options_t *options) _PAPPL_PRIVATE;
+extern void		*_papplJobProcessScan(pappl_job_t *job) _PAPPL_PRIVATE;
+extern bool		_papplJobGetScanPageFile(pappl_job_t *job, int page, char *fname, size_t fnamesize) _PAPPL_PRIVATE;
+extern void		_papplJobRemoveScanFiles(pappl_job_t *job) _PAPPL_PRIVATE;
+extern void		_papplJobCancelScan(pappl_job_t *job) _PAPPL_PRIVATE;
+extern void		_papplJobCompleteScan(pappl_job_t *job) _PAPPL_PRIVATE;
 
 
 #endif // !_PAPPL_JOB_PRIVATE_H_

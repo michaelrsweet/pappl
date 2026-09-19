@@ -35,6 +35,8 @@ int					// O - Exit status
 main(int  argc,				// I - Number of command line arguments
      char *argv[])			// I - Command line arguments
 {
+  papplMainloopSetScannerDrivers(sizeof(pwg_sc_drivers) / sizeof(pwg_sc_drivers[0]), pwg_sc_drivers, pwg_sc_autoadd, pwg_sc_callback);
+
   if (getenv("PAPPL_USE_SYSTEM_CB"))
     return (papplMainloop(argc, argv, VERSION_STRING, FOOTER_HTML, sizeof(pwg_drivers) / sizeof(pwg_drivers[0]), pwg_drivers, /*autoadd_cb*/NULL, pwg_callback, /*subcmd_name*/NULL, /*subcmd_cb*/NULL, system_cb, /*usage_cb*/NULL, "testmainloop"));
   else

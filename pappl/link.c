@@ -63,6 +63,45 @@ papplPrinterAddLink(
 
 
 //
+// 'papplScannerAddLink()' - Add a scanner link to the navigation header.
+//
+// This function adds a navigation link for a scanner.  The "path_or_url"
+// argument specifies a absolute path such as "/ipp/scan/example/page" or an
+// absolute URL such as "https://www.example.com/".  The "options" argument
+// specifies where the link is shown and whether the link should redirect an
+// absolute path to the secure ("https://.../path") web interface.
+//
+
+void
+papplScannerAddLink(
+    pappl_scanner_t  *scanner,		// I - Scanner
+    const char       *label,		// I - Label string
+    const char       *path_or_url,	// I - Path or URL
+    pappl_loptions_t options)		// I - Link options
+{
+  _pappl_link_t	l;			// Link
+
+
+  if (!scanner || !label || !path_or_url)
+    return;
+
+  _papplRWLockWrite(scanner);
+
+  if (!scanner->links)
+    scanner->links = cupsArrayNew((cups_array_cb_t)compare_links, NULL, NULL, 0, (cups_acopy_cb_t)copy_link, (cups_afree_cb_t)free_link);
+
+  l.label       = (char *)label;
+  l.path_or_url = (char *)path_or_url;
+  l.options     = options;
+
+  if (!cupsArrayFind(scanner->links, &l))
+    cupsArrayAdd(scanner->links, &l);
+
+  _papplRWUnlock(scanner);
+}
+
+
+//
 // 'papplPrinterRemoveLink()' - Remove a printer link from the navigation header.
 //
 // This function removes the named link for the printer.

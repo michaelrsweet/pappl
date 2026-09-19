@@ -1,7 +1,7 @@
 //
 // Command line utilities for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -80,10 +80,12 @@ papplMainloop(
   static const char * const subcommands[] =
   {					// List of standard sub-commands
     "add",
+    "add-scanner",
     "autoadd",
     "cancel",
     "default",
     "delete",
+    "delete-scanner",
     "devices",
     "drivers",
     "jobs",
@@ -92,6 +94,8 @@ papplMainloop(
     "pause",
     "printers",
     "resume",
+    "scanner-drivers",
+    "scanners",
     "server",
     "shutdown",
     "status",
@@ -387,6 +391,10 @@ papplMainloop(
   {
     return (_papplMainloopAddPrinter(base_name, num_options, options));
   }
+  else if (!strcmp(subcommand, "add-scanner"))
+  {
+    return (_papplMainloopAddScanner(base_name, num_options, options));
+  }
   else if (!strcmp(subcommand, "autoadd"))
   {
     if (autoadd_cb)
@@ -410,6 +418,10 @@ papplMainloop(
   else if (!strcmp(subcommand, "delete"))
   {
     return (_papplMainloopDeletePrinter(base_name, num_options, options));
+  }
+  else if (!strcmp(subcommand, "delete-scanner"))
+  {
+    return (_papplMainloopDeleteScanner(base_name, num_options, options));
   }
   else if (!strcmp(subcommand, "devices"))
   {
@@ -442,6 +454,14 @@ papplMainloop(
   else if (!strcmp(subcommand, "resume"))
   {
     return (_papplMainloopResumePrinter(base_name, num_options, options));
+  }
+  else if (!strcmp(subcommand, "scanner-drivers"))
+  {
+    return (_papplMainloopShowScannerDrivers(base_name, num_options, options));
+  }
+  else if (!strcmp(subcommand, "scanners"))
+  {
+    return (_papplMainloopShowScanners(base_name, num_options, options));
   }
   else if (!strcmp(subcommand, "server"))
   {
@@ -478,11 +498,13 @@ usage(const char *base_name,		// I - Base name of application
   puts("");
   _papplLocPrintf(stdout, _PAPPL_LOC("Sub-commands:"));
   _papplLocPrintf(stdout, _PAPPL_LOC("  add PRINTER      Add a printer."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  add-scanner      Add a scanner."));
   if (with_autoadd)
     _papplLocPrintf(stdout, _PAPPL_LOC("  autoadd          Automatically add supported printers."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  cancel           Cancel one or more jobs."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  default          Set the default printer."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  delete           Delete a printer."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  delete-scanner   Delete a scanner."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  devices          List devices."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  drivers          List drivers."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  jobs             List jobs."));
@@ -491,6 +513,8 @@ usage(const char *base_name,		// I - Base name of application
   _papplLocPrintf(stdout, _PAPPL_LOC("  pause            Pause printing for a printer."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  printers         List printers."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  resume           Resume printing for a printer."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  scanner-drivers  List scanner drivers."));
+  _papplLocPrintf(stdout, _PAPPL_LOC("  scanners         List scanners."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  server           Run a server."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  shutdown         Shutdown a running server."));
   _papplLocPrintf(stdout, _PAPPL_LOC("  status           Show server/printer/job status."));

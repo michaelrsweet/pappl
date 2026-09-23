@@ -2033,7 +2033,11 @@ _papplSystemSetHostNameNoLock(
 #if !defined(__APPLE__) && !_WIN32
     cups_file_t	*fp;			// Hostname file
 
-    if ((fp = cupsFileOpen("/etc/hostname", "w")) != NULL)
+    if ((fp = cupsFileOpen("/etc/hostname", "w")) == NULL)
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to update /etc/hostname: %s", strerror(errno));
+    }
+    else
     {
       cupsFilePrintf(fp, "%s\n", value);
       cupsFileClose(fp);
@@ -2041,7 +2045,8 @@ _papplSystemSetHostNameNoLock(
 #endif // !__APPLE__ && !_WIN32
 
 #if !_WIN32
-    sethostname(value, (int)strlen(value));
+    if (sethostname(value, (int)strlen(value)))
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to set hostname: %s", strerror(errno));
 #endif // !_WIN32
   }
   else

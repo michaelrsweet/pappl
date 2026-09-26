@@ -2027,29 +2027,7 @@ _papplSystemSetHostNameNoLock(
   if (system->is_listenhost)
     return;
 
-  if (value)
-  {
-    // Save new hostname...
-#if !defined(__APPLE__) && !_WIN32
-    cups_file_t	*fp;			// Hostname file
-
-    if ((fp = cupsFileOpen("/etc/hostname", "w")) == NULL)
-    {
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to update /etc/hostname: %s", strerror(errno));
-    }
-    else
-    {
-      cupsFilePrintf(fp, "%s\n", value);
-      cupsFileClose(fp);
-    }
-#endif // !__APPLE__ && !_WIN32
-
-#if !_WIN32
-    if (sethostname(value, (int)strlen(value)))
-      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to set hostname: %s", strerror(errno));
-#endif // !_WIN32
-  }
-  else
+  if (!value)
   {
     // Get the current hostname...
     if (system->dns_sd)
@@ -2088,21 +2066,93 @@ _papplSystemSetHostNameNoLock(
 
 
 //
-// 'papplSystemSetHostName()' - Set the system hostname.
+// 'papplSystemSetHostName()' - Set the system host name.
 //
-// This function sets the system hostname.  If `NULL`, the default hostname
+// This function sets the system host name.  If `NULL`, the default host name
 // is used.
 //
 
 void
 papplSystemSetHostName(
     pappl_system_t *system,		// I - System
-    const char     *value)		// I - Hostname or `NULL` for default
+    const char     *value)		// I - Host name or `NULL` for default
+{
+  pappl_host_name_cb_t	cb;		// Host name callback, if any
+  void			*cbdata;	// Callback data
+
+
+  if (system)
+  {
+    _papplRWLockWrite(system);
+
+    _papplSystemSetHostNameNoLock(system, value);
+
+    cb     = system->host_name_cb;
+    cbdata = system->host_name_cbdata;
+
+    _papplRWUnlock(system);
+
+    if (value)
+    {
+      if (cb)
+      {
+        (cb)(system, value, cbdata);
+      }
+      else
+      {
+#if !defined(__APPLE__) && !_WIN32
+	cups_file_t	*fp;		// Hostname file
+
+	if ((fp = cupsFileOpen("/etc/hostname", "w")) == NULL)
+	{
+	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to update /etc/hostname: %s", strerror(errno));
+	}
+	else
+	{
+	  cupsFilePrintf(fp, "%s\n", value);
+	  cupsFileClose(fp);
+	}
+#endif // !__APPLE__ && !_WIN32
+
+#if !_WIN32
+	if (sethostname(value, (int)strlen(value)))
+	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Unable to set hostname: %s", strerror(errno));
+#endif // !_WIN32
+      }
+    }
+  }
+}
+
+
+//
+// 'papplSystemSetHostNameCallback()' - Set the callback to record system host name changes.
+//
+// This function sets a callback for recording system host name changes.
+// The callback receives the current system object, new host name, and callback
+// data pointer, for example:
+//
+// ```
+// void my_host_name_cb(pappl_system_t *system, const char *host_name, void *cbdata) {
+// ...
+// }
+// ```
+//
+// The default callback attempts to record the system host name using standard
+// OS APIs and in standard files.
+//
+
+void
+papplSystemSetHostNameCallback(
+    pappl_system_t       *system,	// I - System
+    pappl_host_name_cb_t host_name_cb,	// I - Callback function or `NULL` for default
+    void                 *host_name_cbdata)
+					// I - Callback data
 {
   if (system)
   {
     _papplRWLockWrite(system);
-    _papplSystemSetHostNameNoLock(system, value);
+    system->host_name_cb     = host_name_cb;
+    system->host_name_cbdata = host_name_cbdata;
     _papplRWUnlock(system);
   }
 }

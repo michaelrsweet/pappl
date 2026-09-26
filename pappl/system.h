@@ -109,6 +109,9 @@ typedef struct pappl_wifi_s		// Wi-Fi status/configuration information
 typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *group, gid_t groupid, void *cb_data);
 					// Authentication callback
 
+typedef void (*pappl_host_name_cb_t)(pappl_system_t *system, const char *hostname, void *cb_data);
+					// Host name change callback
+
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
 					// IPP operation callback function
 
@@ -248,6 +251,7 @@ extern void		papplSystemSetExtUserGroup(pappl_system_t *system, const char *user
 extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) _PAPPL_PUBLIC;
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetHostName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
+extern void		papplSystemSetHostNameCallback(pappl_system_t *system, pappl_host_name_cb_t host_name_cb, void *host_name_cbdata) _PAPPL_PUBLIC;
 extern void		papplSystemSetIdleShutdown(pappl_system_t *system, int seconds) _PAPPL_PUBLIC;
 extern void		papplSystemSetLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLogLevel(pappl_system_t *system, pappl_loglevel_t loglevel) _PAPPL_PUBLIC;

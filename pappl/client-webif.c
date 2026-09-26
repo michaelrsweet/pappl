@@ -224,6 +224,12 @@ papplClientGetForm(
     // Flush remaining data...
     if (httpGetState(client->http) == initial_state)
       httpFlush(client->http);
+
+    if (body_size == body_alloc)
+    {
+      papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Discarding over-large form data.");
+      goto done;
+    }
   }
 
   // Parse the data in memory...

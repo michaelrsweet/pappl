@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2026-08-11" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2026-09-26" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -1204,7 +1204,7 @@ void papplSystemSetGeoLocation (
 This function sets the geographic location of the system as a "geo:" URI.
 If \fBNULL\fR, the location is cleared.
 .SS papplSystemSetHostName
-Set the system hostname.
+Set the system host name.
 .PP
 .nf
 void papplSystemSetHostName (
@@ -1213,8 +1213,34 @@ void papplSystemSetHostName (
 );
 .fi
 .PP
-This function sets the system hostname.  If \fBNULL\fR, the default hostname
+This function sets the system host name.  If \fBNULL\fR, the default host name
 is used.
+.SS papplSystemSetHostNameCallback
+Set the callback to record system host name changes.
+.PP
+.nf
+void papplSystemSetHostNameCallback (
+    pappl_system_t *system,
+    pappl_host_name_cb_t host_name_cb,
+    void *host_name_cbdata
+);
+.fi
+.PP
+This function sets a callback for recording system host name changes.
+The callback receives the current system object, new host name, and callback
+data pointer, for example:
+.PP
+.nf
+    void my_host_name_cb(pappl_system_t *system, const char *host_name, void *cbdata) {
+    ...
+    }
+
+.fi
+
+The default callback attempts to record the system host name using standard
+OS APIs and in standard files.
+
+
 .SS papplSystemSetLocation
 Set the system location string, if any.
 .PP
@@ -1600,6 +1626,12 @@ Authentication callback
 .PP
 .nf
 typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *group, gid_t groupid, void *cb_data);
+.fi
+.SS pappl_host_name_cb_t
+Host name change callback
+.PP
+.nf
+typedef bool (*pappl_host_name_cb_t)(pappl_system_t *system, const char *hostname, void *cb_data);
 .fi
 .SS pappl_ipp_op_cb_t
 IPP operation callback function

@@ -552,6 +552,7 @@ span.string {
 <li><a href="#papplSystemSetFooterHTML">papplSystemSetFooterHTML</a></li>
 <li><a href="#papplSystemSetGeoLocation">papplSystemSetGeoLocation</a></li>
 <li><a href="#papplSystemSetHostName">papplSystemSetHostName</a></li>
+<li><a href="#papplSystemSetHostNameCallback">papplSystemSetHostNameCallback</a></li>
 <li><a href="#papplSystemSetLocation">papplSystemSetLocation</a></li>
 <li><a href="#papplSystemSetLogLevel">papplSystemSetLogLevel</a></li>
 <li><a href="#papplSystemSetMIMECallback">papplSystemSetMIMECallback</a></li>
@@ -597,6 +598,7 @@ span.string {
 <li><a href="#pappl_event_cb_t">pappl_event_cb_t</a></li>
 <li><a href="#pappl_event_t">pappl_event_t</a></li>
 <li><a href="#pappl_finishings_t">pappl_finishings_t</a></li>
+<li><a href="#pappl_host_name_cb_t">pappl_host_name_cb_t</a></li>
 <li><a href="#pappl_icon_t">pappl_icon_t</a></li>
 <li><a href="#pappl_identify_actions_t">pappl_identify_actions_t</a></li>
 <li><a href="#pappl_ipp_op_cb_t">pappl_ipp_op_cb_t</a></li>
@@ -6193,7 +6195,7 @@ Note: The footer HTML can only be set prior to calling
 <p class="discussion">This function sets the geographic location of the system as a &quot;geo:&quot; URI.
 If <code>NULL</code>, the location is cleared.</p>
 <h3 class="function"><a id="papplSystemSetHostName">papplSystemSetHostName</a></h3>
-<p class="description">Set the system hostname.</p>
+<p class="description">Set the system host name.</p>
 <p class="code">
 <span class="reserved">void</span> papplSystemSetHostName(<a href="#pappl_system_t">pappl_system_t</a> *system, <span class="reserved">const</span> <span class="reserved">char</span> *value);</p>
 <h4 class="parameters">Parameters</h4>
@@ -6201,11 +6203,39 @@ If <code>NULL</code>, the location is cleared.</p>
 <tr><th>system</th>
 <td class="description">System</td></tr>
 <tr><th>value</th>
-<td class="description">Hostname or <code>NULL</code> for default</td></tr>
+<td class="description">Host name or <code>NULL</code> for default</td></tr>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
-<p class="discussion">This function sets the system hostname.  If <code>NULL</code>, the default hostname
+<p class="discussion">This function sets the system host name.  If <code>NULL</code>, the default host name
 is used.</p>
+<h3 class="function"><span class="info">&#160;PAPPL 1.4.13&#160;</span><a id="papplSystemSetHostNameCallback">papplSystemSetHostNameCallback</a></h3>
+<p class="description">Set the callback to record system host name changes.</p>
+<p class="code">
+<span class="reserved">void</span> papplSystemSetHostNameCallback(<a href="#pappl_system_t">pappl_system_t</a> *system, <a href="#pappl_host_name_cb_t">pappl_host_name_cb_t</a> host_name_cb, <span class="reserved">void</span> *host_name_cbdata);</p>
+<h4 class="parameters">Parameters</h4>
+<table class="list"><tbody>
+<tr><th>system</th>
+<td class="description">System</td></tr>
+<tr><th>host_name_cb</th>
+<td class="description">Callback function or <code>NULL</code> for default</td></tr>
+<tr><th>host_name_cbdata</th>
+<td class="description">Callback data</td></tr>
+</tbody></table>
+<h4 class="discussion">Discussion</h4>
+<p class="discussion">This function sets a callback for recording system host name changes.
+The callback receives the current system object, new host name, and callback
+data pointer, for example:
+
+<pre>
+void my_host_name_cb(pappl_system_t *system, const char *host_name, void *cbdata) {
+...
+}
+</pre>
+
+The default callback attempts to record the system host name using standard
+OS APIs and in standard files.
+
+</p>
 <h3 class="function"><a id="papplSystemSetLocation">papplSystemSetLocation</a></h3>
 <p class="description">Set the system location string, if any.</p>
 <p class="code">
@@ -6696,6 +6726,11 @@ typedef unsigned int pappl_event_t;
 <p class="description">Bitfield for IPP &quot;finishings&quot; values</p>
 <p class="code">
 typedef unsigned pappl_finishings_t;
+</p>
+<h3 class="typedef"><a id="pappl_host_name_cb_t">pappl_host_name_cb_t</a></h3>
+<p class="description">Host name change callback</p>
+<p class="code">
+typedef bool (*pappl_host_name_cb_t)(<a href="#pappl_system_t">pappl_system_t</a> *system, const char *hostname, void *cb_data);
 </p>
 <h3 class="typedef"><a id="pappl_icon_t">pappl_icon_t</a></h3>
 <p class="description">Printer PNG icon structure</p>

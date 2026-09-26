@@ -1,7 +1,7 @@
 //
 // Public system header file for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -103,30 +103,42 @@ typedef struct pappl_wifi_s		// Wi-Fi status/configuration information
 
 typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *group, gid_t groupid, void *cb_data);
 					// Authentication callback
+
+typedef bool (*pappl_host_name_cb_t)(pappl_system_t *system, const char *hostname, void *cb_data);
+					// Host name change callback
+
+typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
+					// IPP operation callback function
+
+typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t headersize, void *data);
+					// MIME typing callback function
+typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
+					// Filter callback function
+
+typedef size_t (*pappl_network_get_cb_t)(pappl_system_t *system, void *cb_data, size_t max_networks, pappl_network_t *networks);
+					// Get networks callback
+typedef bool (*pappl_network_set_cb_t)(pappl_system_t *system, void *cb_data, size_t num_networks, pappl_network_t *networks);
+					// Set networks callback
+
+typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
+					// Printer iterator callback function
+
 typedef const char *(*pappl_pr_autoadd_cb_t)(const char *device_info, const char *device_uri, const char *device_id, void *data);
 					// Auto-add callback
 typedef void (*pappl_pr_create_cb_t)(pappl_printer_t *printer, void *data);
 					// Printer creation callback
 typedef bool (*pappl_pr_driver_cb_t)(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 					// Driver callback function
-typedef bool (*pappl_mime_filter_cb_t)(pappl_job_t *job, pappl_device_t *device, void *data);
-					// Filter callback function
-typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);
-					// IPP operation callback function
-typedef const char *(*pappl_mime_cb_t)(const unsigned char *header, size_t headersize, void *data);
-					// MIME typing callback function
-typedef void (*pappl_printer_cb_t)(pappl_printer_t *printer, void *data);
-					// Printer iterator callback function
+
 typedef bool (*pappl_resource_cb_t)(pappl_client_t *client, void *data);
 					// Dynamic resource callback function
+
 typedef bool (*pappl_save_cb_t)(pappl_system_t *system, void *data);
 					// Save callback function
-typedef size_t (*pappl_network_get_cb_t)(pappl_system_t *system, void *cb_data, size_t max_networks, pappl_network_t *networks);
-					// Get networks callback
-typedef bool (*pappl_network_set_cb_t)(pappl_system_t *system, void *cb_data, size_t num_networks, pappl_network_t *networks);
-					// Set networks callback
+
 typedef bool (*pappl_timer_cb_t)(pappl_system_t *system, void *cb_data);
 					// Timer callback function
+
 typedef bool (*pappl_wifi_join_cb_t)(pappl_system_t *system, void *data, const char *ssid, const char *psk);
 					// Wi-Fi join callback
 typedef int (*pappl_wifi_list_cb_t)(pappl_system_t *system, void *data, cups_dest_t **ssids);
@@ -210,6 +222,7 @@ extern void		papplSystemSetFooterHTML(pappl_system_t *system, const char *html) 
 extern void		papplSystemSetGeoLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetHostname(pappl_system_t *system, const char *value) _PAPPL_DEPRECATED("Use papplSystemSetHostName instead.");
 extern void		papplSystemSetHostName(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
+extern void		papplSystemSetHostNameCallback(pappl_system_t *system, pappl_host_name_cb_t host_name_cb, void *host_name_cbdata) _PAPPL_PUBLIC;
 extern void		papplSystemSetLocation(pappl_system_t *system, const char *value) _PAPPL_PUBLIC;
 extern void		papplSystemSetLogLevel(pappl_system_t *system, pappl_loglevel_t loglevel) _PAPPL_PUBLIC;
 extern void		papplSystemSetMaxClients(pappl_system_t *system, int max_clients) _PAPPL_PUBLIC;

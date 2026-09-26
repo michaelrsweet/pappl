@@ -6,8 +6,10 @@ v1.4.13 - YYYY-MM-DD
 --------------------
 
 - SECURITY-3.1: Fixed a multipart form data parsing bug (GHSA-r3w6-72jx-qfpx)
-- `papplDeviceWrite` could produce a 0-length write call, which is problematic
-  for some USB printers (Issue #434)
+- Added `papplSystemSetHostNameCallback` function to provide an alternate way
+  to record host name changes on the local system.
+- Fixed `papplDeviceWrite` which could produce a 0-length write call that was
+  problematic for some USB printers (Issue #434)
 - Fixed issues with password authentication in the web interface (Issue #435)
 - Fixed Set-Printer-Attributes for some attributes (Issue #440)
 - Fixed a buffering issue in the HTTP monitor for USB gadget printing

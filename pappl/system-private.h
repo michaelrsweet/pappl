@@ -1,7 +1,7 @@
 //
 // Private system header file for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -133,6 +133,8 @@ struct _pappl_system_s			// System data
   bool			dns_sd_collision;	// Was there a name collision for this system?
   int			dns_sd_serial;		// DNS-SD serial number (for collisions)
   int			dns_sd_host_changes;	// Last count of DNS-SD host name changes
+  pappl_host_name_cb_t	host_name_cb;		// Host name change callback
+  void			*host_name_cbdata;	// Host name change callback data
   pappl_network_get_cb_t network_get_cb;	// Get networks callback
   pappl_network_set_cb_t network_set_cb;	// Set networks callback
   void			*network_cbdata;	// Network callback data

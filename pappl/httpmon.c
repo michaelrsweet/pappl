@@ -1,7 +1,7 @@
 //
 // Private HTTP monitor implementation for the Printer Application Framework
 //
-// Copyright © 2021-2025 by Michael R Sweet.
+// Copyright © 2021-2026 by Michael R Sweet.
 // Copyright © 2012 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -377,7 +377,7 @@ _papplHTTPMonitorProcessDeviceData(
 	  switch (hm->phase)
 	  {
 	    case _PAPPL_HTTP_PHASE_SERVER_HEADERS : /* Waiting for blank line */
-		if (!http_buffer_line(hm, &hm->host, &data, &datasize, line, sizeof(line)))
+		if (!http_buffer_line(hm, &hm->device, &data, &datasize, line, sizeof(line)))
 		  return (hm->status);
 
 		if (!line[0])
@@ -463,7 +463,7 @@ _papplHTTPMonitorProcessDeviceData(
 		switch (hm->data_chunk)
 		{
 		  case _PAPPL_HTTP_CHUNK_HEADER :
-		      if (!http_buffer_line(hm, &hm->host, &data, &datasize, line, sizeof(line)))
+		      if (!http_buffer_line(hm, &hm->device, &data, &datasize, line, sizeof(line)))
 			return (hm->status);
 
 		      // Get chunk length (hex)
@@ -498,7 +498,7 @@ _papplHTTPMonitorProcessDeviceData(
 		  case _PAPPL_HTTP_CHUNK_DATA : // Consume chunk data...
 		      if (hm->data_remaining > 0)
 		      {
-			bytes = http_buffer_consume(&hm->host, &data, &datasize, (size_t)hm->data_remaining);
+			bytes = http_buffer_consume(&hm->device, &data, &datasize, (size_t)hm->data_remaining);
 			hm->data_remaining -= (off_t)bytes;
 		      }
 
@@ -511,7 +511,7 @@ _papplHTTPMonitorProcessDeviceData(
 		      break;
 
 		  case _PAPPL_HTTP_CHUNK_TRAILER : // Look for blank line at end of chunk
-		      if (!http_buffer_line(hm, &hm->host, &data, &datasize, line, sizeof(line)))
+		      if (!http_buffer_line(hm, &hm->device, &data, &datasize, line, sizeof(line)))
 			return (hm->status);
 
 		      if (line[0])
@@ -543,7 +543,7 @@ _papplHTTPMonitorProcessDeviceData(
 		// Skip fixed-length data...
 		if (hm->data_remaining > 0)
 		{
-		  bytes = http_buffer_consume(&hm->host, &data, &datasize, (size_t)hm->data_remaining);
+		  bytes = http_buffer_consume(&hm->device, &data, &datasize, (size_t)hm->data_remaining);
 		  hm->data_remaining -= (off_t)bytes;
 		}
 
@@ -563,7 +563,7 @@ _papplHTTPMonitorProcessDeviceData(
 	      break;
 
 	  case _PAPPL_HTTP_PHASE_CLIENT_DATA : // Server may send failure response before client completes POST/PUT
-	      if (!http_buffer_line(hm, &hm->host, &data, &datasize, line, sizeof(line)))
+	      if (!http_buffer_line(hm, &hm->device, &data, &datasize, line, sizeof(line)))
 		return (hm->status);
 
 	      if (!strncmp(line, "HTTP/", 5))

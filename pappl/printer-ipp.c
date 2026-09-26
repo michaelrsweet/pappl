@@ -1384,24 +1384,6 @@ _papplPrinterSetAttributes(
         do_defaults = true;
       }
     }
-    else if (!strcmp(name, "output-bin-default"))
-    {
-      keyword = ippGetString(rattr, 0, NULL);
-
-      for (i = 0; i < driver_data.num_bin; i ++)
-      {
-        if (!strcmp(keyword, driver_data.bin[i]))
-        {
-          driver_data.bin_default = i;
-          break;
-        }
-      }
-
-      if (i >= driver_data.num_bin)
-        papplClientRespondIPP(client, IPP_STATUS_ERROR_ATTRIBUTES_OR_VALUES, "Unsupported \"output-bin-default\" value '%s'.", keyword);
-      else
-        do_defaults = true;
-    }
     else if (!strcmp(name, "print-color-mode-default"))
     {
       pappl_color_mode_t color_mode;	// "print-color-mode" bit value
@@ -1649,13 +1631,13 @@ _papplPrinterSetAttributes(
     papplPrinterSetGeoLocation(printer, geo_location);
 
   if (location)
-    papplPrinterSetGeoLocation(printer, location);
+    papplPrinterSetLocation(printer, location);
 
   if (organization)
-    papplPrinterSetGeoLocation(printer, organization);
+    papplPrinterSetOrganization(printer, organization);
 
   if (org_unit)
-    papplPrinterSetGeoLocation(printer, org_unit);
+    papplPrinterSetOrganizationalUnit(printer, org_unit);
 
   papplSystemAddEvent(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, NULL);
 

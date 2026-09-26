@@ -1429,13 +1429,13 @@ _papplPrinterSetAttributes(
     papplPrinterSetGeoLocation(printer, geo_location);
 
   if (location)
-    papplPrinterSetGeoLocation(printer, location);
+    papplPrinterSetLocation(printer, location);
 
   if (organization)
-    papplPrinterSetGeoLocation(printer, organization);
+    papplPrinterSetOrganization(printer, organization);
 
   if (org_unit)
-    papplPrinterSetGeoLocation(printer, org_unit);
+    papplPrinterSetOrganizationalUnit(printer, org_unit);
 
   papplSystemAddEvent(printer->system, printer, NULL, PAPPL_EVENT_PRINTER_CONFIG_CHANGED, NULL);
 

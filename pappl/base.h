@@ -93,6 +93,14 @@ typedef unsigned char pappl_dither_t[16][16];
 typedef struct pappl_pr_driver_data_s pappl_pr_driver_data_t;
 					// Print driver data
 typedef struct _pappl_job_s pappl_job_t;// Job object
+typedef struct pappl_sc_driver_data_s pappl_sc_driver_data_t;
+					// Scan driver data
+typedef struct pappl_sc_driver_s pappl_sc_driver_t;
+					// Scan driver information
+typedef struct pappl_sc_options_s pappl_sc_options_t;
+					// Combined scan job options
+typedef struct _pappl_scanner_s pappl_scanner_t;
+					// Scanner object
 typedef struct _pappl_loc_s pappl_loc_t;// Localization data
 typedef struct pappl_pr_options_s pappl_pr_options_t;
 					// Combined print job options

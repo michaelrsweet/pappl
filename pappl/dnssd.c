@@ -1,7 +1,7 @@
 //
 // DNS-SD support for the Printer Application Framework
 //
-// Copyright © 2019-2023 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -15,6 +15,7 @@
 //
 
 static void	dns_sd_printer_callback(cups_dnssd_service_t *service, pappl_printer_t *printer, cups_dnssd_flags_t flags);
+static void	dns_sd_scanner_callback(cups_dnssd_service_t *service, pappl_scanner_t *scanner, cups_dnssd_flags_t flags);
 static void	dns_sd_system_callback(cups_dnssd_service_t *service, pappl_system_t *system, cups_dnssd_flags_t flags);
 
 
@@ -284,6 +285,204 @@ _papplPrinterUnregisterDNSSDNoLock(
 
 
 //
+// '_papplScannerRegisterDNSSDNoLock()' - Register a scanner's DNS-SD service.
+//
+// This function registers the _uscan._tcp (and _uscans._tcp for TLS) DNS-SD
+// services for a scanner per the eSCL specification §3.
+//
+// Required TXT record keys per eSCL spec:
+//   txtvers=1, vers=2.0, adminurl, representation, rs=eSCL, ty, note,
+//   pdl, uuid, cs, is, duplex
+//
+
+bool					// O - `true` on success, `false` on failure
+_papplScannerRegisterDNSSDNoLock(
+    pappl_scanner_t *scanner)		// I - Scanner
+{
+  bool			ret = true;	// Return value
+  pappl_system_t	*system = scanner->system;
+					// System
+  uint32_t		if_index;	// Interface index
+  size_t		num_txt;	// Number of DNS-SD TXT record key/value pairs
+  cups_option_t		*txt;		// DNS-SD TXT record key/value pairs
+  char			adminurl[246],	// Admin URL
+			representation[246],
+					// Icon URL
+			pdl[252],	// List of supported formats
+			cs[64],		// Color capabilities string
+			is[64],		// Input sources string
+			*ptr;		// Pointer into string
+  size_t		i;		// Looping var
+
+
+  if (!scanner->dns_sd_name || !scanner->system->is_running || (scanner->system->options & PAPPL_SOPTIONS_NO_DNS_SD))
+    return (false);
+
+  papplLog(system, PAPPL_LOGLEVEL_DEBUG, "Registering scanner DNS-SD name '%s'.", scanner->dns_sd_name);
+
+  if_index = !strcmp(system->hostname, "localhost") ? CUPS_DNSSD_IF_INDEX_LOCAL : CUPS_DNSSD_IF_INDEX_ANY;
+
+  // Build the pdl (supported document formats) string...
+  for (i = 0, ptr = pdl, *ptr = '\0'; i < scanner->driver_data.num_format; i ++)
+  {
+    if (ptr > pdl && ptr < (pdl + sizeof(pdl) - 1))
+      *ptr++ = ',';
+
+    cupsCopyString(ptr, scanner->driver_data.format[i], sizeof(pdl) - (size_t)(ptr - pdl));
+    ptr += strlen(ptr);
+
+    if (ptr >= (pdl + sizeof(pdl) - 1))
+      break;
+  }
+
+  // Build the cs (color space) string...
+  cs[0] = '\0';
+  ptr   = cs;
+
+  if (scanner->driver_data.color_supported & PAPPL_SCAN_COLOR_MODE_RGB_24)
+  {
+    if (ptr > cs && ptr < (cs + sizeof(cs) - 1))
+      *ptr++ = ',';
+    cupsCopyString(ptr, "color", sizeof(cs) - (size_t)(ptr - cs));
+    ptr += strlen(ptr);
+  }
+
+  if (scanner->driver_data.color_supported & (PAPPL_SCAN_COLOR_MODE_GRAYSCALE_8 | PAPPL_SCAN_COLOR_MODE_GRAYSCALE_16))
+  {
+    if (ptr > cs && ptr < (cs + sizeof(cs) - 1))
+      *ptr++ = ',';
+    cupsCopyString(ptr, "grayscale", sizeof(cs) - (size_t)(ptr - cs));
+    ptr += strlen(ptr);
+  }
+
+  if (scanner->driver_data.color_supported & PAPPL_SCAN_COLOR_MODE_BLACK_AND_WHITE_1)
+  {
+    if (ptr > cs && ptr < (cs + sizeof(cs) - 1))
+      *ptr++ = ',';
+    cupsCopyString(ptr, "binary", sizeof(cs) - (size_t)(ptr - cs));
+    ptr += strlen(ptr);
+  }
+
+  // Build the is (input source) string...
+  is[0] = '\0';
+  ptr   = is;
+
+  if (scanner->driver_data.input_sources_supported & PAPPL_SCAN_INPUT_SOURCE_PLATEN)
+  {
+    if (ptr > is && ptr < (is + sizeof(is) - 1))
+      *ptr++ = ',';
+    cupsCopyString(ptr, "platen", sizeof(is) - (size_t)(ptr - is));
+    ptr += strlen(ptr);
+  }
+
+  if (scanner->driver_data.input_sources_supported & PAPPL_SCAN_INPUT_SOURCE_ADF)
+  {
+    if (ptr > is && ptr < (is + sizeof(is) - 1))
+      *ptr++ = ',';
+    cupsCopyString(ptr, "adf", sizeof(is) - (size_t)(ptr - is));
+    ptr += strlen(ptr);
+  }
+
+  if (scanner->driver_data.input_sources_supported & PAPPL_SCAN_INPUT_SOURCE_CAMERA)
+  {
+    if (ptr > is && ptr < (is + sizeof(is) - 1))
+      *ptr++ = ',';
+    cupsCopyString(ptr, "camera", sizeof(is) - (size_t)(ptr - is));
+    ptr += strlen(ptr);
+  }
+
+  // Build admin URL...
+  httpAssembleURIf(HTTP_URI_CODING_ALL, adminurl, sizeof(adminurl), "http", NULL, system->hostname, system->port, "%s/", scanner->uriname);
+
+  // Build representation (icon) URL...
+  httpAssembleURIf(HTTP_URI_CODING_ALL, representation, sizeof(representation), "http", NULL, system->hostname, system->port, "%s/icon-lg.png", scanner->uriname);
+
+  // Handle DNS-SD name collisions...
+  if (scanner->dns_sd_collision)
+  {
+    char	new_dns_sd_name[256];	// New DNS-SD name
+
+    scanner->dns_sd_serial ++;
+
+    if (scanner->dns_sd_serial == 1)
+    {
+      if (system->options & PAPPL_SOPTIONS_DNSSD_HOST)
+	snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", scanner->dns_sd_name, system->hostname);
+      else if (scanner->device_uri && strstr(scanner->device_uri, "?serial="))
+	snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%s)", scanner->dns_sd_name, strstr(scanner->device_uri, "?serial=") + 8);
+      else
+	snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s (%c%c%c%c%c%c)", scanner->dns_sd_name, toupper(scanner->uuid[39]), toupper(scanner->uuid[40]), toupper(scanner->uuid[41]), toupper(scanner->uuid[42]), toupper(scanner->uuid[43]), toupper(scanner->uuid[44]));
+    }
+    else
+    {
+      char	base_dns_sd_name[256];	// Base DNS-SD name
+
+      cupsCopyString(base_dns_sd_name, scanner->dns_sd_name, sizeof(base_dns_sd_name));
+      if ((ptr = strrchr(base_dns_sd_name, '(')) != NULL)
+        *ptr = '\0';
+
+      snprintf(new_dns_sd_name, sizeof(new_dns_sd_name), "%s(%d)", base_dns_sd_name, scanner->dns_sd_serial);
+    }
+
+    free(scanner->dns_sd_name);
+    if ((scanner->dns_sd_name = strdup(new_dns_sd_name)) != NULL)
+    {
+      papplLog(system, PAPPL_LOGLEVEL_INFO, "Scanner DNS-SD name collision, trying new DNS-SD service name '%s'.", scanner->dns_sd_name);
+
+      scanner->dns_sd_collision = false;
+    }
+    else
+    {
+      papplLog(system, PAPPL_LOGLEVEL_ERROR, "Scanner DNS-SD name collision, failed to allocate new DNS-SD service name.");
+      return (false);
+    }
+  }
+
+  // Build TXT record key/value pairs per eSCL spec §3...
+  num_txt = cupsAddOption("txtvers", "1", 0, &txt);
+  num_txt = cupsAddOption("vers", "2.0", num_txt, &txt);
+  num_txt = cupsAddOption("adminurl", adminurl, num_txt, &txt);
+  num_txt = cupsAddOption("representation", representation, num_txt, &txt);
+  num_txt = cupsAddOption("rs", "eSCL", num_txt, &txt);
+  num_txt = cupsAddOption("ty", scanner->driver_data.make_and_model, num_txt, &txt);
+  num_txt = cupsAddOption("note", scanner->location ? scanner->location : "", num_txt, &txt);
+  num_txt = cupsAddOption("pdl", pdl, num_txt, &txt);
+  num_txt = cupsAddOption("uuid", scanner->uuid + 9, num_txt, &txt);
+  num_txt = cupsAddOption("cs", cs, num_txt, &txt);
+  num_txt = cupsAddOption("is", is, num_txt, &txt);
+  num_txt = cupsAddOption("duplex", scanner->driver_data.duplex_supported ? "T" : "F", num_txt, &txt);
+
+  // Create DNS-SD service...
+  cupsDNSSDServiceDelete(scanner->dns_sd_services);
+  if ((scanner->dns_sd_services = cupsDNSSDServiceNew(system->dns_sd, if_index, scanner->dns_sd_name, (cups_dnssd_service_cb_t)dns_sd_scanner_callback, (void *)scanner)) == NULL)
+    ret = false;
+
+  // Register _uscan._tcp service (eSCL over HTTP)...
+  if (ret)
+    ret &= cupsDNSSDServiceAdd(scanner->dns_sd_services, "_uscan._tcp", /*domain*/NULL, /*hostname*/NULL, (uint16_t)system->port, num_txt, txt);
+
+  // Register _uscans._tcp service (eSCL over HTTPS)...
+  if (ret && !(system->options & PAPPL_SOPTIONS_NO_TLS))
+    ret &= cupsDNSSDServiceAdd(scanner->dns_sd_services, "_uscans._tcp", /*domain*/NULL, /*hostname*/NULL, (uint16_t)system->port, num_txt, txt);
+
+  cupsFreeOptions(num_txt, txt);
+
+  // Add a geo-location record...
+  if (ret && scanner->geo_location)
+    ret &= cupsDNSSDServiceSetLocation(scanner->dns_sd_services, scanner->geo_location);
+
+  // Commit service...
+  if (ret)
+    ret &= cupsDNSSDServicePublish(scanner->dns_sd_services);
+
+  if (!ret)
+    _papplScannerUnregisterDNSSDNoLock(scanner);
+
+  return (ret);
+}
+
+
+//
 // '_papplSystemRegisterDNSSDNoLock()' - Register a system's DNS-SD service.
 //
 
@@ -426,6 +625,41 @@ dns_sd_printer_callback(
 
   if (flags & CUPS_DNSSD_FLAGS_ERROR)
     papplLogPrinter(printer, PAPPL_LOGLEVEL_ERROR, "DNS-SD registration of '%s' failed.", printer->dns_sd_name);
+}
+
+
+//
+// 'dns_sd_scanner_callback()' - Track changes to a scanner's service registrations...
+//
+
+static void
+dns_sd_scanner_callback(
+    cups_dnssd_service_t *service,	// I - DNS-SD service
+    pappl_scanner_t      *scanner,	// I - Scanner
+    cups_dnssd_flags_t   flags)		// I - DNS-SD flags
+{
+  (void)service;
+
+  if (flags & CUPS_DNSSD_FLAGS_COLLISION)
+  {
+    _papplRWLockWrite(scanner->system);
+    _papplRWLockWrite(scanner);
+
+    scanner->dns_sd_collision             = true;
+    scanner->system->dns_sd_any_collision = true;
+
+    _papplRWUnlock(scanner);
+    _papplRWUnlock(scanner->system);
+  }
+
+#if 0
+  if (flags & CUPS_DNSSD_FLAGS_HOST_CHANGE)
+  {
+  }
+#endif // 0
+
+  if (flags & CUPS_DNSSD_FLAGS_ERROR)
+    papplLog(scanner->system, PAPPL_LOGLEVEL_ERROR, "Scanner DNS-SD registration of '%s' failed.", scanner->dns_sd_name);
 }
 
 

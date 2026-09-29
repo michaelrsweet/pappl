@@ -115,6 +115,10 @@ papplSystemLoadState(
     }
     else if (!strcasecmp(line, "NextPrinterID") && value)
       papplSystemSetNextPrinterID(system, (int)strtol(value, NULL, 10));
+    else if (!strcasecmp(line, "DefaultScannerID") && value)
+      papplSystemSetDefaultScannerID(system, (int)strtol(value, NULL, 10));
+    else if (!strcasecmp(line, "NextScannerID") && value)
+      papplSystemSetNextScannerID(system, (int)strtol(value, NULL, 10));
     else if (!strcasecmp(line, "UUID") && value)
     {
       if ((system->uuid = strdup(value)) == NULL)
@@ -449,6 +453,97 @@ papplSystemLoadState(
       if (printer && printer->driver_data.status_cb)
         (printer->driver_data.status_cb)(printer);
     }
+    else if (!strcasecmp(line, "<Scanner") && value)
+    {
+      // Read a scanner...
+      size_t		num_options;	// Number of options
+      cups_option_t	*options = NULL;// Options
+      const char	*scanner_id,	// Scanner ID
+			*scanner_name,	// Scanner name
+			*device_id,	// Device ID
+			*device_uri,	// Device URI
+			*driver_name;	// Driver name
+      pappl_scanner_t	*scanner;	// Current scanner
+
+
+      if ((num_options = cupsParseOptions(value, /*end*/NULL, 0, &options)) == 0 || (scanner_id = cupsGetOption("id", num_options, options)) == NULL || strtol(scanner_id, NULL, 10) <= 0 || (scanner_name = cupsGetOption("name", num_options, options)) == NULL || (device_id = cupsGetOption("did", num_options, options)) == NULL || (device_uri = cupsGetOption("uri", num_options, options)) == NULL || (driver_name = cupsGetOption("driver", num_options, options)) == NULL)
+      {
+        papplLog(system, PAPPL_LOGLEVEL_ERROR, "Bad scanner definition on line %d of \"%s\".", linenum, filename);
+        break;
+      }
+
+      if ((scanner = papplScannerCreate(system, (int)strtol(scanner_id, NULL, 10), scanner_name, driver_name, device_id, device_uri)) == NULL)
+      {
+	if (errno == EEXIST)
+	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Scanner '%s' already exists, dropping duplicate scanner in state file.", scanner_name);
+	else if (errno == EIO)
+	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Dropping scanner '%s' because the driver ('%s') is no longer supported.", scanner_name, driver_name);
+	else
+	  papplLog(system, PAPPL_LOGLEVEL_ERROR, "Dropping scanner '%s' because an error occurred: %s", scanner_name, strerror(errno));
+      }
+
+      while (read_line(fp, line, sizeof(line), &value, &linenum))
+      {
+        if (!strcasecmp(line, "</Scanner>"))
+          break;
+	else if (!scanner)
+	  continue;
+	else if (!strcasecmp(line, "DNSSDName"))
+	  papplScannerSetDNSSDName(scanner, value);
+	else if (!strcasecmp(line, "Location"))
+	  papplScannerSetLocation(scanner, value);
+	else if (!strcasecmp(line, "GeoLocation"))
+	  papplScannerSetGeoLocation(scanner, value);
+	else if (!strcasecmp(line, "Organization"))
+	  papplScannerSetOrganization(scanner, value);
+	else if (!strcasecmp(line, "OrganizationalUnit"))
+	  papplScannerSetOrganizationalUnit(scanner, value);
+	else if (!strcasecmp(line, "Contact"))
+	{
+	  pappl_contact_t	contact;// "scanner-contact" value
+
+	  parse_contact(value, &contact);
+	  papplScannerSetContact(scanner, &contact);
+	}
+	else if (!strcasecmp(line, "ScanGroup"))
+	  papplScannerSetScanGroup(scanner, value);
+	else if (!strcasecmp(line, "MaxActiveJobs") && value)
+	  papplScannerSetMaxActiveJobs(scanner, (size_t)strtol(value, NULL, 10));
+	else if (!strcasecmp(line, "MaxCompletedJobs") && value)
+	  papplScannerSetMaxCompletedJobs(scanner, (size_t)strtol(value, NULL, 10));
+	else if (!strcasecmp(line, "NextJobId") && value)
+	  papplScannerSetNextJobID(scanner, (int)strtol(value, NULL, 10));
+	else if (!strcasecmp(line, "ImpressionsCompleted") && value)
+	  papplScannerSetImpressionsCompleted(scanner, (int)strtol(value, NULL, 10));
+	else if (!strcasecmp(line, "scan-color-mode-default") && value)
+	{
+	  if (!strcmp(value, "color"))
+	    scanner->driver_data.color_default = PAPPL_SCAN_COLOR_MODE_RGB_24;
+	  else if (!strcmp(value, "grayscale"))
+	    scanner->driver_data.color_default = PAPPL_SCAN_COLOR_MODE_GRAYSCALE_8;
+	  else if (!strcmp(value, "black-and-white"))
+	    scanner->driver_data.color_default = PAPPL_SCAN_COLOR_MODE_BLACK_AND_WHITE_1;
+	}
+	else if (!strcasecmp(line, "input-source-default") && value)
+	{
+	  if (!strcmp(value, "platen"))
+	    scanner->driver_data.input_source_default = PAPPL_SCAN_INPUT_SOURCE_PLATEN;
+	  else if (!strcmp(value, "adf"))
+	    scanner->driver_data.input_source_default = PAPPL_SCAN_INPUT_SOURCE_ADF;
+	}
+	else if (!strcasecmp(line, "scanner-resolution-default") && value)
+	  sscanf(value, "%dx%ddpi", &scanner->driver_data.x_default, &scanner->driver_data.y_default);
+	else
+	{
+	  papplLog(system, PAPPL_LOGLEVEL_WARN, "Unknown scanner directive '%s' on line %d of \"%s\".", line, linenum, filename);
+	}
+      }
+
+      // Loaded all scanner attributes, call the status callback (if any) to
+      // update the current scanner state...
+      if (scanner && scanner->driver_data.status_cb)
+        (scanner->driver_data.status_cb)(scanner);
+    }
     else
     {
       papplLog(system, PAPPL_LOGLEVEL_WARN, "Unknown directive '%s' on line %d of \"%s\".", line, linenum, filename);
@@ -516,6 +611,8 @@ papplSystemSaveState(
   cupsFilePrintf(fp, "DefaultPrinterID %d\n", system->default_printer_id);
   cupsFilePrintf(fp, "MaxImageSize %ld %d %d\n", (long)system->max_image_size, system->max_image_width, system->max_image_height);
   cupsFilePrintf(fp, "NextPrinterID %d\n", system->next_printer_id);
+  cupsFilePrintf(fp, "DefaultScannerID %d\n", system->default_scanner_id);
+  cupsFilePrintf(fp, "NextScannerID %d\n", system->next_scanner_id);
   cupsFilePutConf(fp, "UUID", system->uuid);
 
   // Loop through the printers.
@@ -778,6 +875,65 @@ papplSystemSaveState(
   }
 
   cupsRWUnlock(&system->printers_rwlock);
+
+  // Loop through the scanners.
+  //
+  // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
+  // enumerating the scanners array.
+  cupsRWLockRead(&system->scanners_rwlock);
+
+  for (i = 0, count = cupsArrayGetCount(system->scanners); i < count; i ++)
+  {
+    size_t		num_options = 0;// Number of options
+    cups_option_t	*options = NULL;// Options
+    pappl_scanner_t	*scanner;	// Current scanner
+
+    scanner = (pappl_scanner_t *)cupsArrayGetElement(system->scanners, i);
+
+    _papplRWLockRead(scanner);
+
+    if (scanner->is_deleted)
+    {
+      _papplRWUnlock(scanner);
+      continue;
+    }
+
+    num_options = cupsAddIntegerOption("id", scanner->scanner_id, num_options, &options);
+    num_options = cupsAddOption("name", scanner->name, num_options, &options);
+    num_options = cupsAddOption("did", scanner->device_id ? scanner->device_id : "", num_options, &options);
+    num_options = cupsAddOption("uri", scanner->device_uri, num_options, &options);
+    num_options = cupsAddOption("driver", scanner->driver_name, num_options, &options);
+
+    write_options(fp, "<Scanner", num_options, options);
+    cupsFreeOptions(num_options, options);
+
+    if (scanner->dns_sd_name)
+      cupsFilePutConf(fp, "DNSSDName", scanner->dns_sd_name);
+    if (scanner->location)
+      cupsFilePutConf(fp, "Location", scanner->location);
+    if (scanner->geo_location)
+      cupsFilePutConf(fp, "Geolocation", scanner->geo_location);
+    if (scanner->organization)
+      cupsFilePutConf(fp, "Organization", scanner->organization);
+    if (scanner->org_unit)
+      cupsFilePutConf(fp, "OrganizationalUnit", scanner->org_unit);
+    write_contact(fp, &scanner->contact);
+    if (scanner->scan_group)
+      cupsFilePutConf(fp, "ScanGroup", scanner->scan_group);
+    cupsFilePrintf(fp, "MaxActiveJobs %u\n", (unsigned)scanner->max_active_jobs);
+    cupsFilePrintf(fp, "MaxCompletedJobs %u\n", (unsigned)scanner->max_completed_jobs);
+    cupsFilePrintf(fp, "NextJobId %d\n", scanner->next_job_id);
+    cupsFilePrintf(fp, "ImpressionsCompleted %d\n", scanner->impcompleted);
+
+    if (scanner->driver_data.x_default)
+      cupsFilePrintf(fp, "scanner-resolution-default %dx%ddpi\n", scanner->driver_data.x_default, scanner->driver_data.y_default);
+
+    cupsFilePuts(fp, "</Scanner>\n");
+
+    _papplRWUnlock(scanner);
+  }
+
+  cupsRWUnlock(&system->scanners_rwlock);
   _papplRWUnlock(system);
 
   cupsFileClose(fp);

@@ -15,6 +15,7 @@ v1.4.13 - YYYY-MM-DD
 - Fixed a buffering issue in the HTTP monitor for USB gadget printing
   (Issue #440)
 - Fixed a SNMP issue for invalid OIDs (Issue #440)
+- Fixed a potential string overrun issue when loading .strings files.
 
 
 v1.4.12 - 2026-08-20

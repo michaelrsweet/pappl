@@ -1,7 +1,7 @@
 //
 // Localization functions for the Printer Application Framework
 //
-// Copyright © 2022-2024 by Michael R Sweet.
+// Copyright © 2022-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -612,8 +612,6 @@ loc_load_resource(
       papplLog(loc->system, PAPPL_LOGLEVEL_WARN, "Missing terminator on line %d of '%s' (%s).", linenum, r->path, r->filename ? r->filename : "in-memory");
       break;
     }
-
-    dataptr ++;
 
     if (!cupsArrayFind(loc->pairs, &pair))
       cupsArrayAdd(loc->pairs, &pair);

@@ -104,7 +104,7 @@ typedef struct pappl_wifi_s		// Wi-Fi status/configuration information
 typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *group, gid_t groupid, void *cb_data);
 					// Authentication callback
 
-typedef bool (*pappl_host_name_cb_t)(pappl_system_t *system, const char *hostname, void *cb_data);
+typedef void (*pappl_host_name_cb_t)(pappl_system_t *system, const char *hostname, void *cb_data);
 					// Host name change callback
 
 typedef bool (*pappl_ipp_op_cb_t)(pappl_client_t *client, void *data);

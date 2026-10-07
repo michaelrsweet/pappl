@@ -1,4 +1,4 @@
-.TH pappl-system 3 "pappl system functions" "2026-09-26" "pappl system functions"
+.TH pappl-system 3 "pappl system functions" "2026-10-07" "pappl system functions"
 .SH NAME
 pappl-system \- pappl system functions
 .SH LIBRARY
@@ -1631,7 +1631,7 @@ typedef http_status_t (*pappl_auth_cb_t)(pappl_client_t *client, const char *gro
 Host name change callback
 .PP
 .nf
-typedef bool (*pappl_host_name_cb_t)(pappl_system_t *system, const char *hostname, void *cb_data);
+typedef void (*pappl_host_name_cb_t)(pappl_system_t *system, const char *hostname, void *cb_data);
 .fi
 .SS pappl_ipp_op_cb_t
 IPP operation callback function

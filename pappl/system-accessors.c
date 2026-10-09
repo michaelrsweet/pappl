@@ -1848,16 +1848,17 @@ _papplSystemSetHostNameNoLock(
 
   if (!value)
   {
-    _papplDNSSDCopyHostName(temp, sizeof(temp));
+    httpGetHostname(NULL, temp, sizeof(temp));
 
-    if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
+    if (!strchr(temp, '.'))
     {
-      // Replace hostname.lan with hostname.local
-      papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+      // No domain information, so get the mDNS hostname...
+      _papplDNSSDCopyHostName(temp, sizeof(temp));
     }
-    else if (!strrchr(temp, '.'))
+
+    if (!strchr(temp, '.'))
     {
-      // No domain information, so append .local to hostname...
+      // Still no domain information, add ".local"...
       ptr = temp + strlen(temp);
       papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
     }

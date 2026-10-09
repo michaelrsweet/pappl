@@ -2030,17 +2030,15 @@ _papplSystemSetHostNameNoLock(
   if (!value)
   {
     // Get the current hostname...
-    if (system->dns_sd)
-      cupsDNSSDCopyHostName(system->dns_sd, temp, sizeof(temp));
-    else
-      httpGetHostname(/*http*/NULL, temp, sizeof(temp));
+    httpGetHostname(/*http*/NULL, temp, sizeof(temp));
 
-    if ((ptr = strstr(temp, ".lan")) != NULL && !ptr[4])
+    if (!strchr(temp, '.') && system->dns_sd)
     {
-      // Replace hostname.lan with hostname.local
-      cupsCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+      // No domain information, so try the mDNS hostname...
+      cupsDNSSDCopyHostName(system->dns_sd, temp, sizeof(temp));
     }
-    else if (!strrchr(temp, '.'))
+
+    if (!strchr(temp, '.'))
     {
       // No domain information, so append .local to hostname...
       ptr = temp + strlen(temp);

@@ -16,6 +16,8 @@ v1.4.13 - YYYY-MM-DD
   (Issue #440)
 - Fixed a SNMP issue for invalid OIDs (Issue #440)
 - Fixed a potential string overrun issue when loading .strings files.
+- Fixed non-mDNS hostname support.
+- Fixed a compatibility issue with older versions of Android.
 
 
 v1.4.12 - 2026-08-20

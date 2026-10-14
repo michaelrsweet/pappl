@@ -541,7 +541,7 @@ _papplPrinterCopyAttributesNoLock(
 
     num_values = 0;
 
-    if (httpAddrIsLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
+    if (httpAddrIsLocalhost(httpGetAddress(client->http)) || (!httpIsEncrypted(client->http) && !papplSystemGetTLSOnly(client->system)))
     {
       httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipp", NULL, client->host_field, client->host_port, printer->resource);
       values[num_values] = uris[num_values];
@@ -743,7 +743,7 @@ _papplPrinterCopyXRINoLock(
 	*values[2];			// Values for attribute
 
 
-  if (httpAddrIsLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system))
+  if (httpAddrIsLocalhost(httpGetAddress(client->http)) || (!httpIsEncrypted(client->http) && !papplSystemGetTLSOnly(client->system)))
   {
     // Add ipp: URI...
     httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipp", NULL, client->host_field, client->host_port, printer->resource);

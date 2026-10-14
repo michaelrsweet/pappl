@@ -118,15 +118,7 @@ AS_IF([$PKGCONFIG --exists cups3], [
     PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups3)"
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups3)"
 
-    AS_IF([test x$host_os_name = xdarwin], [
-	CUPS_SERVERROOT="/private/etc/cups"
-    ], [
-	AS_IF([test "x$($PKGCONFIG --variable=prefix cups3)" = x/usr], [
-	    CUPS_SERVERROOT="/etc/cups"
-	], [
-	    CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
-	])
-    ])
+    CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups3)"
 ], [$PKGCONFIG --exists cups], [
     CUPS_VERSION="$($PKGCONFIG --modversion cups)"
     AC_MSG_RESULT([yes, v$CUPS_VERSION])
@@ -137,17 +129,6 @@ AS_IF([$PKGCONFIG --exists cups3], [
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups)"
 
     CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
-    AS_IF([test "x$CUPS_SERVERROOT" = x], [
-	AS_IF([test x$host_os_name = xdarwin], [
-	    CUPS_SERVERROOT="/private/etc/cups"
-	], [
-	    AS_IF([test "x$($PKGCONFIG --variable=prefix cups)" = x/usr], [
-		CUPS_SERVERROOT="/etc/cups"
-	    ], [
-		CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups)/etc/cups"
-	    ])
-	])
-    ])
 ], [
     AS_IF([test "x$CUPSCONFIG" = x], [
     	AC_MSG_RESULT(no)
@@ -171,6 +152,18 @@ AS_IF([$PKGCONFIG --exists cups3], [
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($CUPSCONFIG --image --libs)"
 
     CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
+])
+
+AS_IF([test "x$CUPS_SERVERROOT" = x], [
+  AS_IF([test x$host_os_name = xdarwin], [
+      CUPS_SERVERROOT="/private/etc/cups"
+  ], [
+      AS_IF([test "x$($PKGCONFIG --variable=prefix cups3)" = x/usr], [
+	  CUPS_SERVERROOT="/etc/cups"
+      ], [
+	  CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
+      ])
+  ])
 ])
 AC_DEFINE_UNQUOTED(CUPS_SERVERROOT, "$CUPS_SERVERROOT", [Location of CUPS config files])
 

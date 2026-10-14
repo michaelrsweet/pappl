@@ -4217,25 +4217,7 @@ printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
     PKGCONFIG_CFLAGS="$PKGCONFIG_CFLAGS $($PKGCONFIG --cflags cups3)"
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups3)"
 
-    if test x$host_os_name = xdarwin
-then :
-
-	CUPS_SERVERROOT="/private/etc/cups"
-
-else $as_nop
-
-	if test "x$($PKGCONFIG --variable=prefix cups3)" = x/usr
-then :
-
-	    CUPS_SERVERROOT="/etc/cups"
-
-else $as_nop
-
-	    CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
-
-fi
-
-fi
+    CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups3)"
 
 elif $PKGCONFIG --exists cups
 then :
@@ -4250,30 +4232,6 @@ printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($PKGCONFIG --libs cups)"
 
     CUPS_SERVERROOT="$($PKGCONFIG --variable=cups_serverroot cups)"
-    if test "x$CUPS_SERVERROOT" = x
-then :
-
-	if test x$host_os_name = xdarwin
-then :
-
-	    CUPS_SERVERROOT="/private/etc/cups"
-
-else $as_nop
-
-	    if test "x$($PKGCONFIG --variable=prefix cups)" = x/usr
-then :
-
-		CUPS_SERVERROOT="/etc/cups"
-
-else $as_nop
-
-		CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups)/etc/cups"
-
-fi
-
-fi
-
-fi
 
 else $as_nop
 
@@ -4309,6 +4267,31 @@ printf "%s\n" "yes, v$CUPS_VERSION" >&6; }
     PKGCONFIG_LIBS="$PKGCONFIG_LIBS $($CUPSCONFIG --image --libs)"
 
     CUPS_SERVERROOT="$($CUPSCONFIG --serverroot)"
+
+fi
+
+if test "x$CUPS_SERVERROOT" = x
+then :
+
+  if test x$host_os_name = xdarwin
+then :
+
+      CUPS_SERVERROOT="/private/etc/cups"
+
+else $as_nop
+
+      if test "x$($PKGCONFIG --variable=prefix cups3)" = x/usr
+then :
+
+	  CUPS_SERVERROOT="/etc/cups"
+
+else $as_nop
+
+	  CUPS_SERVERROOT="$($PKGCONFIG --variable=prefix cups3)/etc/cups"
+
+fi
+
+fi
 
 fi
 

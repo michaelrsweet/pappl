@@ -54,6 +54,7 @@ extern bool		papplClientIsEncrypted(pappl_client_t *client) _PAPPL_PUBLIC;
 extern bool		papplClientIsValidForm(pappl_client_t *client, size_t num_form, cups_option_t *form) _PAPPL_PUBLIC;
 
 extern bool		papplClientRespond(pappl_client_t *client, http_status_t code, const char *content_coding, const char *type, time_t last_modified, size_t length) _PAPPL_PUBLIC;
+extern bool		papplClientRespondCreated(pappl_client_t *client, const char *location) _PAPPL_PUBLIC;
 extern ipp_t		*papplClientRespondIPP(pappl_client_t *client, ipp_status_t status, const char *message, ...) _PAPPL_PUBLIC _PAPPL_FORMAT(3, 4);
 extern void		papplClientRespondIPPUnsupported(pappl_client_t *client, ipp_attribute_t *attr) _PAPPL_PUBLIC;
 extern bool		papplClientRespondRedirect(pappl_client_t *client, http_status_t code, const char *path) _PAPPL_PUBLIC;

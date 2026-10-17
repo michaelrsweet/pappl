@@ -12,6 +12,7 @@ include ../Makedefs
 
 OBJS	=	\
 		pwg-driver.o \
+		pwg-scanner.o \
 		testhttpmon.o \
 		testmainloop.o \
 		testpappl.o \
@@ -56,8 +57,8 @@ test:		testpappl
 	./testhttpmon 2>>test.log
 	echo "./testqrcode"
 	./testqrcode 2>>test.log
-	echo "./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,infra,idle-shutdown"
-	PAPPL_EXEC=../pappl/pappl-exec ./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,infra,idle-shutdown 2>>test.log
+	echo "./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,scan,infra,idle-shutdown"
+	PAPPL_EXEC=../pappl/pappl-exec ./testpappl -c -l testpappl.log -L debug -d testpappl.spool -o testpappl.output -t api,client,pwg-raster,scan,infra,idle-shutdown 2>>test.log
 	date >>test.log
 
 
@@ -69,16 +70,16 @@ testhttpmon:	testhttpmon.o ../pappl/$(LINKPAPPL_STATIC)
 
 
 # Mainloop test program
-testmainloop:	testmainloop.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
+testmainloop:	testmainloop.o pwg-driver.o pwg-scanner.o ../pappl/$(LINKPAPPL_STATIC)
 	echo Linking $@...
-	$(CC) $(LDFLAGS) -o $@ testmainloop.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ testmainloop.o pwg-driver.o pwg-scanner.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 
 # Test suite program
-testpappl:	testpappl.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC)
+testpappl:	testpappl.o pwg-driver.o pwg-scanner.o ../pappl/$(LINKPAPPL_STATIC)
 	echo Linking $@...
-	$(CC) $(LDFLAGS) -o $@ testpappl.o pwg-driver.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ testpappl.o pwg-driver.o pwg-scanner.o ../pappl/$(LINKPAPPL_STATIC) $(LIBS)
 	$(CODE_SIGN) $(CSFLAGS) -i org.msweet.pappl.$@ $@
 
 

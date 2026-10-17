@@ -42,6 +42,15 @@ pappl_pr_driver_t pwg_drivers[13] =
 };
 #endif // PWG_DRIVER
 
+extern pappl_sc_driver_t pwg_sc_drivers[2];
+#ifdef PWG_SC_DRIVER
+pappl_sc_driver_t pwg_sc_drivers[2] =
+{					// Scanner Drivers
+  { "pwg_scanner",		"PWG Test Scanner",		"MFG:PWG;MDL:Test Scanner;CMD:eSCL;",	NULL },
+  { "pwg_scanner_adf",		"PWG Test Scanner with ADF",	"MFG:PWG;MDL:Test Scanner ADF;CMD:eSCL;",	NULL }
+};
+#endif // PWG_SC_DRIVER
+
 
 //
 // Functions..
@@ -49,6 +58,9 @@ pappl_pr_driver_t pwg_drivers[13] =
 
 extern const char *pwg_autoadd(const char *device_info, const char *device_uri, const char *device_id, void *data);
 extern bool	pwg_callback(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_pr_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
+
+extern const char *pwg_sc_autoadd(const char *device_info, const char *device_uri, const char *device_id, void *data);
+extern bool	pwg_sc_callback(pappl_system_t *system, const char *driver_name, const char *device_uri, const char *device_id, pappl_sc_driver_data_t *driver_data, ipp_t **driver_attrs, void *data);
 
 
 #endif // !_TESTPAPPL_H_

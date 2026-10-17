@@ -21,6 +21,15 @@
 
 char	*_papplMainloopPath = NULL;	// Path to self
 
+size_t			_papplMainloopNumSCDrivers = 0;
+					// Number of scanner drivers
+pappl_sc_driver_t	*_papplMainloopSCDrivers = NULL;
+					// Scanner drivers array
+pappl_sc_autoadd_cb_t	_papplMainloopSCAutoaddCB = NULL;
+					// Scanner auto-add callback
+pappl_sc_driver_cb_t	_papplMainloopSCDriverCB = NULL;
+					// Scanner driver callback
+
 
 //
 // Local functions
@@ -698,4 +707,26 @@ get_length(const char *value)		// I - Length string
     return ((int)(n * 100000.0));
   else
     return ((int)n);
+}
+
+
+//
+// 'papplMainloopSetScannerDrivers()' - Set the list of scanner drivers for the
+//                                      main loop.
+//
+// This function sets the list of scanner drivers and callbacks for the main
+// loop.  It must be called before @link papplMainloop@.
+//
+
+void
+papplMainloopSetScannerDrivers(
+    size_t                num_drivers,	// I - Number of scanner drivers
+    pappl_sc_driver_t     *drivers,	// I - Scanner drivers
+    pappl_sc_autoadd_cb_t autoadd_cb,	// I - Auto-add callback or `NULL`
+    pappl_sc_driver_cb_t  driver_cb)	// I - Driver callback
+{
+  _papplMainloopNumSCDrivers = num_drivers;
+  _papplMainloopSCDrivers    = drivers;
+  _papplMainloopSCAutoaddCB  = autoadd_cb;
+  _papplMainloopSCDriverCB   = driver_cb;
 }

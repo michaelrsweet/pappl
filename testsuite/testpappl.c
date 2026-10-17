@@ -55,7 +55,7 @@
 //   pwg-raster           PWG Raster tests
 //
 
-#include <pappl/system-private.h>
+#include <pappl/pappl-private.h>
 #include <cups/dir.h>
 #include "testpappl.h"
 #include "test.h"
@@ -226,6 +226,7 @@ static size_t	test_network_get_cb(pappl_system_t *system, void *data, size_t max
 static bool	test_network_set_cb(pappl_system_t *system, void *data, size_t num_networks, pappl_network_t *networks);
 static bool	test_print_files(pappl_system_t *system, const char *prompt, const char *format, size_t num_files, const char * const *files);
 static bool	test_pwg_raster(pappl_system_t *system);
+static bool	test_scan(pappl_system_t *system);
 static bool	test_wifi_join_cb(pappl_system_t *system, void *data, const char *ssid, const char *psk);
 static size_t	test_wifi_list_cb(pappl_system_t *system, void *data, cups_dest_t **ssids);
 static pappl_wifi_t *test_wifi_status_cb(pappl_system_t *system, void *data, pappl_wifi_t *wifi_data);
@@ -860,6 +861,7 @@ main(int  argc,				// I - Number of command-line arguments
   papplSystemAddTimerCallback(system, /*start*/0, _PAPPL_TIMER_INTERVAL, (pappl_timer_cb_t)timer_cb, /*cb_data*/&testdata);
   papplSystemSetEventCallback(system, event_cb, (void *)"testpappl");
   papplSystemSetPrinterDrivers(system, (int)(sizeof(pwg_drivers) / sizeof(pwg_drivers[0])), pwg_drivers, pwg_autoadd, /* create_cb */NULL, pwg_callback, "testpappl");
+  papplSystemSetScannerDrivers(system, (int)(sizeof(pwg_sc_drivers) / sizeof(pwg_sc_drivers[0])), pwg_sc_drivers, pwg_sc_autoadd, /* create_cb */NULL, pwg_sc_callback, "testpappl");
   papplSystemSetRegisterCallbacks(system, infra_register_cb, infra_deregister_cb, /*cbdata*/NULL);
   papplSystemSetWiFiCallbacks(system, test_wifi_join_cb, test_wifi_list_cb, test_wifi_status_cb, (void *)"testpappl");
   papplSystemAddLink(system, "Configuration", "/config", true);
@@ -923,6 +925,21 @@ main(int  argc,				// I - Number of command-line arguments
 	// Not setting geo-location for label printer to ensure that DNS-SD works without a LOC record...
 	papplPrinterSetLocation(printer, "Test Lab 42");
 	papplPrinterSetOrganization(printer, "Lakeside Robotics");
+      }
+    }
+
+    // Create test scanner...
+    {
+      pappl_scanner_t *scanner;
+
+      scanner = papplScannerCreate(system, /* scanner_id */0, "Test Scanner", "pwg_scanner", "MFG:PWG;MDL:Test Scanner;CMD:eSCL;", "file:///dev/null");
+      if (scanner)
+      {
+        papplScannerSetContact(scanner, &contact);
+        papplScannerSetDNSSDName(scanner, "Test Scanner");
+        papplScannerSetGeoLocation(scanner, "geo:46.4707,-80.9961");
+        papplScannerSetLocation(scanner, "Test Lab 42");
+        papplScannerSetOrganization(scanner, "Lakeside Robotics");
       }
     }
   }
@@ -1578,6 +1595,11 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
     else if (!strcmp(name, "pwg-raster"))
     {
       if (!test_pwg_raster(testdata->system))
+        ret = (void *)1;
+    }
+    else if (!strcmp(name, "scan"))
+    {
+      if (!test_scan(testdata->system))
         ret = (void *)1;
     }
     else if (strcmp(name, "idle-shutdown"))
@@ -4885,6 +4907,1049 @@ test_pwg_raster(pappl_system_t *system)	// I - System
   return (ret);
 }
 
+
+//
+//
+// Scan test helper functions...
+//
+
+static bool	test_scan_color_mode(pappl_scanner_t *scanner, pappl_scan_color_mode_t color_mode, int x_resolution, int y_resolution, int width, int height, bool adf);
+static bool	test_scan_escl_job(pappl_system_t *system, pappl_scanner_t *scanner, pappl_scan_color_mode_t color_mode, const char *format, int width, int height, bool adf);
+static void	test_scan_job_cb(pappl_job_t *job, void *data);
+
+
+//
+// 'test_scan_job_cb()' - Count jobs seen by scanner iterator.
+//
+
+static void
+test_scan_job_cb(pappl_job_t *job,	// I - Job
+                 void       *data)	// I - Callback data
+{
+  size_t *count = (size_t *)data;
+
+  (void)job;
+
+  if (count)
+    (*count) ++;
+}
+
+
+//
+// 'test_scan_color_mode()' - Run an internal API scan for a specific color
+//                            mode and verify the raw page file size.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_scan_color_mode(
+    pappl_scanner_t		*scanner,	// I - Scanner
+    pappl_scan_color_mode_t	color_mode,	// I - Color mode
+    int				x_resolution,	// I - X resolution
+    int				y_resolution,	// I - Y resolution
+    int				width,		// I - Scan width in 1/300"
+    int				height,		// I - Scan height in 1/300"
+    bool			adf)		// I - ADF?
+{
+  bool			pass = true;	// Pass/fail
+  pappl_sc_options_t	options;	// Scan options
+  pappl_job_t		*job;		// Scan job
+  int			wait;		// Wait counter
+  int			expected_pages;	// Expected number of pages
+  const char		*mode_name;	// Mode name for messages
+  int			width_pixels,		// Width in pixels
+			height_pixels;	// Height in pixels
+  size_t		expected_size,	// Expected raw file size
+			actual_size;	// Actual raw file size
+  int			page;		// Page number
+  char			page_file[1024];	// Page filename
+  struct stat		st;		// File status
+
+
+  switch (color_mode)
+  {
+    case PAPPL_SCAN_COLOR_MODE_BLACK_AND_WHITE_1 :
+        mode_name = "BlackAndWhite1";
+        break;
+    case PAPPL_SCAN_COLOR_MODE_GRAYSCALE_8 :
+        mode_name = "Grayscale8";
+        break;
+    default :
+        mode_name = "RGB24";
+        break;
+  }
+
+  _papplTestBegin("scan: Color mode %s %dx%d%s", mode_name, x_resolution, y_resolution, adf ? " ADF" : "");
+
+  memset(&options, 0, sizeof(options));
+  options.intent       = PAPPL_SCAN_INTENT_DOCUMENT;
+  options.input_source = adf ? PAPPL_SCAN_INPUT_SOURCE_ADF : PAPPL_SCAN_INPUT_SOURCE_PLATEN;
+  options.color_mode   = color_mode;
+  options.x_resolution = x_resolution;
+  options.y_resolution = y_resolution;
+  options.scan_width   = width;
+  options.scan_height  = height;
+  options.compression  = 80;
+  cupsCopyString(options.format, "image/jpeg", sizeof(options.format));
+
+  if (adf)
+    options.duplex = true;
+
+  if ((job = _papplJobCreateScan(scanner, "testuser", &options)) == NULL)
+  {
+    _papplTestEndMessage(false, "failed to create job");
+    return (false);
+  }
+
+  _papplRWLockWrite(scanner);
+  _papplScannerCheckJobsNoLock(scanner);
+  _papplRWUnlock(scanner);
+
+  for (wait = 0; wait < 100; wait ++)
+  {
+    usleep(100000);
+    if (job->scan_complete || job->state >= IPP_JSTATE_CANCELED)
+      break;
+  }
+
+  expected_pages = adf ? 3 : 1;
+
+  if (!job->scan_complete)
+  {
+    _papplTestEndMessage(false, "did not complete (state=%d)", (int)job->state);
+    return (false);
+  }
+
+  if (job->scan_pages_ready != expected_pages)
+  {
+    _papplTestEndMessage(false, "expected %d pages, got %d", expected_pages, job->scan_pages_ready);
+    pass = false;
+  }
+
+  // Compute expected raw file size...
+  width_pixels  = width * x_resolution / 300;
+  if (width_pixels < 1)
+    width_pixels = 1;
+  height_pixels = height * y_resolution / 300;
+  if (height_pixels < 1)
+    height_pixels = 1;
+
+  switch (color_mode)
+  {
+    case PAPPL_SCAN_COLOR_MODE_BLACK_AND_WHITE_1 :
+        expected_size = (size_t)((width_pixels + 7) / 8) * (size_t)height_pixels;
+        break;
+    case PAPPL_SCAN_COLOR_MODE_GRAYSCALE_8 :
+        expected_size = (size_t)width_pixels * (size_t)height_pixels;
+        break;
+    default :
+        expected_size = (size_t)width_pixels * (size_t)height_pixels * 3;
+        break;
+  }
+
+  actual_size = 0;
+  for (page = 1; page <= job->scan_pages_ready; page ++)
+  {
+    if (_papplJobGetScanPageFile(job, page, page_file, sizeof(page_file)) &&
+        stat(page_file, &st) == 0)
+      actual_size += (size_t)st.st_size;
+  }
+
+  if (!adf && actual_size != expected_size)
+  {
+    _papplTestEndMessage(false, "expected %lu bytes, got %lu", (unsigned long)expected_size, (unsigned long)actual_size);
+    pass = false;
+  }
+
+  job->scan_pages_sent = job->scan_pages_ready;
+  _papplJobCompleteScan(job);
+
+  if (job->state != IPP_JSTATE_COMPLETED)
+  {
+    _papplTestEndMessage(false, "state=%d", (int)job->state);
+    pass = false;
+  }
+
+  if (pass)
+    _papplTestEndMessage(true, "%d page(s), %lu bytes", expected_pages, (unsigned long)actual_size);
+
+  return (pass);
+}
+
+
+//
+// 'test_scan_escl_connect()' - Create a fresh HTTP connection to the eSCL
+//                              endpoint.
+//
+
+static http_t *			// O - HTTP connection or `NULL`
+test_scan_escl_connect(
+    pappl_system_t *system,		// I - System
+    char           *resource,		// I - Resource buffer
+    size_t         resourcesize)	// I - Size of resource buffer
+{
+  int	port;				// Server port
+  char	uri[1024],			// Full URI
+	hhost[256];			// Host from URI
+  int	hport;				// Host port from URI
+
+
+  port = papplSystemGetHostPort(system);
+  httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "http", NULL, "localhost", port, "/eSCL/ScannerCapabilities");
+
+  return (httpConnectURI(uri, hhost, sizeof(hhost), &hport, resource, resourcesize, true, 30000, NULL, false));
+}
+
+
+//
+//
+// 'test_scan_escl_request()' - Send an eSCL HTTP request, retrying once if
+//                              the first attempt is rejected with a bad
+//                              request due to httpConnectURI host-field setup.
+//
+
+static http_status_t			// O - Response status
+test_scan_escl_request(
+    http_t       *http,			// I - HTTP connection
+    const char   *method,		// I - HTTP method
+    const char   *path,		// I - Resource path
+    const char   *body,			// I - Request body or `NULL`
+    size_t       body_len)		// I - Length of request body
+{
+  http_status_t	status;			// Response status
+
+
+  httpSetField(http, HTTP_FIELD_CONTENT_LENGTH, "0");
+  httpSetLength(http, 0);
+
+  if (body && body_len > 0)
+  {
+    char len_str[32];
+
+    snprintf(len_str, sizeof(len_str), "%lu", (unsigned long)body_len);
+    httpSetField(http, HTTP_FIELD_CONTENT_LENGTH, len_str);
+    httpSetLength(http, body_len);
+  }
+
+  if (!httpWriteRequest(http, method, path))
+    return (HTTP_STATUS_ERROR);
+
+  if (body && body_len > 0)
+    httpWrite(http, body, body_len);
+
+  while ((status = httpUpdate(http)) == HTTP_STATUS_CONTINUE)
+    ;
+
+  // Retry once on bad request...
+  if (status == HTTP_STATUS_BAD_REQUEST)
+  {
+    httpFlush(http);
+    usleep(100000);
+
+    if (body && body_len > 0)
+    {
+      char len_str[32];
+
+      snprintf(len_str, sizeof(len_str), "%lu", (unsigned long)body_len);
+      httpSetField(http, HTTP_FIELD_CONTENT_LENGTH, len_str);
+      httpSetLength(http, body_len);
+    }
+
+    if (httpWriteRequest(http, method, path))
+    {
+      if (body && body_len > 0)
+        httpWrite(http, body, body_len);
+
+      while ((status = httpUpdate(http)) == HTTP_STATUS_CONTINUE)
+        ;
+    }
+    else
+    {
+      status = HTTP_STATUS_ERROR;
+    }
+  }
+
+  return (status);
+}
+
+
+// 'test_scan_escl_job()' - Create an eSCL job via HTTP, retrieve pages via
+//                          NextDocument, and delete the job.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_scan_escl_job(
+    pappl_system_t		*system,	// I - System
+    pappl_scanner_t		*scanner,	// I - Scanner
+    pappl_scan_color_mode_t	color_mode,	// I - Color mode
+    const char			*format,	// I - Document format
+    int				width,		// I - Scan width in 1/300"
+    int				height,		// I - Scan height in 1/300"
+    bool			adf)		// I - ADF?
+{  bool			pass = true;	// Pass/fail
+  http_t		*http;		// HTTP connection
+  http_status_t		status;		// Response status
+  char			resource[1024];	// Resource path
+  char			location[1024];	// Job Location path
+  char			scan_xml[2048];	// ScanSettings XML
+  size_t		xml_len;	// XML length
+  const char		*mode_str;	// ColorMode string
+  const char		*loc_hdr;	// Location header value
+  int			page;		// Page number
+  int			expected_pages;	// Expected pages
+
+
+  (void)scanner;
+
+  switch (color_mode)
+  {
+    case PAPPL_SCAN_COLOR_MODE_BLACK_AND_WHITE_1 :
+        mode_str = "BlackAndWhite1";
+        break;
+    case PAPPL_SCAN_COLOR_MODE_GRAYSCALE_8 :
+        mode_str = "Grayscale8";
+        break;
+    default :
+        mode_str = "RGB24";
+        break;
+  }
+
+  _papplTestBegin("scan: eSCL POST %s%s", mode_str, adf ? " ADF" : "");
+
+  if ((http = test_scan_escl_connect(system, resource, sizeof(resource))) == NULL)
+  {
+    _papplTestEndMessage(false, "httpConnectURI failed");
+    return (false);
+  }
+
+  snprintf(scan_xml, sizeof(scan_xml),
+           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+           "<scan:ScanSettings xmlns:scan=\"http://schemas.hp.com/imaging/escl/2011/05/03\"\n"
+           "                   xmlns:pwg=\"http://www.pwg.org/schemas/2010/12/sm\">\n"
+           "  <pwg:Version>2.0</pwg:Version>\n"
+           "  <scan:Intent>Document</scan:Intent>\n"
+           "  <pwg:InputSource>%s</pwg:InputSource>\n"
+           "  <scan:ColorMode>%s</scan:ColorMode>\n"
+           "  <scan:XResolution>300</scan:XResolution>\n"
+           "  <scan:YResolution>300</scan:YResolution>\n"
+           "  <pwg:DocumentFormat>%s</pwg:DocumentFormat>\n"
+           "  <pwg:ScanRegions>\n"
+           "    <pwg:ScanRegion>\n"
+           "      <pwg:Width>%d</pwg:Width>\n"
+           "      <pwg:Height>%d</pwg:Height>\n"
+           "      <pwg:XOffset>0</pwg:XOffset>\n"
+           "      <pwg:YOffset>0</pwg:YOffset>\n"
+           "    </pwg:ScanRegion>\n"
+           "  </pwg:ScanRegions>\n"
+           "%s"
+           "</scan:ScanSettings>\n",
+           adf ? "Adf" : "Platen", mode_str, format, width, height,
+           adf ? "  <scan:Duplex>true</scan:Duplex>\n" : "");
+
+  xml_len = strlen(scan_xml);
+  httpSetField(http, HTTP_FIELD_CONTENT_TYPE, "text/xml");
+
+  status = test_scan_escl_request(http, "POST", "/eSCL/ScanJobs", scan_xml, xml_len);
+
+  if (status != HTTP_STATUS_CREATED)
+  {
+    _papplTestEndMessage(false, "status=%d", (int)status);
+    httpClose(http);
+    return (false);
+  }
+
+  loc_hdr = httpGetField(http, HTTP_FIELD_LOCATION);
+  if (loc_hdr && *loc_hdr)
+    cupsCopyString(location, loc_hdr, sizeof(location));
+  else
+    snprintf(location, sizeof(location), "/eSCL/ScanJobs/1");
+
+  // Extract path from absolute URL...
+  {
+    const char *path_ptr = location;
+
+    if (!strncmp(path_ptr, "http://", 7))
+    {
+      path_ptr += 7;
+      if ((path_ptr = strchr(path_ptr, '/')) != NULL)
+        cupsCopyString(location, path_ptr, sizeof(location));
+    }
+    else if (!strncmp(path_ptr, "https://", 8))
+    {
+      path_ptr += 8;
+      if ((path_ptr = strchr(path_ptr, '/')) != NULL)
+        cupsCopyString(location, path_ptr, sizeof(location));
+    }
+  }
+
+  _papplTestEndMessage(true, "Location: %s", location);
+  httpClose(http);
+
+  // GET ScanImageInfo (fresh connection)...
+  {
+    char info_uri[1024];
+    snprintf(info_uri, sizeof(info_uri), "%s/ScanImageInfo", location);
+    _papplTestBegin("scan: GET %s", info_uri);
+    if ((http = test_scan_escl_connect(system, resource, sizeof(resource))) == NULL)
+    {
+      _papplTestEndMessage(false, "httpConnectURI failed");
+      return (false);
+    }
+
+    status = test_scan_escl_request(http, "GET", info_uri, NULL, 0);
+    if (status == HTTP_STATUS_OK || status == HTTP_STATUS_NOT_FOUND)
+      _papplTestEndMessage(true, "status=%d", (int)status);
+    else
+    {
+      _papplTestEndMessage(false, "status=%d", (int)status);
+      pass = false;
+    }
+    httpClose(http);
+  }
+
+  // GET NextDocument until exhausted, using a fresh connection for each page
+  // because the server closes the connection after streaming each document.
+  expected_pages = adf ? 3 : 1;
+
+  for (page = 0; page < expected_pages + 2; page ++)
+  {
+    char		doc_uri[1024];
+    char		buffer[65536];
+    ssize_t		bytes;
+    size_t		total = 0;
+
+    snprintf(doc_uri, sizeof(doc_uri), "%s/NextDocument", location);
+    _papplTestBegin("scan: GET %s (page %d)", doc_uri, page + 1);
+
+    if ((http = test_scan_escl_connect(system, resource, sizeof(resource))) == NULL)
+    {
+      _papplTestEndMessage(false, "httpConnectURI failed");
+      pass = false;
+      break;
+    }
+
+    status = test_scan_escl_request(http, "GET", doc_uri, NULL, 0);
+
+    if (status == HTTP_STATUS_OK)
+    {
+      while ((bytes = httpRead(http, buffer, sizeof(buffer))) > 0)
+        total += (size_t)bytes;
+
+      _papplTestEndMessage(true, "%lu bytes", (unsigned long)total);
+    }
+    else if (status == HTTP_STATUS_NOT_FOUND)
+    {
+      _papplTestEndMessage(true, "no more pages");
+    }
+    else if (status == HTTP_STATUS_SERVICE_UNAVAILABLE)
+    {
+      _papplTestEndMessage(true, "retry");
+      page --;
+    }
+    else
+    {
+      _papplTestEndMessage(false, "status=%d", (int)status);
+      pass = false;
+    }
+
+    httpClose(http);
+
+    if (status == HTTP_STATUS_NOT_FOUND)
+      break;
+    else if (status != HTTP_STATUS_OK && status != HTTP_STATUS_SERVICE_UNAVAILABLE)
+      break;
+  }
+
+  // DELETE the created job (fresh connection)...
+  {
+    _papplTestBegin("scan: DELETE %s", location);
+    if ((http = test_scan_escl_connect(system, resource, sizeof(resource))) == NULL)
+    {
+      _papplTestEndMessage(false, "httpConnectURI failed");
+      pass = false;
+    }
+    else
+    {
+      status = test_scan_escl_request(http, "DELETE", location, NULL, 0);
+      if (status == HTTP_STATUS_OK || status == HTTP_STATUS_NOT_FOUND || status == HTTP_STATUS_GONE)
+        _papplTestEndMessage(true, "status=%d", (int)status);
+      else
+      {
+        _papplTestEndMessage(false, "status=%d", (int)status);
+        pass = false;
+      }
+      httpClose(http);
+    }
+  }
+
+  return (pass);
+
+}
+
+
+// 'test_scan()' - Run scan API and eSCL endpoint tests.
+//
+
+static bool				// O - `true` on success, `false` on failure
+test_scan(pappl_system_t *system)	// I - System
+{
+  bool			pass = true;		// Pass/fail state
+  pappl_scanner_t	*scanner;		// Test scanner
+  pappl_sc_driver_data_t driver_data;		// Scanner driver data
+
+
+  // Find scanner...
+  _papplTestBegin("scan: papplSystemFindScanner");
+  scanner = papplSystemFindScanner(system, NULL, 0, "file:///dev/null");
+  if (scanner)
+    _papplTestEndMessage(true, "%s", papplScannerGetName(scanner));
+  else
+  {
+    _papplTestEndMessage(false, "Scanner not found");
+    return (false);
+  }
+
+  // Verify driver data...
+  _papplTestBegin("scan: papplScannerGetDriverData");
+  if (papplScannerGetDriverData(scanner, &driver_data))
+  {
+    if (driver_data.color_supported & PAPPL_SCAN_COLOR_MODE_RGB_24)
+      _papplTestEndMessage(true, "color_supported=0x%04x, resolutions=%u", (unsigned)driver_data.color_supported, (unsigned)driver_data.num_resolution);
+    else
+    {
+      _papplTestEndMessage(false, "RGB24 not in color_supported");
+      pass = false;
+    }
+  }
+  else
+  {
+    _papplTestEndMessage(false, "Failed to get driver data");
+    pass = false;
+  }
+
+  // Verify scanner state...
+  _papplTestBegin("scan: papplScannerGetState");
+  if (papplScannerGetState(scanner) == IPP_PSTATE_IDLE)
+    _papplTestEndMessage(true, "Idle");
+  else
+  {
+    _papplTestEndMessage(false, "state=%d", (int)papplScannerGetState(scanner));
+    pass = false;
+  }
+
+  // Basic accessors...
+  _papplTestBegin("scan: papplScannerGetName");
+  {
+    const char *name = papplScannerGetName(scanner);
+    if (name && !strcmp(name, "Test Scanner"))
+      _papplTestEndMessage(true, "\'%s\'", name);
+    else
+    {
+      _papplTestEndMessage(false, "got '%s'", name ? name : "(null)");
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGetID");
+  {
+    int scanner_id = papplScannerGetID(scanner);
+    if (scanner_id >= 1)
+      _papplTestEndMessage(true, "id=%d", scanner_id);
+    else
+    {
+      _papplTestEndMessage(false, "id=%d", scanner_id);
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerSetLocation/GetLocation");
+  {
+    char loc_buf[256];
+    papplScannerSetLocation(scanner, "Scan Room 101");
+    papplScannerGetLocation(scanner, loc_buf, sizeof(loc_buf));
+    if (!strcmp(loc_buf, "Scan Room 101"))
+      _papplTestEnd(true);
+    else
+    {
+      _papplTestEndMessage(false, "got '%s'", loc_buf);
+      pass = false;
+    }
+    papplScannerSetLocation(scanner, "Test Lab 42");
+  }
+
+  _papplTestBegin("scan: papplSystemGetNumberOfScanners");
+  {
+    size_t num = papplSystemGetNumberOfScanners(system);
+    if (num >= 1)
+      _papplTestEndMessage(true, "num=%lu", (unsigned long)num);
+    else
+    {
+      _papplTestEndMessage(false, "num=%lu", (unsigned long)num);
+      pass = false;
+    }
+  }
+
+  // Extended accessors...
+  _papplTestBegin("scan: papplScannerGetDriverName");
+  {
+    const char *dname = papplScannerGetDriverName(scanner);
+    if (dname && !strcmp(dname, "pwg_scanner"))
+      _papplTestEndMessage(true, "'%s'", dname);
+    else
+    {
+      _papplTestEndMessage(false, "got '%s'", dname ? dname : "(null)");
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGetDeviceURI");
+  {
+    const char *duri = papplScannerGetDeviceURI(scanner);
+    if (duri && !strcmp(duri, "file:///dev/null"))
+      _papplTestEndMessage(true, "'%s'", duri);
+    else
+    {
+      _papplTestEndMessage(false, "got '%s'", duri ? duri : "(null)");
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGetContact");
+  {
+    pappl_contact_t scontact;
+    if (papplScannerGetContact(scanner, &scontact) && scontact.name[0] && !strcmp(scontact.name, "Michael R Sweet"))
+      _papplTestEndMessage(true, "'%s'", scontact.name);
+    else
+    {
+      _papplTestEndMessage(false, "contact missing");
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGetGeoLocation");
+  {
+    char geo[256];
+    papplScannerGetGeoLocation(scanner, geo, sizeof(geo));
+    if (!strncmp(geo, "geo:", 4))
+      _papplTestEndMessage(true, "'%s'", geo);
+    else
+    {
+      _papplTestEndMessage(false, "got '%s'", geo);
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGetOrganization");
+  {
+    char org[256];
+    papplScannerGetOrganization(scanner, org, sizeof(org));
+    if (org[0])
+      _papplTestEndMessage(true, "'%s'", org);
+    else
+    {
+      _papplTestEndMessage(false, "empty");
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGet/SetMaxActiveJobs");
+  {
+    papplScannerSetMaxActiveJobs(scanner, 5);
+    if (papplScannerGetMaxActiveJobs(scanner) == 5)
+      _papplTestEndMessage(true, "5");
+    else
+    {
+      _papplTestEndMessage(false, "max=%lu", (unsigned long)papplScannerGetMaxActiveJobs(scanner));
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGet/SetNextJobID");
+  {
+    int next = papplScannerGetNextJobID(scanner);
+    papplScannerSetNextJobID(scanner, next + 100);
+    if (papplScannerGetNextJobID(scanner) == next + 100)
+    {
+      _papplTestEndMessage(true, "next=%d", next + 100);
+      papplScannerSetNextJobID(scanner, next);
+    }
+    else
+    {
+      _papplTestEndMessage(false, "next=%d", papplScannerGetNextJobID(scanner));
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGet/SetScanGroup");
+  {
+    char group[256];
+    papplScannerSetScanGroup(scanner, "scanners");
+    papplScannerGetScanGroup(scanner, group, sizeof(group));
+    if (!strcmp(group, "scanners"))
+    {
+      _papplTestEndMessage(true, "'%s'", group);
+      papplScannerSetScanGroup(scanner, "");
+    }
+    else
+    {
+      _papplTestEndMessage(false, "got '%s'", group);
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGet/SetDNSSDName");
+  {
+    char dns[256];
+    papplScannerSetDNSSDName(scanner, "PWG Test Scanner DNS");
+    papplScannerGetDNSSDName(scanner, dns, sizeof(dns));
+    if (!strcmp(dns, "PWG Test Scanner DNS"))
+    {
+      _papplTestEndMessage(true, "'%s'", dns);
+      papplScannerSetDNSSDName(scanner, "Test Scanner");
+    }
+    else
+    {
+      _papplTestEndMessage(false, "got '%s'", dns);
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerGetPath");
+  {
+    char path[256];
+    if (papplScannerGetPath(scanner, "config", path, sizeof(path)) && path[0] == '/')
+      _papplTestEndMessage(true, "'%s'", path);
+    else
+    {
+      _papplTestEndMessage(false, "path missing");
+      pass = false;
+    }
+  }
+
+  _papplTestBegin("scan: papplScannerIsDeleted");
+  {
+    if (!papplScannerIsDeleted(scanner))
+      _papplTestEndMessage(true, "false");
+    else
+    {
+      _papplTestEndMessage(false, "true");
+      pass = false;
+    }
+  }
+
+  // Internal API color mode coverage...
+  if (!test_scan_color_mode(scanner, PAPPL_SCAN_COLOR_MODE_RGB_24, 300, 300, 2550, 3300, false))
+    pass = false;
+  if (!test_scan_color_mode(scanner, PAPPL_SCAN_COLOR_MODE_GRAYSCALE_8, 150, 150, 1275, 1650, false))
+    pass = false;
+  if (!test_scan_color_mode(scanner, PAPPL_SCAN_COLOR_MODE_BLACK_AND_WHITE_1, 300, 300, 2550, 3300, false))
+    pass = false;
+
+  // ADF multi-page path...
+  {
+    pappl_scanner_t *adf_scanner;
+
+    _papplTestBegin("scan: Create ADF scanner");
+    adf_scanner = papplScannerCreate(system, 0, "ADF Test Scanner", "pwg_scanner_adf", "MFG:PWG;MDL:ADF Test Scanner;CMD:eSCL;", "file:///dev/null");
+    if (adf_scanner)
+      _papplTestEndMessage(true, "%s", papplScannerGetName(adf_scanner));
+    else
+    {
+      _papplTestEndMessage(false, "failed");
+      pass = false;
+      return (pass);
+    }
+
+    _papplTestBegin("scan: ADF driver data");
+    if (papplScannerGetDriverData(adf_scanner, &driver_data) &&
+        (driver_data.input_sources_supported & PAPPL_SCAN_INPUT_SOURCE_ADF) &&
+        driver_data.duplex_supported)
+      _papplTestEndMessage(true, "ADF duplex");
+    else
+    {
+      _papplTestEndMessage(false, "missing ADF/duplex");
+      pass = false;
+    }
+
+    if (!test_scan_color_mode(adf_scanner, PAPPL_SCAN_COLOR_MODE_RGB_24, 300, 300, 2550, 3300, true))
+      pass = false;
+  }
+
+  // MFP association...
+  _papplTestBegin("scan: papplPrinterSetScanner/GetScanner");
+  {
+    pappl_printer_t *printer = papplSystemFindPrinter(system, NULL, 1, NULL);
+    if (printer)
+    {
+      papplPrinterSetScanner(printer, scanner);
+      if (papplPrinterGetScanner(printer) == scanner)
+        _papplTestEndMessage(true, "scanner=%p", (void *)scanner);
+      else
+      {
+        _papplTestEndMessage(false, "association failed");
+        pass = false;
+      }
+    }
+    else
+    {
+      _papplTestEndMessage(false, "no printer found");
+      pass = false;
+    }
+  }
+
+  // Cancel scan job...
+  _papplTestBegin("scan: Cancel scan job");
+  {
+    pappl_sc_options_t options;
+    pappl_job_t *cancel_job;
+
+    memset(&options, 0, sizeof(options));
+    options.intent       = PAPPL_SCAN_INTENT_PHOTO;
+    options.input_source = PAPPL_SCAN_INPUT_SOURCE_PLATEN;
+    options.color_mode   = PAPPL_SCAN_COLOR_MODE_GRAYSCALE_8;
+    options.x_resolution = 150;
+    options.y_resolution = 150;
+    options.scan_width   = 2550;
+    options.scan_height  = 3300;
+    options.compression  = 80;
+    cupsCopyString(options.format, "image/jpeg", sizeof(options.format));
+
+    cancel_job = _papplJobCreateScan(scanner, "testuser", &options);
+    if (cancel_job)
+    {
+      _papplJobCancelScan(cancel_job);
+      if (cancel_job->state == IPP_JSTATE_CANCELED)
+        _papplTestEnd(true);
+      else
+      {
+        _papplTestEndMessage(false, "state=%d", (int)cancel_job->state);
+        pass = false;
+      }
+    }
+    else
+    {
+      _papplTestEndMessage(false, "failed to create job for cancellation");
+      pass = false;
+    }
+  }
+
+  // Job iterator and counters...
+  _papplTestBegin("scan: papplScannerIterateActiveJobs");
+  {
+    size_t active_count = 0;
+
+    _papplRWLockWrite(scanner);
+    _papplScannerCheckJobsNoLock(scanner);
+    _papplRWUnlock(scanner);
+
+    papplScannerIterateActiveJobs(scanner, (pappl_job_cb_t)test_scan_job_cb, &active_count, 0, 0);
+    _papplTestEndMessage(true, "count=%lu", (unsigned long)active_count);
+  }
+
+  _papplTestBegin("scan: papplScannerGetNumberOfJobs");
+  {
+    size_t num = papplScannerGetNumberOfJobs(scanner);
+    _papplTestEndMessage(true, "num=%lu", (unsigned long)num);
+  }
+
+  _papplTestBegin("scan: papplScannerGetImpressionsCompleted");
+  {
+    int impressions = papplScannerGetImpressionsCompleted(scanner);
+    if (impressions >= 3)
+      _papplTestEndMessage(true, "impressions=%d", impressions);
+    else
+    {
+      _papplTestEndMessage(false, "impressions=%d (expected >=3)", impressions);
+      pass = false;
+    }
+  }
+
+  // eSCL HTTP endpoint tests...
+  {
+    http_t		*http;			// HTTP connection
+    http_status_t	status;			// Response status
+    int			port;			// Server port
+    char		uri[1024],		// Full URI
+			resource[1024],		// Resource path
+			hhost[256];		// Host from URI
+    int			hport;			// Host port from URI
+
+    port = papplSystemGetHostPort(system);
+    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "http", NULL, "localhost", port, "/eSCL/ScannerCapabilities");
+
+    _papplTestBegin("scan: HTTP connect for eSCL");
+    if ((http = httpConnectURI(uri, hhost, sizeof(hhost), &hport, resource, sizeof(resource), true, 30000, NULL, false)) != NULL)
+      _papplTestEnd(true);
+    else
+    {
+      _papplTestEndMessage(false, "httpConnectURI failed");
+      pass = false;
+      goto scan_escl_done;
+    }
+
+    // GET /eSCL/ScannerCapabilities...
+    _papplTestBegin("scan: GET /eSCL/ScannerCapabilities");
+    if (httpWriteRequest(http, "GET", "/eSCL/ScannerCapabilities"))
+    {
+      while ((status = httpUpdate(http)) == HTTP_STATUS_CONTINUE)
+        ;
+
+      if (status != HTTP_STATUS_OK)
+      {
+        httpFlush(http);
+        usleep(100000);
+        httpWriteRequest(http, "GET", "/eSCL/ScannerCapabilities");
+        while ((status = httpUpdate(http)) == HTTP_STATUS_CONTINUE)
+          ;
+      }
+
+      if (status == HTTP_STATUS_OK)
+        _papplTestEnd(true);
+      else
+      {
+        _papplTestEndMessage(false, "status=%d", (int)status);
+        pass = false;
+      }
+    }
+    else
+    {
+      _papplTestEndMessage(false, "httpWriteRequest failed");
+      pass = false;
+    }
+    httpFlush(http);
+
+    // GET /eSCL/ScannerStatus...
+    _papplTestBegin("scan: GET /eSCL/ScannerStatus");
+    if (httpWriteRequest(http, "GET", "/eSCL/ScannerStatus"))
+    {
+      while ((status = httpUpdate(http)) == HTTP_STATUS_CONTINUE)
+        ;
+      if (status == HTTP_STATUS_OK)
+        _papplTestEnd(true);
+      else
+      {
+        _papplTestEndMessage(false, "status=%d", (int)status);
+        pass = false;
+      }
+    }
+    else
+    {
+      _papplTestEndMessage(false, "httpWriteRequest failed");
+      pass = false;
+    }
+    httpFlush(http);
+
+    // DELETE non-existent job returns 404...
+    _papplTestBegin("scan: DELETE /eSCL/ScanJobs/99999");
+    if (httpWriteRequest(http, "DELETE", "/eSCL/ScanJobs/99999"))
+    {
+      while ((status = httpUpdate(http)) == HTTP_STATUS_CONTINUE)
+        ;
+      if (status == HTTP_STATUS_NOT_FOUND)
+        _papplTestEndMessage(true, "status=%d", (int)status);
+      else
+      {
+        _papplTestEndMessage(false, "status=%d", (int)status);
+        pass = false;
+      }
+    }
+    else
+    {
+      _papplTestEndMessage(false, "httpWriteRequest failed");
+      pass = false;
+    }
+    httpFlush(http);
+
+    // Bad XML returns an error...
+    _papplTestBegin("scan: POST /eSCL/ScanJobs bad XML");
+    {
+      static const char *bad_settings = "not xml";
+      size_t		bad_len = strlen(bad_settings);
+      char		len_str[32];
+
+      snprintf(len_str, sizeof(len_str), "%lu", (unsigned long)bad_len);
+      httpSetField(http, HTTP_FIELD_CONTENT_TYPE, "text/xml");
+      httpSetField(http, HTTP_FIELD_CONTENT_LENGTH, len_str);
+      httpSetLength(http, bad_len);
+
+      if (httpWriteRequest(http, "POST", "/eSCL/ScanJobs"))
+      {
+        httpWrite(http, bad_settings, bad_len);
+        while ((status = httpUpdate(http)) == HTTP_STATUS_CONTINUE)
+          ;
+        if (status >= HTTP_STATUS_BAD_REQUEST)
+          _papplTestEndMessage(true, "status=%d", (int)status);
+        else
+        {
+          _papplTestEndMessage(false, "status=%d", (int)status);
+          pass = false;
+        }
+      }
+      else
+      {
+        _papplTestEndMessage(false, "httpWriteRequest failed");
+        pass = false;
+      }
+      httpFlush(http);
+    }
+
+    httpClose(http);
+  }
+
+scan_escl_done:
+
+  // eSCL job creation + NextDocument coverage...
+  if (!test_scan_escl_job(system, scanner, PAPPL_SCAN_COLOR_MODE_RGB_24, "image/jpeg", 2550, 3300, false))
+    pass = false;
+  if (!test_scan_escl_job(system, scanner, PAPPL_SCAN_COLOR_MODE_GRAYSCALE_8, "image/jpeg", 1275, 1650, false))
+    pass = false;
+  if (!test_scan_escl_job(system, scanner, PAPPL_SCAN_COLOR_MODE_BLACK_AND_WHITE_1, "image/jpeg", 2550, 3300, false))
+    pass = false;
+  if (!test_scan_escl_job(system, scanner, PAPPL_SCAN_COLOR_MODE_RGB_24, "image/jpeg", 2550, 3300, true))
+    pass = false;
+
+  // Web interface smoke tests...
+  {
+    http_t		*http;		// HTTP connection
+    http_status_t	status;		// Response status
+    char		resource[1024];	// Resource path
+    struct
+    {
+      const char *path;		// Web path
+      const char *name;		// Test name
+    }			pages[] =
+    {
+      { "/Test_Scanner", "home" },
+      { "/Test_Scanner/config", "config" },
+      { "/Test_Scanner/jobs", "jobs" },
+      { "/Test_Scanner/defaults", "defaults" }
+    };
+    size_t		i;		// Looping var
+
+    for (i = 0; i < sizeof(pages) / sizeof(pages[0]); i ++)
+    {
+      _papplTestBegin("scan: GET %s (%s)", pages[i].path, pages[i].name);
+      if ((http = test_scan_escl_connect(system, resource, sizeof(resource))) == NULL)
+      {
+        _papplTestEndMessage(false, "httpConnectURI failed");
+        pass = false;
+        continue;
+      }
+
+      status = test_scan_escl_request(http, "GET", pages[i].path, NULL, 0);
+      if (status == HTTP_STATUS_OK || status == HTTP_STATUS_FOUND || status == HTTP_STATUS_UNAUTHORIZED)
+        _papplTestEndMessage(true, "status=%d", (int)status);
+      else
+      {
+        _papplTestEndMessage(false, "status=%d", (int)status);
+        pass = false;
+      }
+      httpClose(http);
+    }
+  }
+
+  return (pass);
+
+}
 
 //
 // 'test_wifi_join_cb()' - Try joining a Wi-Fi network.

@@ -1,7 +1,7 @@
 //
 // Private mainloop header file for the Printer Application Framework
 //
-// Copyright © 2020-2023 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -22,15 +22,26 @@ extern "C" {
 
 extern char *_papplMainloopPath _PAPPL_PRIVATE;
 
+extern size_t              _papplMainloopNumSCDrivers _PAPPL_PRIVATE;
+					// Number of scanner drivers
+extern pappl_sc_driver_t   *_papplMainloopSCDrivers _PAPPL_PRIVATE;
+					// Scanner drivers array
+extern pappl_sc_autoadd_cb_t _papplMainloopSCAutoaddCB _PAPPL_PRIVATE;
+					// Scanner auto-add callback
+extern pappl_sc_driver_cb_t  _papplMainloopSCDriverCB _PAPPL_PRIVATE;
+					// Scanner driver callback
+
 
 //
 // Functions...
 //
 
 extern int	_papplMainloopAddPrinter(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
+extern int	_papplMainloopAddScanner(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopAutoAddPrinters(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopCancelJob(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopDeletePrinter(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
+extern int	_papplMainloopDeleteScanner(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopGetSetDefaultPrinter(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopModifyPrinter(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopPausePrinter(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
@@ -41,6 +52,8 @@ extern int	_papplMainloopShowDrivers(const char *base_name, size_t num_drivers, 
 extern int	_papplMainloopShowJobs(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopShowOptions(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopShowPrinters(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
+extern int	_papplMainloopShowScannerDrivers(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
+extern int	_papplMainloopShowScanners(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopShowStatus(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopShutdownServer(const char *base_name, size_t num_options, cups_option_t *options) _PAPPL_PRIVATE;
 extern int	_papplMainloopSubmitJob(const char *base_name, size_t num_options, cups_option_t *options, size_t num_files, char **files) _PAPPL_PRIVATE;

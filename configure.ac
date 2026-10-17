@@ -200,6 +200,25 @@ AC_CHECK_HEADER([sys/vfs.h], AC_DEFINE([HAVE_SYS_VFS_H], [1], [Have <sys/vfs.h> 
 AC_CHECK_FUNCS([statfs statvfs])
 
 
+dnl Mini-XML for eSCL XML processing (required for scanner support)...
+AC_MSG_CHECKING([for Mini-XML library v4.x])
+AS_IF([$PKGCONFIG --exists mxml4], [
+    MXML_VERSION="$($PKGCONFIG --modversion mxml4)"
+    AC_MSG_RESULT([yes, v$MXML_VERSION])
+    CPPFLAGS="$($PKGCONFIG --cflags mxml4) $CPPFLAGS"
+    LIBS="$($PKGCONFIG --libs mxml4) $LIBS"
+    PKGCONFIG_LIBS_PRIVATE="$($PKGCONFIG --libs mxml4) $PKGCONFIG_LIBS_PRIVATE"
+    MXML_LIBDIR="$($PKGCONFIG --variable=libdir mxml4)"
+    AS_IF([test "x$MXML_LIBDIR" != x -a "x$MXML_LIBDIR" != x/usr/lib -a "x$MXML_LIBDIR" != x/usr/lib64], [
+        LDFLAGS="$LDFLAGS -Wl,-rpath,$MXML_LIBDIR"
+        DSOFLAGS="$DSOFLAGS -Wl,-rpath,$MXML_LIBDIR"
+    ])
+], [
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([Sorry, Mini-XML >= 4.0 is required for eSCL scanner support. Get it from https://www.msweet.org/mxml/])
+])
+
+
 dnl libjpeg...
 AC_ARG_ENABLE([libjpeg], AS_HELP_STRING([--enable-libjpeg], [use libjpeg for JPEG printing, default=auto]))
 

@@ -44,6 +44,7 @@ struct _pappl_printer_s			// Printer data
 {
   cups_rwlock_t		rwlock;			// Reader/writer lock
   pappl_system_t	*system;		// Containing system
+  pappl_scanner_t	*scanner;		// Associated scanner (MFP) or NULL
   int			printer_id;		// "printer-id" value
   char			*name,			// "printer-name" value
 			*dns_sd_name,		// "printer-dns-sd-name" value

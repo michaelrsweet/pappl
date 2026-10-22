@@ -1436,7 +1436,7 @@ papplPrinterReleaseHeldNewJobs(
 
     for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs); job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
     {
-      if (job->state == IPP_JSTATE_HELD && job->hold_until == 0 && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
+      if (job->state == IPP_JSTATE_HELD && job->num_documents > 0 && job->hold_until == 0 && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
       {
 	// Release this job
 	_papplRWLockWrite(job);

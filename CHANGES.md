@@ -1,7 +1,6 @@
 Changes in PAPPL
 ================
 
-
 Changes in v2.0b1 (YYYY-MM-DD)
 ------------------------------
 

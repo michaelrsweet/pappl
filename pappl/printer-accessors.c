@@ -1,7 +1,7 @@
 //
 // Printer accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -985,7 +985,7 @@ papplPrinterReleaseHeldNewJobs(
     {
       _papplRWLockWrite(job);
 
-      if (job->state == IPP_JSTATE_HELD && job->hold_until == 0 && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
+      if (job->state == IPP_JSTATE_HELD && job->filename != NULL && job->format != NULL && job->hold_until == 0 && !(job->state_reasons & PAPPL_JREASON_JOB_HOLD_UNTIL_SPECIFIED))
       {
 	// Release this job
 	_papplJobReleaseNoLock(job, username);

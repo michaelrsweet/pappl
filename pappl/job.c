@@ -1,7 +1,7 @@
 //
 // Job object for the Printer Application Framework
 //
-// Copyright © 2019-2025 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -177,6 +177,9 @@ _papplJobCreate(
   _papplRWUnlock(printer);
 
   papplSystemAddEvent(printer->system, printer, job, PAPPL_EVENT_JOB_CREATED, NULL);
+
+  if (!printer->system->clean_time)
+    printer->system->clean_time = time(NULL) + 60;
 
   _papplSystemConfigChanged(printer->system);
 
@@ -541,7 +544,7 @@ papplJobRelease(pappl_job_t *job,	// I - Job
   _papplRWLockWrite(job);
 
   // Only release jobs in the held state...
-  if (job->state == IPP_JSTATE_HELD)
+  if (job->state == IPP_JSTATE_HELD && job->filename != NULL && job->format != NULL)
   {
     // Do the release...
     _papplJobReleaseNoLock(job, username);
@@ -986,29 +989,62 @@ _papplPrinterCheckJobsNoLock(
 // '_papplPrinterCleanJobsNoLock()' - Clean completed jobs for a printer.
 //
 
-void
+time_t					// O - Next clean time
 _papplPrinterCleanJobsNoLock(
     pappl_printer_t *printer)		// I - Printer
 {
-  time_t	cleantime;		// Clean time
+  time_t	clean_time,		// Clean time
+		next_time = 0;		// Next clean time
   pappl_job_t	*job;			// Current job
   int		preserved;		// Number of preserved jobs
 
 
-  if (cupsArrayGetCount(printer->completed_jobs) == 0 || (printer->max_preserved_jobs == 0 && printer->max_completed_jobs <= 0))
-    return;
-
-  // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
-  // only thread enumerating and can use cupsArrayGetFirst/Last...
-  for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs), cleantime = time(NULL) - 60, preserved = 0; job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
+  // Enumerate the active jobs.  Since we have a writer (exclusive) lock, we
+  // are the only thread enumerating and can use cupsArrayGetFirst/Last...
+  for (job = (pappl_job_t *)cupsArrayGetFirst(printer->active_jobs), clean_time = time(NULL) - 60; job; job = (pappl_job_t *)cupsArrayGetNext(printer->active_jobs))
   {
-    if (job->completed && job->completed < cleantime && printer->max_completed_jobs > 0 && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
+    if (job->state == IPP_JSTATE_HELD && !job->filename && job->created < clean_time)
     {
+      // Abort an incoming job without a print job
+      _papplRWLockWrite(job);
+
+      papplLogJob(job, PAPPL_LOGLEVEL_ERROR, "Aborting due to lack of document data.");
+      job->state     = IPP_JSTATE_ABORTED;
+      job->completed = time(NULL);
+
+      cupsArrayRemove(printer->active_jobs, job);
+      cupsArrayAdd(printer->completed_jobs, job);
+
+      if (printer->processing_job == job)
+	printer->processing_job = NULL;
+
+      _papplSystemAddEventNoLock(job->system, printer, job, PAPPL_EVENT_JOB_COMPLETED, NULL);
+
+      _papplRWUnlock(job);
+    }
+    else if (job->state == IPP_JSTATE_HELD && !job->filename && (!next_time || next_time > (job->created + 60)))
+    {
+      // Save the next time we need to do this...
+      next_time = job->created + 60;
+    }
+  }
+
+  // Check whether we have any completed jobs to clean...
+  if (cupsArrayGetCount(printer->completed_jobs) == 0 || (printer->max_preserved_jobs == 0 && printer->max_completed_jobs <= 0))
+    return (next_time);
+
+  // Enumerate the completed jobs.
+  for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs), preserved = 0; job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
+  {
+    if (job->completed && job->completed < clean_time && printer->max_completed_jobs > 0 && (int)cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
+    {
+      // Remove stale completed job...
       cupsArrayRemove(printer->completed_jobs, job);
       cupsArrayRemove(printer->all_jobs, job);
     }
     else if (printer->max_preserved_jobs > 0)
     {
+      // Check whether to preserve this job...
       if (job->filename)
       {
 	if ((preserved + 1) > printer->max_preserved_jobs || (job->retain_until && time(NULL) > job->retain_until))
@@ -1019,9 +1055,15 @@ _papplPrinterCleanJobsNoLock(
     }
     else
     {
+      // Nothing more to do, update the next clean time and break out...
+      if (!next_time || next_time > (job->completed + 60))
+	next_time = job->completed + 60;
+
       break;
     }
   }
+
+  return (next_time);
 }
 
 
@@ -1068,6 +1110,8 @@ papplSystemCleanJobs(
   cups_len_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
+  time_t		clean_time = 0,	// Clean time
+			next_time;	// Next time reported for printer
 
 
   _papplRWLockRead(system);
@@ -1082,11 +1126,14 @@ papplSystemCleanJobs(
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
     _papplRWLockWrite(printer);
-    _papplPrinterCleanJobsNoLock(printer);
+    next_time = _papplPrinterCleanJobsNoLock(printer);
     _papplRWUnlock(printer);
+
+    if (!clean_time || next_time < clean_time)
+      clean_time = next_time;
   }
 
-  system->clean_time = 0;
+  system->clean_time = clean_time;
 
   _papplRWUnlock(system);
 }

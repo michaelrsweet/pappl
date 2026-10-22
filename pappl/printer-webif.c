@@ -1510,7 +1510,7 @@ job_cb(pappl_job_t    *job,		// I - Job
 
     case IPP_JSTATE_HELD :
 	show_cancel  = true;
-	show_release = true;
+	show_release = papplJobGetFilename(job) != NULL;
 	papplLocFormatString(papplClientGetLoc(client), when, sizeof(when), _PAPPL_LOC("Queued %s"), time_string(client, papplJobGetTimeCreated(job), hhmmss, sizeof(hhmmss)));
 	break;
 

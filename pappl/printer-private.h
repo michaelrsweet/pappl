@@ -127,7 +127,7 @@ extern void		*_papplPrinterRunRaw(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		*_papplPrinterRunUSB(pappl_printer_t *printer) _PAPPL_PRIVATE;
 
 extern void		_papplPrinterCheckJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
-extern void		_papplPrinterCleanJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
+extern time_t		_papplPrinterCleanJobsNoLock(pappl_printer_t *printer) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyAttributesNoLock(pappl_printer_t *printer, pappl_client_t *client, cups_array_t *ra, const char *format) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyStateNoLock(pappl_printer_t *printer, ipp_tag_t group_tag, ipp_t *ipp, pappl_client_t *client, cups_array_t *ra) _PAPPL_PRIVATE;
 extern void		_papplPrinterCopyXRINoLock(pappl_printer_t *printer, ipp_t *ipp, pappl_client_t *client) _PAPPL_PRIVATE;

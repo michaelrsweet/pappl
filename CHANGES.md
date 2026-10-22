@@ -1,10 +1,11 @@
 Changes in PAPPL
 ================
 
-
 v1.4.13 - YYYY-MM-DD
 --------------------
 
+- SECURITY-4.3: Fixed a bug in Release-Job for jobs without a document
+  (GHSA-q2q8-6pq2-j2rp)
 - SECURITY-3.1: Fixed a multipart form data parsing bug (GHSA-r3w6-72jx-qfpx)
 - Added `papplSystemSetHostNameCallback` function to provide an alternate way
   to record host name changes on the local system.

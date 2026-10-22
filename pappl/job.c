@@ -1114,7 +1114,7 @@ papplSystemCleanJobs(
 			next_time;	// Next time reported for printer
 
 
-  _papplRWLockRead(system);
+  pthread_rwlock_rdlock(&system->printers_rwlock);
 
   // Loop through the printers.
   //
@@ -1135,5 +1135,5 @@ papplSystemCleanJobs(
 
   system->clean_time = clean_time;
 
-  _papplRWUnlock(system);
+  pthread_rwlock_unlock(&system->printers_rwlock);
 }

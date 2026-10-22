@@ -712,9 +712,9 @@ papplClientHTMLHeader(
   const char		*name;		// Name for title/header
 
 
-  _papplRWLockRead(system);
+  pthread_rwlock_rdlock(&system->printers_rwlock);
   printer = (pappl_printer_t *)cupsArrayGetFirst(system->printers);
-  _papplRWUnlock(system);
+  pthread_rwlock_unlock(&system->printers_rwlock);
 
   if ((system->options & PAPPL_SOPTIONS_MULTI_QUEUE) || !printer)
     name = system->name;

@@ -19,6 +19,7 @@ v1.4.13 - YYYY-MM-DD
 - Fixed a potential string overrun issue when loading .strings files.
 - Fixed non-mDNS hostname support.
 - Fixed a compatibility issue with older versions of Android.
+- Fixed ECDSA P256 certificate generation with OpenSSL.
 
 
 v1.4.12 - 2026-08-20

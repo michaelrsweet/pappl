@@ -547,7 +547,7 @@ _papplPrinterRegisterDNSSDNoLock(
     TXTRecordSetValue(&txt, "URF", (uint8_t)strlen(urf), urf);
   TXTRecordSetValue(&txt, "Color", 1, ippGetBoolean(color_supported, 0) ? "T" : "F");
   TXTRecordSetValue(&txt, "Duplex", 1, (printer->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
-  TXTRecordSetValue(&txt, "TLS", 3, "1.2");
+  TXTRecordSetValue(&txt, "TLS", 3, "1.3");
   TXTRecordSetValue(&txt, "txtvers", 1, "1");
   TXTRecordSetValue(&txt, "qtotal", 1, "1");
   TXTRecordSetValue(&txt, "priority", 1, "0");
@@ -706,7 +706,7 @@ _papplPrinterRegisterDNSSDNoLock(
     txt = avahi_string_list_add_printf(txt, "UUID=%s", value + 9);
   if (urf[0])
     txt = avahi_string_list_add_printf(txt, "URF=%s", urf);
-  txt = avahi_string_list_add_printf(txt, "TLS=1.2");
+  txt = avahi_string_list_add_printf(txt, "TLS=1.3");
   txt = avahi_string_list_add_printf(txt, "Color=%s", ippGetBoolean(color_supported, 0) ? "T" : "F");
   txt = avahi_string_list_add_printf(txt, "Duplex=%s", (printer->driver_data.sides_supported & PAPPL_SIDES_TWO_SIDED_LONG_EDGE) ? "T" : "F");
   txt = avahi_string_list_add_printf(txt, "txtvers=1");

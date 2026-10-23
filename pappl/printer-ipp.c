@@ -66,7 +66,7 @@ _papplPrinterCopyAttributesNoLock(
   int		ivalues[100];		// Integer values
   pappl_pr_driver_data_t *data = &printer->driver_data;
 					// Driver data
-  const char	*webscheme = (httpAddrIsLocalhost(httpGetAddress(client->http)) || !papplSystemGetTLSOnly(client->system)) ? "http" : "https";
+  const char	*webscheme = httpIsEncrypted(client->http) ? "https" : "http";
 					// URL scheme for resources
 
 
@@ -536,27 +536,10 @@ _papplPrinterCopyAttributesNoLock(
 
   if (!ra || cupsArrayFind(ra, "printer-uri-supported"))
   {
-    char	uris[2][1024];		// Buffers for URIs
-    const char	*values[2];		// Values for attribute
+    char	uri[1024];		// URI value
 
-    num_values = 0;
-
-    if (httpAddrIsLocalhost(httpGetAddress(client->http)) || (!httpIsEncrypted(client->http) && !papplSystemGetTLSOnly(client->system)))
-    {
-      httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipp", NULL, client->host_field, client->host_port, printer->resource);
-      values[num_values] = uris[num_values];
-      num_values ++;
-    }
-
-    if (!httpAddrIsLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
-    {
-      httpAssembleURI(HTTP_URI_CODING_ALL, uris[num_values], sizeof(uris[0]), "ipps", NULL, client->host_field, client->host_port, printer->resource);
-      values[num_values] = uris[num_values];
-      num_values ++;
-    }
-
-    if (num_values > 0)
-      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri-supported", IPP_NUM_CAST num_values, NULL, values);
+    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), httpIsEncrypted(client->http) ? "ipps" : "ipp", NULL, client->host_field, client->host_port, printer->resource);
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_TAG_URI, "printer-uri-supported", NULL, uri);
   }
 
   if (client->system->wifi_status_cb && httpAddrIsLocalhost(httpGetAddress(client->http)) && (!ra || cupsArrayFind(ra, "printer-wifi-ssid") || cupsArrayFind(ra, "printer-wifi-state")))
@@ -590,41 +573,12 @@ _papplPrinterCopyAttributesNoLock(
 
   if (!ra || cupsArrayFind(ra, "uri-authentication-supported"))
   {
-    // For each supported printer-uri value, report whether authentication is
-    // supported.  Since we only support authentication over a secure (TLS)
-    // channel, the value is always 'none' for the "ipp" URI and either 'none'
-    // or 'basic' for the "ipps" URI...
-    if (httpAddrIsLocalhost(httpGetAddress(client->http)) || (client->system->options & PAPPL_SOPTIONS_NO_TLS))
-    {
-      ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", NULL, "none");
-    }
-    else if (papplSystemGetTLSOnly(client->system))
-    {
-      if (papplSystemGetAuthService(client->system))
-        ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", NULL, "basic");
-      else
-        ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", NULL, "none");
-    }
-    else if (papplSystemGetAuthService(client->system))
-    {
-      static const char * const uri_authentication_basic[] =
-      {					// uri-authentication-supported values
-	"basic",
-	"none"
-      };
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", NULL, papplSystemGetAuthService(client->system) != NULL ? "basic" : "none");
+  }
 
-      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", 2, NULL, uri_authentication_basic);
-    }
-    else
-    {
-      static const char * const uri_authentication_none[] =
-      {					// uri-authentication-supported values
-	"none",
-	"none"
-      };
-
-      ippAddStrings(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-authentication-supported", 2, NULL, uri_authentication_none);
-    }
+  if (!ra || cupsArrayFind(ra, "uri-security-supported"))
+  {
+    ippAddString(client->response, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", NULL, httpIsEncrypted(client->http) ? "tls" : "none");
   }
 }
 
@@ -737,43 +691,19 @@ _papplPrinterCopyXRINoLock(
     pappl_client_t  *client)		// I - Client
 {
   char	uri[1024];			// URI value
-  int	i,				// Looping var
-	num_values = 0;			// Number of values
-  ipp_t	*col,				// Current collection value
-	*values[2];			// Values for attribute
+  ipp_t	*col;				// Collection value
 
 
-  if (httpAddrIsLocalhost(httpGetAddress(client->http)) || (!httpIsEncrypted(client->http) && !papplSystemGetTLSOnly(client->system)))
-  {
-    // Add ipp: URI...
-    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipp", NULL, client->host_field, client->host_port, printer->resource);
-    col = ippNew();
+  httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), httpIsEncrypted(client->http) ? "ipps" : "ipp", NULL, client->host_field, client->host_port, printer->resource);
 
-    ippAddString(col, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-authentication", NULL, "none");
-    ippAddString(col, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security", NULL, "none");
-    ippAddString(col, IPP_TAG_PRINTER, IPP_TAG_URI, "xri-uri", NULL, uri);
+  col = ippNew();
 
-    values[num_values ++] = col;
-  }
+  ippAddString(col, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-authentication", NULL, papplSystemGetAuthService(client->system) ? "basic" : "none");
+  ippAddString(col, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security", NULL, httpIsEncrypted(client->http) ? "tls" : "none");
+  ippAddString(col, IPP_TAG_PRINTER, IPP_TAG_URI, "xri-uri", NULL, uri);
 
-  if (!httpAddrIsLocalhost(httpGetAddress(client->http)) && !(client->system->options & PAPPL_SOPTIONS_NO_TLS))
-  {
-    // Add ipps: URI...
-    httpAssembleURI(HTTP_URI_CODING_ALL, uri, sizeof(uri), "ipps", NULL, client->host_field, client->host_port, printer->resource);
-    col = ippNew();
-
-    ippAddString(col, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-authentication", NULL, papplSystemGetAuthService(client->system) ? "basic" : "none");
-    ippAddString(col, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "xri-security", NULL, "tls");
-    ippAddString(col, IPP_TAG_PRINTER, IPP_TAG_URI, "xri-uri", NULL, uri);
-
-    values[num_values ++] = col;
-  }
-
-  if (num_values > 0)
-    ippAddCollections(ipp, IPP_TAG_PRINTER, "printer-xri-supported", IPP_NUM_CAST num_values, (const ipp_t **)values);
-
-  for (i = 0; i < num_values; i ++)
-    ippDelete(values[i]);
+  ippAddCollection(ipp, IPP_TAG_PRINTER, "printer-xri-supported", col);
+  ippDelete(col);
 }
 
 

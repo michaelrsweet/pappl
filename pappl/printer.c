@@ -228,11 +228,6 @@ papplPrinterCreate(
     "fit",
     "none"
   };
-  static const char * const uri_security[] =
-  {					// uri-security-supported values
-    "tls",
-    "none"
-  };
   static const char * const which_jobs[] =
   {					// which-jobs-supported values
     "completed",
@@ -550,14 +545,6 @@ papplPrinterCreate(
 
   // smi55357-driver
   ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_TAG_KEYWORD, "smi55357-driver", NULL, printer->driver_name);
-
-  // uri-security-supported
-  if (system->options & PAPPL_SOPTIONS_NO_TLS)
-    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", NULL, "none");
-  else if (papplSystemGetTLSOnly(system))
-    ippAddString(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", NULL, "tls");
-  else
-    ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "uri-security-supported", 2, NULL, uri_security);
 
   // which-jobs-supported
   ippAddStrings(printer->attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "which-jobs-supported", sizeof(which_jobs) / sizeof(which_jobs[0]), NULL, which_jobs);

@@ -247,15 +247,16 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 {
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Removing job from history.");
 
+  // Only remove the job file (document) if the job is in a terminating state...
+  if (job->state >= IPP_JSTATE_CANCELED)
+    _papplJobRemoveFile(job);
+
+  // Free the rest of the job...
   pthread_rwlock_destroy(&job->rwlock);
 
   ippDelete(job->attrs);
 
   free(job->message);
-
-  // Only remove the job file (document) if the job is in a terminating state...
-  if (job->state >= IPP_JSTATE_CANCELED)
-    _papplJobRemoveFile(job);
 
   free(job);
 }

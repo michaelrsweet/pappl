@@ -260,13 +260,6 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
 {
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Removing job from history.");
 
-  cupsRWDestroy(&job->rwlock);
-
-  ippDelete(job->attrs);
-
-  free(job->message);
-  free(job->log_prefix);
-
   // Only remove the job file (document) if the job is in a terminating state...
   if (job->state >= IPP_JSTATE_CANCELED)
   {
@@ -286,6 +279,13 @@ _papplJobDelete(pappl_job_t *job)	// I - Job
   }
 
   // Free the rest of the job...
+  cupsRWDestroy(&job->rwlock);
+
+  ippDelete(job->attrs);
+
+  free(job->message);
+  free(job->log_prefix);
+
   free(job);
 }
 

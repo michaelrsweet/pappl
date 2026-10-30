@@ -1,7 +1,7 @@
 //
 // Client localization functions for the Printer Application Framework
 //
-// Copyright © 2022 by Michael R Sweet.
+// Copyright © 2022-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -35,7 +35,7 @@ papplClientGetLoc(
       // Use IPP language specification...
       papplLogClient(client, PAPPL_LOGLEVEL_DEBUG, "Using IPP language code '%s' for localization.", language);
 
-      if ((client->loc = papplSystemFindLoc(client->system, language)) == NULL && language[2])
+      if ((client->loc = papplSystemFindLoc(client->system, language)) == NULL && strlen(language) > 2)
       {
         // Try the generic localization...
         papplCopyString(temp, language, sizeof(temp));
@@ -85,7 +85,7 @@ papplClientGetLoc(
 
 	// If the lookup failed and this is a regional language request, try
 	// the generic localization for that language...
-	if (temp[2])
+	if (strlen(temp) > 2)
 	{
 	  // Truncate after the 2-digit language code...
 	  temp[2] = '\0';

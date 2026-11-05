@@ -462,8 +462,28 @@ papplClientHTMLAuthorize(
   if (!client || (!client->system->auth_service && !client->system->auth_cb && !client->system->password_hash[0]))
   {
     _PAPPL_DEBUG("papplClientHTMLAuthorize: auth_service='%s', auth_cb=%s, password_hash=%s\n", client->system->auth_service, client->system->auth_cb != NULL ? "set" : "unset", client->system->password_hash[0] ? "set" : "unset");
-    _PAPPL_DEBUG("papplClientHTMLAuthorize: Returning true.");
-    return (true);
+
+    if (client && client->hostname[0] && client->hostname[0] != '/' && (strcmp(client->hostname, "localhost") && strcmp(client->hostname, "127.0.0.1") && strcmp(client->hostname, "::1")))
+    {
+      _PAPPL_DEBUG("papplClientHTMLAuthorize: Remote client - returning false.");
+      papplClientRespond(client, HTTP_STATUS_FORBIDDEN, NULL, "text/html", 0, 0);
+      papplClientHTMLHeader(client, "Forbidden", 0);
+      papplClientHTMLPuts(client,
+			  "<div class=\"content\">\n"
+			  "  <div class=\"row\">\n"
+			  "    <div class=\"col-12\">\n"
+			  "      <h1 class=\"title\">Forbidden</h1>\n"
+			  "      <p>Remote access requires authentication to be configured.</p>\n"
+			  "    </div>\n"
+			  "  </div>\n");
+      papplClientHTMLFooter(client);
+      return (false);
+    }
+    else
+    {
+      _PAPPL_DEBUG("papplClientHTMLAuthorize: Returning true.");
+      return (true);
+    }
   }
 
   // When using an auth service, use HTTP Basic authentication...

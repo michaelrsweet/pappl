@@ -707,7 +707,10 @@ _papplSystemWebHome(
   papplClientHTMLPrintf(client,
 			"      <div class=\"row\">\n"
 			"        <div class=\"col-6\">\n"
-			"          <h1 class=\"title\">%s <a class=\"btn\" href=\"%s://%s:%d/config\">%s</a></h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Configuration")), _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, papplClientGetLocString(client, _PAPPL_LOC("Change")));
+			"          <h1 class=\"title\">%s", papplClientGetLocString(client, _PAPPL_LOC("Configuration")));
+  if (_papplClientAllowAdmin(client))
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s://%s:%d/config\">%s</a>", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, papplClientGetLocString(client, _PAPPL_LOC("Change")));
+  papplClientHTMLPuts(client, "</h1>\n");
 
   _papplClientHTMLPutLinks(client, system->links, PAPPL_LOPTIONS_CONFIGURATION);
 
@@ -1585,6 +1588,9 @@ _papplSystemWebSettings(
 		count;			// Number of links
   _pappl_link_t	*l;			// Current link
 
+
+  if (!_papplClientAllowAdmin(client))
+    return;
 
   for (i = 0, count = cupsArrayGetCount(client->system->links); i < count; i ++)
   {

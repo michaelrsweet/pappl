@@ -13,6 +13,18 @@
 
 
 //
+// '_papplClientAllowAdmin()' - Determine whether to serve admin content.
+//
+
+bool					// O - `true` if allowed, `false` otherwise
+_papplClientAllowAdmin(
+    pappl_client_t *client)		// I - Client
+{
+  return (httpAddrIsLocalhost(httpGetAddress(client->http)) || (client->system->options & PAPPL_SOPTIONS_WEB_REMOTE));
+}
+
+
+//
 // 'papplClientGetCookie()' - Get a cookie from the client.
 //
 // This function gets a HTTP "cookie" value from the client request.  `NULL`
@@ -458,8 +470,19 @@ papplClientHTMLAuthorize(
   const char	*status = NULL;		// Status message, if any
 
 
+  // Range check...
+  if (!client)
+    return (false);
+
+  // Check client address rules...
+  if (!_papplClientAllowAdmin(client))
+  {
+    papplClientRespond(client, HTTP_STATUS_FORBIDDEN, /*content_encoding*/NULL, /*content_type*/NULL, /*last_modified*/0, /*length*/0);
+    return (false);
+  }
+
   // Don't authorize if we have no auth service or we don't have a password set.
-  if (!client || (!client->system->auth_service && !client->system->auth_cb && !client->system->password_hash[0]))
+  if ((!client->system->auth_service && !client->system->auth_cb && !client->system->password_hash[0]))
   {
     _PAPPL_DEBUG("papplClientHTMLAuthorize: auth_service='%s', auth_cb=%s, password_hash=%s\n", client->system->auth_service, client->system->auth_cb != NULL ? "set" : "unset", client->system->password_hash[0] ? "set" : "unset");
     _PAPPL_DEBUG("papplClientHTMLAuthorize: Returning true.");
@@ -1055,7 +1078,7 @@ papplClientHTMLPrinterHeader(
 			  "      <div class=\"row\">\n"
 			  "        <div class=\"col-12\">\n"
 			  "          <h1 class=\"title\">%s", papplClientGetLocString(client, title));
-    if (label && path_or_url)
+    if (_papplClientAllowAdmin(client) && label && path_or_url)
       papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s\">%s</a>", path_or_url, papplClientGetLocString(client, label));
     papplClientHTMLPuts(client, "</h1>\n");
   }
@@ -1295,7 +1318,11 @@ _papplClientHTMLPutLinks(
   _pappl_link_t	*l;			// Current link
   const char	*webscheme = _papplClientGetAuthWebScheme(client);
 					// URL scheme for authenticated links
+  bool		filter_remote;		// Filter remote access?
 
+
+  // See if we need to filter remote access...
+  filter_remote = !_papplClientAllowAdmin(client);
 
   // Loop through the links.
   //
@@ -1308,6 +1335,9 @@ _papplClientHTMLPutLinks(
     if (!l || !(l->options & which))
       continue;
 
+    if (filter_remote && (l->options & (PAPPL_LOPTIONS_CONFIGURATION | PAPPL_LOPTIONS_LOGGING | PAPPL_LOPTIONS_NAVIGATION | PAPPL_LOPTIONS_NETWORK | PAPPL_LOPTIONS_PRINTER | PAPPL_LOPTIONS_SECURITY | PAPPL_LOPTIONS_TLS)))
+      continue;
+
     if (strcmp(client->uri, l->path_or_url))
     {
       if (l->path_or_url[0] != '/' || !(l->options & PAPPL_LOPTIONS_HTTPS_REQUIRED))
@@ -1316,7 +1346,9 @@ _papplClientHTMLPutLinks(
 	papplClientHTMLPrintf(client, "          <a class=\"btn\" href=\"%s://%s:%d%s\">%s</a>\n", webscheme, client->host_field, client->host_port, l->path_or_url, papplClientGetLocString(client, l->label));
     }
     else
+    {
       papplClientHTMLPrintf(client, "          <span class=\"active\">%s</span>\n", papplClientGetLocString(client, l->label));
+    }
   }
 }
 

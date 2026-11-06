@@ -159,7 +159,7 @@ _papplPrinterWebConfig(
 void
 _papplPrinterWebConfigFinalize(
     pappl_printer_t *printer,		// I - Printer
-    size_t      num_form,		// I - Number of form variables
+    size_t          num_form,		// I - Number of form variables
     cups_option_t   *form)		// I - Form variables
 {
   const char	*value,			// Form value
@@ -894,7 +894,10 @@ _papplPrinterWebHome(
     papplClientHTMLPrintf(client, "<div class=\"banner\">%s</div>\n", papplClientGetLocString(client, status));
 
   snprintf(edit_path, sizeof(edit_path), "%s/config", printer->uriname);
-  papplClientHTMLPrintf(client, "          <h1 class=\"title\">%s <a class=\"btn\" href=\"%s://%s:%d%s\">%s</a></h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Configuration")), _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, edit_path, papplClientGetLocString(client, _PAPPL_LOC("Change")));
+  papplClientHTMLPrintf(client, "          <h1 class=\"title\">%s", papplClientGetLocString(client, _PAPPL_LOC("Configuration")));
+  if (_papplClientAllowAdmin(client))
+    papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s://%s:%d%s\">%s</a>", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, edit_path, papplClientGetLocString(client, _PAPPL_LOC("Change")));
+  papplClientHTMLPuts(client, "</h1>\n");
 
   _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_CONFIGURATION);
 
@@ -1063,10 +1066,19 @@ _papplPrinterWebIteratorCallback(
   snprintf(uri, sizeof(uri), "%s/", printer->uriname);
 
   if (!strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
+  {
     papplClientHTMLPrintf(client,
-			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a> <a class=\"btn\" href=\"%s://%s:%d%s/delete\">%s</a></h2>\n", printer->uriname, printer->name, _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, printer->uriname, papplClientGetLocString(client, _PAPPL_LOC("Delete")));
+			  "          <h2 class=\"title\"><a href=\"%s/\">%s</a>", printer->uriname, printer->name);
+
+    if (_papplClientAllowAdmin(client))
+      papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s://%s:%d%s/delete\">%s</a></h2>\n", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, printer->uriname, papplClientGetLocString(client, _PAPPL_LOC("Delete")));
+
+    papplClientHTMLPuts(client, "</h2>\n");
+  }
   else
+  {
     papplClientHTMLPrintf(client, "          <h1 class=\"title\">%s</h1>\n", papplClientGetLocString(client, _PAPPL_LOC("Status")));
+  }
 
   snprintf(state_str, sizeof(state_str), "%d", (int)printer_state);
   papplLocFormatString(papplClientGetLoc(client), jobs_str, sizeof(jobs_str), printer_jobs == 1 ? _PAPPL_LOC("%d job") : _PAPPL_LOC("%d jobs"), (int)printer_jobs);
@@ -1091,31 +1103,31 @@ _papplPrinterWebIteratorCallback(
   papplClientHTMLPuts(client, "          <div class=\"btn\">");
   _papplClientHTMLPutLinks(client, printer->links, PAPPL_LOPTIONS_STATUS);
 
-  if (!printer->hold_new_jobs && papplPrinterGetMaxActiveJobs(printer) != 1)
+  if (_papplClientAllowAdmin(client) && !printer->hold_new_jobs && papplPrinterGetMaxActiveJobs(printer) != 1)
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"hold-new-jobs\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Hold New Jobs")));
   }
 
-  if (printer->driver_data.identify_supported)
+  if (_papplClientAllowAdmin(client) && printer->driver_data.identify_supported)
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"identify-printer\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Identify Printer")));
   }
 
-  if (printer->driver_data.testpage_cb)
+  if (_papplClientAllowAdmin(client) && printer->driver_data.testpage_cb)
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"print-test-page\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Print Test Page")));
   }
 
-  if (printer->hold_new_jobs && papplPrinterGetMaxActiveJobs(printer) != 1)
+  if (_papplClientAllowAdmin(client) && printer->hold_new_jobs && papplPrinterGetMaxActiveJobs(printer) != 1)
   {
     papplClientHTMLStartForm(client, uri, false);
     papplClientHTMLPrintf(client, "<input type=\"hidden\" name=\"action\" value=\"release-held-new-jobs\"><input type=\"submit\" value=\"%s\"></form>", papplClientGetLocString(client, _PAPPL_LOC("Release Held New Jobs")));
   }
 
-  if (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE)
+  if (_papplClientAllowAdmin(client) && (printer->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
   {
     if (printer->state == IPP_PSTATE_STOPPED)
     {
@@ -1135,7 +1147,7 @@ _papplPrinterWebIteratorCallback(
     }
   }
 
-  if (strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
+  if (_papplClientAllowAdmin(client) && strcmp(client->uri, "/") && (client->system->options & PAPPL_SOPTIONS_MULTI_QUEUE))
     papplClientHTMLPrintf(client, " <a class=\"btn\" href=\"%s://%s:%d%s/delete\">%s</a>", _papplClientGetAuthWebScheme(client), client->host_field, client->host_port, printer->uriname, papplClientGetLocString(client, _PAPPL_LOC("Delete Printer")));
 
   papplClientHTMLPuts(client, "<br clear=\"all\"></div>\n");
@@ -1156,6 +1168,7 @@ _papplPrinterWebJobs(
 		limit = 20;		// Jobs per page
   const char	*status = NULL;		// Status message
   bool		refresh;		// Refresh the window?
+
 
   if (!papplClientHTMLAuthorize(client))
     return;
@@ -1787,12 +1800,17 @@ infra_status(
     else
       status = _PAPPL_LOC("Idle");
   }
+  else if (!printer->proxy_provider_uri)
+  {
+    status = _PAPPL_LOC("Not Connected");
+  }
+  else if (!printer->proxy_token)
+  {
+    status = _PAPPL_LOC("Authorization Required");
+  }
   else
   {
-    if (!printer->proxy_token)
-      status = _PAPPL_LOC("Authorization Required");
-    else
-      status = _PAPPL_LOC("Not Connected");
+    status = _PAPPL_LOC("Unknown");
   }
 
   snprintf(title, sizeof(title), "%s (%s)", papplClientGetLocString(client, _PAPPL_LOC("Cloud Printing")), papplClientGetLocString(client, status));
@@ -1816,7 +1834,14 @@ infra_status(
 
   papplPrinterGetPath(printer, "cloud", path, sizeof(path));
 
-  if (!printer->proxy_provider_uri)
+  if (!_papplClientAllowAdmin(client))
+  {
+    if (printer->proxy_provider_uri)
+      papplClientHTMLPrintf(client, "          <p>%s</p>\n", papplPrinterGetProxyProviderName(printer, provider_name, sizeof(provider_name)));
+    else
+      papplClientHTMLPrintf(client, "          <p>%s</p>\n", papplClientGetLocString(client, _PAPPL_LOC("Administrator access required to connect.")));
+  }
+  else if (!printer->proxy_provider_uri)
   {
     cups_len_t	i,			// Current provider
 		count = cupsArrayGetCount(printer->system->infra_providers);

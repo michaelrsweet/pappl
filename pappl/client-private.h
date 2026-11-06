@@ -52,6 +52,7 @@ struct _pappl_client_s			// Client data
 // Functions...
 //
 
+extern bool		_papplClientAllowAdmin(pappl_client_t *client) _PAPPL_PRIVATE;
 extern void		_papplClientCleanTempFiles(pappl_client_t *client) _PAPPL_PRIVATE;
 extern pappl_client_t	*_papplClientCreate(pappl_system_t *system, int sock) _PAPPL_PRIVATE;
 extern char		*_papplClientCreateTempFile(pappl_client_t *client, const void *data, size_t datasize) _PAPPL_PRIVATE;

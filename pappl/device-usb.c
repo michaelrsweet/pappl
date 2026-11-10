@@ -518,13 +518,13 @@ pappl_usb_find(
 
               if (make)
               {
-                if ((ptr = strchr(make, ';')) != NULL)
+                if ((ptr = (char *)strchr(make, ';')) != NULL)
                   *ptr = '\0';
               }
 
               if (model)
               {
-                if ((ptr = strchr(model, ';')) != NULL)
+                if ((ptr = (char *)strchr(model, ';')) != NULL)
                   *ptr = '\0';
               }
 

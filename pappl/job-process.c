@@ -1306,9 +1306,8 @@ start_job(pappl_job_t *job)		// I - Job
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Starting print job.");
 
-  job->state              = IPP_JSTATE_PROCESSING;
-  job->processing         = time(NULL);
-  printer->processing_job = job;
+  job->state      = IPP_JSTATE_PROCESSING;
+  job->processing = time(NULL);
 
   if (printer->proxy_infra_uri && ippFindAttribute(job->attrs, "parent-job-id", IPP_TAG_INTEGER))
   {

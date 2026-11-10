@@ -1103,6 +1103,8 @@ _papplPrinterCheckJobsNoLock(
 
       papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Starting job %d.", job->job_id);
 
+      printer->processing_job = job;
+
       if ((t = cupsThreadCreate((void *(*)(void *))_papplJobProcess, job)) == CUPS_THREAD_INVALID)
       {
 	job->state     = IPP_JSTATE_ABORTED;

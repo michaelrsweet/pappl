@@ -152,7 +152,7 @@ static cups_mutex_t	heartbeat_mutex = CUPS_MUTEX_INITIALIZER;
 					// Mutex for heartbeat
 static size_t		heartbeat_count = 0;
 					// Heartbeat counter
-static int		output_count = 0;
+static unsigned long	output_count = 0;
 					// Number of expected output files
 static char		output_device_uri[1024] = "";
 					// Device URI for output directory
@@ -174,6 +174,7 @@ typedef struct _pappl_testclient_s	// Client test data
 			request_count;	// Number of requests
   cups_array_t		*errors;	// Errors, if any
   struct timeval	start, end;	// Start/end times
+  unsigned long		output_count;	// Client output count
 } _pappl_testclient_t;
 
 typedef struct _pappl_testdata_s	// Test data
@@ -1488,7 +1489,7 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
   int		expected;		// Expected timer count
   cups_dir_t	*dir;			// Output directory
   cups_dentry_t	*dent;			// Output file
-  int		files = 0;		// Total file count
+  unsigned long	files = 0;		// Total file count
   off_t		total = 0;		// Total output size
 #ifdef HAVE_LIBJPEG
   static const char * const jpeg_files[] =
@@ -1720,9 +1721,9 @@ run_tests(_pappl_testdata_t *testdata)	// I - Testing data
 
   // Show final status...
   if (ret)
-    printf("\nFAILED: %d of %d output file(s), %.1fMB\n", files, output_count, (double)total / 1048576.0);
+    printf("\nFAILED: %lu of %lu output file(s), %.1fMB\n", files, output_count, (double)total / 1048576.0);
   else
-    printf("\nPASSED: %d of %d output file(s), %.1fMB\n", files, output_count, (double)total / 1048576.0);
+    printf("\nPASSED: %lu of %lu output file(s), %.1fMB\n", files, output_count, (double)total / 1048576.0);
 
   // Force shutdown
   papplSystemShutdown(testdata->system);
@@ -4023,7 +4024,10 @@ test_client_child(
   size_t	i;			// Looping var
   http_t	*http;			// HTTP connection
   char		printer_uri[1024];	// "printer-uri" value
-  ipp_t		*request;		// IPP request
+  ipp_t		*request,		// IPP request
+		*response;		// IPP response
+  int		job_id;			// Current job ID
+  char		job_name[256];		// Current job name
   char		error[1024];		// Error message
 
 
@@ -4041,9 +4045,10 @@ test_client_child(
 
   httpAssembleURI(HTTP_URI_CODING_ALL, printer_uri, sizeof(printer_uri), "ipp", /*userpass*/NULL, "localhost", papplSystemGetHostPort(data->system), "/ipp/print");
 
-  // Do Get-Printer-Attributes requests
+  // Do Get-Printer-Attributes/Print-Job/Get-Job-Attributes requests
   for (i = 0; i < data->num_requests; i ++)
   {
+    // Get printer attributes...
     request = ippNewRequest(IPP_OP_GET_PRINTER_ATTRIBUTES);
     ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
 
@@ -4059,6 +4064,69 @@ test_client_child(
     gettimeofday(&data->end, NULL);
     cupsMutexUnlock(&data->mutex);
   }
+
+#if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
+  // Print a file
+  cupsMutexLock(&data->mutex);
+  data->output_count ++;
+  snprintf(job_name, sizeof(job_name), "client-job-%lu", data->output_count);
+  cupsMutexUnlock(&data->mutex);
+
+  request = ippNewRequest(IPP_OP_PRINT_JOB);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "requesting-user-name", NULL, cupsGetUser());
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_NAME, "job-name", NULL, job_name);
+
+#  ifdef HAVE_LIBJPEG
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", NULL, "image/jpeg");
+
+  if (access("portrait-color.jpg", R_OK))
+    response = cupsDoFileRequest(http, request, "/ipp/print", "testsuite/portrait-color.jpg");
+  else
+    response = cupsDoFileRequest(http, request, "/ipp/print", "portrait-color.jpg");
+#  else
+  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_MIMETYPE, "document-format", NULL, "image/png");
+
+  if (access("portrait-color.png", R_OK))
+    response = cupsDoFileRequest(http, request, "/ipp/print", "testsuite/portrait-color.png");
+  else
+    response = cupsDoFileRequest(http, request, "/ipp/print", "portrait-color.png");
+#  endif // HAVE_LIBJPEG
+
+  cupsMutexLock(&data->mutex);
+  data->request_count ++;
+  if (cupsGetError() > IPP_STATUS_OK_EVENTS_COMPLETE)
+  {
+    snprintf(error, sizeof(error), "Print-Job: %s", cupsGetErrorString());
+    cupsArrayAdd(data->errors, error);
+  }
+
+  job_id = ippGetInteger(ippFindAttribute(response, "job-id", IPP_TAG_INTEGER), 0);
+  ippDelete(response);
+
+  gettimeofday(&data->end, NULL);
+  cupsMutexUnlock(&data->mutex);
+
+  if (job_id > 0)
+  {
+    // Get job attributes...
+    request = ippNewRequest(IPP_OP_GET_JOB_ATTRIBUTES);
+    ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_URI, "printer-uri", NULL, printer_uri);
+    ippAddInteger(request, IPP_TAG_OPERATION, IPP_TAG_INTEGER, "job-id", job_id);
+
+    ippDelete(cupsDoRequest(http, request, "/ipp/print"));
+
+    cupsMutexLock(&data->mutex);
+    data->request_count ++;
+    if (cupsGetError() > IPP_STATUS_OK_EVENTS_COMPLETE)
+    {
+      snprintf(error, sizeof(error), "Get-Job-Attributes: %s", cupsGetErrorString());
+      cupsArrayAdd(data->errors, error);
+    }
+    gettimeofday(&data->end, NULL);
+    cupsMutexUnlock(&data->mutex);
+  }
+#endif // HAVE_LIBJPEG || HAVE_LIBPNG
 
   httpClose(http);
 
@@ -4089,6 +4157,7 @@ test_client_max(pappl_system_t *system,	// I - System
   const char		*ptr;		// Pointer into name
   char			progress[13];	// Progress bar
   int			pcounter = 0;	// Progress counter
+  pappl_printer_t	*printer;	// Default printer
 
 
   // Don't rotate the logs for this test...
@@ -4143,6 +4212,10 @@ test_client_max(pappl_system_t *system,	// I - System
 
   total = data.num_children * data.num_requests;
 
+#if defined(HAVE_LIBJPEG) || defined(HAVE_LIBPNG)
+  total += 2 * data.num_children;
+#endif // HAVE_LIBJPEG || HAVE_LIBPNG
+
   // Start client threads
   _papplTestBegin("%s", name);
   gettimeofday(&data.start, NULL);
@@ -4179,6 +4252,8 @@ test_client_max(pappl_system_t *system,	// I - System
       pcounter ++;
     }
     fflush(stdout);
+
+    heartbeat_update();
     sleep(1);
 
     cupsMutexLock(&data.mutex);
@@ -4201,6 +4276,19 @@ test_client_max(pappl_system_t *system,	// I - System
     fprintf(stderr, "%s: %s\n", name, ptr);
 
   cupsArrayDelete(data.errors);
+
+  output_count += data.output_count;
+
+  // Wait for jobs to complete...
+  printer = papplSystemFindPrinter(system, /*resource*/NULL, papplSystemGetDefaultPrinterID(system), /*device_uri*/NULL);
+
+  _papplTestBegin("%s: Wait for Jobs to Complete", name);
+  while (papplPrinterGetNumberOfActiveJobs(printer) > 0)
+  {
+    _papplTestProgress();
+    sleep(1);
+  }
+  _papplTestEnd(true);
 
   return (i == 0);
 }

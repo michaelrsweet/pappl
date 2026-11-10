@@ -205,11 +205,12 @@ _papplClientProcessHTTP(
   ippDelete(client->request);
   ippDelete(client->response);
 
-  client->cookies   = NULL;
-  client->loc       = NULL;
-  client->request   = NULL;
-  client->response  = NULL;
-  client->operation = HTTP_STATE_WAITING;
+  client->cookies     = NULL;
+  client->loc         = NULL;
+  client->request     = NULL;
+  client->response    = NULL;
+  client->operation   = HTTP_STATE_WAITING;
+  client->username[0] = '\0';
 
   // Read a request from the connection...
   while ((http_state = httpReadRequest(client->http, uri, sizeof(uri))) == HTTP_STATE_WAITING)

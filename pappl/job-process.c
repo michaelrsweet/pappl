@@ -1164,9 +1164,8 @@ start_job(pappl_job_t *job)		// I - Job
 
   papplLogJob(job, PAPPL_LOGLEVEL_INFO, "Starting print job.");
 
-  job->state              = IPP_JSTATE_PROCESSING;
-  job->processing         = time(NULL);
-  printer->processing_job = job;
+  job->state      = IPP_JSTATE_PROCESSING;
+  job->processing = time(NULL);
 
   _papplSystemAddEventNoLock(printer->system, printer, job, PAPPL_EVENT_JOB_STATE_CHANGED, NULL);
 

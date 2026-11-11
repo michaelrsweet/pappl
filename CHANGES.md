@@ -19,6 +19,7 @@ v1.4.13 - YYYY-MM-DD
   (Issue #440)
 - Fixed a SNMP issue for invalid OIDs (Issue #440)
 - Fixed support for `PAPPL_SOPTIONS_WEB_REMOTE` (Issue #447)
+- Fixed a potential busy loop in `papplSystemRun` (Issue #449)
 - Fixed a potential string overrun issue when loading .strings files.
 - Fixed non-mDNS hostname support.
 - Fixed a compatibility issue with older versions of Android.

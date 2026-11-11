@@ -20,6 +20,8 @@ v1.4.13 - YYYY-MM-DD
 - Fixed a buffering issue in the HTTP monitor for USB gadget printing
   (Issue #440)
 - Fixed a SNMP issue for invalid OIDs (Issue #440)
+- Fixed document-format validation for Print-Job/Send-Document requests
+  (Issue #444)
 - Fixed support for `PAPPL_SOPTIONS_WEB_REMOTE` (Issue #447)
 - Fixed a potential busy loop in `papplSystemRun` (Issue #449)
 - Fixed a potential string overrun issue when loading .strings files.

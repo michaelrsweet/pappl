@@ -1,7 +1,7 @@
 //
 // Job IPP processing for the Printer Application Framework
 //
-// Copyright © 2019-2024 by Michael R Sweet.
+// Copyright © 2019-2026 by Michael R Sweet.
 // Copyright © 2010-2019 by Apple Inc.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
@@ -537,7 +537,7 @@ _papplJobValidateDocumentAttributes(
 
   _papplRWLockRead(client->printer);
 
-  if (op != IPP_OP_CREATE_JOB && (supported = ippFindAttribute(client->printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, format))
+  if (op != IPP_OP_CREATE_JOB && (supported = ippFindAttribute(client->printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, format))
   {
     papplClientRespondIPPUnsupported(client, attr);
     valid = false;

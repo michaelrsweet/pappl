@@ -11,6 +11,8 @@ v1.4.13 - YYYY-MM-DD
   (GHSA-9w48-3pcp-4vhf)
 - Added `papplSystemSetHostNameCallback` function to provide an alternate way
   to record host name changes on the local system.
+- Updated the default "document-format-preferred" value to take into account
+  the native driver format (Issue #445)
 - Fixed `papplDeviceWrite` which could produce a 0-length write call that was
   problematic for some USB printers (Issue #434)
 - Fixed issues with password authentication in the web interface (Issue #435)

@@ -721,7 +721,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     _papplRWUnlock(system);
 
     if (next <= curtime.tv_sec)
-      ptimeout = 0;
+      ptimeout = 1;
     else
       ptimeout = 1000 * (int)(next - curtime.tv_sec) - (int)curtime.tv_usec / 1000;
 

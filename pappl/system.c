@@ -658,17 +658,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
     else if (pcount <= 0)
     {
       // Limit CPU usage
-      if (ptimeout > 0)
-	usleep(1000);
-
-      // Resume listening
-      _papplRWLockRead(system);
-
-      if (system->num_clients < system->max_clients)
-      {
-	for (i = 0; i < system->num_listeners; i ++)
-	  system->listeners[i].events = POLLIN;
-      }
+      usleep(1000);
     }
     else
     {
@@ -692,14 +682,21 @@ papplSystemRun(pappl_system_t *system)	// I - System
 	  }
 	}
       }
+    }
 
-      _papplRWLockRead(system);
+    _papplRWLockRead(system);
 
-      if (system->num_clients >= system->max_clients)
-      {
-	for (i = 0; i < system->num_listeners; i ++)
-	  system->listeners[i].events = 0;
-      }
+    if (system->num_clients < system->max_clients && !system->listeners[0].events)
+    {
+      // Resume listening
+      for (i = 0; i < system->num_listeners; i ++)
+	system->listeners[i].events = POLLIN;
+    }
+    else if (system->listeners[0].events)
+    {
+      // Pause listening
+      for (i = 0; i < system->num_listeners; i ++)
+	system->listeners[i].events = 0;
     }
 
     dns_sd_host_changes = _papplDNSSDGetHostChanges();

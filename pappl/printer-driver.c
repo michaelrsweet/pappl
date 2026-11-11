@@ -481,7 +481,12 @@ make_attrs(
   if (data->format && strcmp(data->format, "application/octet-stream"))
     svalues[num_values ++] = data->format;
 
-  for (preferred = "image/urf", filter = (_pappl_mime_filter_t *)cupsArrayGetFirst(system->filters); filter; filter = (_pappl_mime_filter_t *)cupsArrayGetNext(system->filters))
+  if (data->format && !strcmp(data->format, "application/pdf"))
+    preferred = "application/pdf";
+  else
+    preferred = "image/urf";
+
+  for (filter = (_pappl_mime_filter_t *)cupsArrayGetFirst(system->filters); filter; filter = (_pappl_mime_filter_t *)cupsArrayGetNext(system->filters))
   {
     if ((data->format && !strcmp(filter->dst, data->format)) || !strcmp(filter->dst, "image/pwg-raster"))
     {

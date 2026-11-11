@@ -635,7 +635,7 @@ _papplJobValidateDocumentAttributes(
 
   _papplRWLockRead(client->printer);
 
-  if (op != IPP_OP_CREATE_JOB && format && (supported = ippFindAttribute(client->printer->attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, *format))
+  if (op != IPP_OP_CREATE_JOB && format && (supported = ippFindAttribute(client->printer->driver_attrs, "document-format-supported", IPP_TAG_MIMETYPE)) != NULL && !ippContainsString(supported, *format))
   {
     papplClientRespondIPPUnsupported(client, attr);
     valid = false;

@@ -767,7 +767,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
 
     cupsMutexLock(&system->clients_mutex);
 
-    if (system->num_clients < system->max_clients && !system->listeners[i].events)
+    if (system->num_clients < system->max_clients && !system->listeners[0].events)
     {
       // Resume listening
       for (i = 0; i < system->num_listeners; i ++)

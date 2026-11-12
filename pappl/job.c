@@ -1006,7 +1006,10 @@ _papplJobSubmitFile(
 
       _papplRWUnlock(job);
       _papplRWLockWrite(job->printer);
-      _papplPrinterCheckJobsNoLock(job->printer);
+      if (job->is_canceled)
+        _papplJobCancelNoLock(job);
+      else
+        _papplPrinterCheckJobsNoLock(job->printer);
       _papplRWUnlock(job->printer);
       return;
     }
@@ -1175,13 +1178,13 @@ _papplPrinterCleanJobsNoLock(
 
   // Check whether we have any completed jobs to clean...
   if (cupsArrayGetCount(printer->completed_jobs) == 0 || (printer->max_preserved_jobs == 0 && printer->max_completed_jobs <= 0))
-    return (next_time);
+    goto done;
 
   // Enumerate the jobs.  Since we have a writer (exclusive) lock, we are the
   // only thread enumerating and can use cupsArrayGetFirst/Last...
   for (job = (pappl_job_t *)cupsArrayGetFirst(printer->completed_jobs), clean_time = time(NULL) - 60, preserved = 0; job; job = (pappl_job_t *)cupsArrayGetNext(printer->completed_jobs))
   {
-    if (job->completed && job->completed < clean_time && printer->max_completed_jobs > 0 && cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
+    if (job->completed < clean_time && printer->max_completed_jobs > 0 && cupsArrayGetCount(printer->completed_jobs) > printer->max_completed_jobs)
     {
       cupsArrayRemove(printer->completed_jobs, job);
       cupsArrayRemove(printer->all_jobs, job);
@@ -1196,15 +1199,9 @@ _papplPrinterCleanJobsNoLock(
 	  preserved ++;
       }
     }
-    else
-    {
-      // Nothing more to do, update the next clean time and break out...
-      if (!next_time || next_time > (job->completed + 60))
-	next_time = job->completed + 60;
-
-      break;
-    }
   }
+
+  done:
 
   return (next_time);
 }
@@ -1270,7 +1267,7 @@ papplSystemCleanJobs(
   size_t		i,		// Looping var
 			count;		// Number of printers
   pappl_printer_t	*printer;	// Current printer
-  time_t		clean_time = 0,	// Clean time
+  time_t		clean_time,	// Clean time
 			next_time;	// Next time reported for printer
 
 
@@ -1281,7 +1278,7 @@ papplSystemCleanJobs(
   // Note: Cannot use cupsArrayGetFirst/Last since other threads might be
   // enumerating the printers array.
 
-  for (i = 0, count = cupsArrayGetCount(system->printers); i < count; i ++)
+  for (i = 0, count = cupsArrayGetCount(system->printers), clean_time = time(NULL) + 60; i < count; i ++)
   {
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
@@ -1289,7 +1286,7 @@ papplSystemCleanJobs(
     next_time = _papplPrinterCleanJobsNoLock(printer);
     _papplRWUnlock(printer);
 
-    if (!clean_time || next_time < clean_time)
+    if (next_time < clean_time)
       clean_time = next_time;
   }
 

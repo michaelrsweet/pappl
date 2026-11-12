@@ -110,6 +110,7 @@
 "Aborted %s" = "%s בוטלה";
 "Add Printer" = "הוספת מדפסת";
 "Admin Group" = "קבוצת ניהול";
+"Administrator access required to connect." = "Administrator access required to connect.";
 "Afghanistan" = "אפגניסטן";
 "Albania" = "אלבניה";
 "Algeria" = "אלג׳יריה";
@@ -168,6 +169,7 @@
 "Certificate installed." = "אישור הותקן.";
 "Certificate request created." = "נוצרה בקשת אישור.";
 "Chad" = "צ׳אד";
+"Change" = "Change";
 "Change Access Password" = "החלפת סיסמת גישה";
 "Change Hostname" = "Change Hostname";
 "Change Log Level" = "החלפת רמת תיעוד ביומן";

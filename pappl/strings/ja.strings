@@ -110,6 +110,7 @@
 "Aborted %s" = "Aborted %s";
 "Add Printer" = "プリンターを追加";
 "Admin Group" = "管理者グループ";
+"Administrator access required to connect." = "Administrator access required to connect.";
 "Afghanistan" = "アフガニスタン";
 "Albania" = "アルバニア";
 "Algeria" = "アルジェリア";
@@ -168,6 +169,7 @@
 "Certificate installed." = "証明書は取付けました。";
 "Certificate request created." = "証明書作成リクエスト";
 "Chad" = "チャド";
+"Change" = "Change";
 "Change Access Password" = "アクセスパスワードの変更";
 "Change Hostname" = "Change Hostname";
 "Change Log Level" = "ログレベルを変更する";

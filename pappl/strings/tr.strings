@@ -110,6 +110,7 @@
 "Aborted %s" = "%s sonlandırıldı";
 "Add Printer" = "Yazıcı Ekle";
 "Admin Group" = "Yönetici Grubu";
+"Administrator access required to connect." = "Administrator access required to connect.";
 "Afghanistan" = "Afganistan";
 "Albania" = "Arnavutluk";
 "Algeria" = "Cezayir";
@@ -168,6 +169,7 @@
 "Certificate installed." = "Sertifika kuruldu.";
 "Certificate request created." = "Sertifika isteği oluşturuldu.";
 "Chad" = "Çad";
+"Change" = "Change";
 "Change Access Password" = "Erişim Parolasını Değiştir";
 "Change Hostname" = "Change Hostname";
 "Change Log Level" = "Günlük Kaydı Seviyesini Değiştir";

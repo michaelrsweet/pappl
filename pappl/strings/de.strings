@@ -110,6 +110,7 @@
 "Aborted %s" = "Aborted %s";
 "Add Printer" = "Drucker hinzufügen";
 "Admin Group" = "Admin Gruppe";
+"Administrator access required to connect." = "Administrator access required to connect.";
 "Afghanistan" = "Afghanistan";
 "Albania" = "Albanien";
 "Algeria" = "Algerien";
@@ -168,6 +169,7 @@
 "Certificate installed." = "Zertifikat installiert.";
 "Certificate request created." = "Zertifikatsanfrage erstellt.";
 "Chad" = "Tschad";
+"Change" = "Change";
 "Change Access Password" = "Zugangspasswort ändern";
 "Change Hostname" = "Change Hostname";
 "Change Log Level" = "Log Level ändern";

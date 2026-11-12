@@ -105,6 +105,7 @@
 "Aborted %s" = "கைவிடப்பட்டது %s";
 "Add Printer" = "அச்சுப்பொறியைச் சேர்க்கவும்";
 "Admin Group" = "நிர்வாக குழு";
+"Administrator access required to connect." = "Administrator access required to connect.";
 "Afghanistan" = "ஆப்கானிச்தான்";
 "Albania" = "அல்பேனியா";
 "Algeria" = "அல்சீரியா";
@@ -163,6 +164,7 @@
 "Certificate installed." = "சான்றிதழ் நிறுவப்பட்டது.";
 "Certificate request created." = "சான்றிதழ் கோரிக்கை உருவாக்கப்பட்டது.";
 "Chad" = "சாட்";
+"Change" = "Change";
 "Change Access Password" = "அணுகல் கடவுச்சொல்லை மாற்றவும்";
 "Change Hostname" = "Change Hostname";
 "Change Log Level" = "பதிவு அளவை மாற்றவும்";

@@ -159,7 +159,9 @@
 "Certificate installed." = "Sertifika kuruldu.";
 "Certificate request created." = "Sertifika isteği oluşturuldu.";
 "Chad" = "Çad";
+"Change" = "Change";
 "Change Access Password" = "Erişim Parolasını Değiştir";
+"Change Hostname" = "Change Hostname";
 "Change Log Level" = "Günlük Kaydı Seviyesini Değiştir";
 "Change Network Settings" = "Ağ Ayarlarını Değiştir";
 "Change Wi-Fi Network" = "Wi-Fi Ağını Değiştir";
@@ -168,7 +170,6 @@
 "Chile" = "Şili";
 "China" = "Çin";
 "Christmas Island" = "Christmas Adası";
-"City/Locality" = "Şehir/Yerellik";
 "Cocos (Keeling) Islands" = "Cocos (Keeling) Adaları";
 "Colombia" = "Kolombiya";
 "Comoros" = "Komorlar";
@@ -496,6 +497,7 @@
 "Unable to identify printer." = "Yazıcı tanımlanamıyor.";
 "Unable to lookup address." = "Adres aranamıyor.";
 "Unable to use that driver." = "Bu sürücü kullanılamıyor.";
+"Unit, department, etc." = "Unit, department, etc.";
 "United Arab Emirates" = "Birleşik Arap Emirlikleri";
 "United Kingdom" = "Birleşik Krallık";
 "United Kingdom of Great Britain and Northern Ireland" = "Büyük Britanya ve Kuzey İrlanda Birleşik Krallığı";

@@ -159,7 +159,9 @@
 "Certificate installed." = "Certificato installato.";
 "Certificate request created." = "Richiesta certificato creata.";
 "Chad" = "Ciad";
+"Change" = "Change";
 "Change Access Password" = "Cambia password di accesso";
+"Change Hostname" = "Change Hostname";
 "Change Log Level" = "Cambia il livello di registro";
 "Change Network Settings" = "Change Network Settings";
 "Change Wi-Fi Network" = "Modifica della rete Wi-Fi";
@@ -168,7 +170,6 @@
 "Chile" = "Cile";
 "China" = "Cina";
 "Christmas Island" = "Isola di Natale";
-"City/Locality" = "City/Locality";
 "Cocos (Keeling) Islands" = "Isole Cocos (Keeling)";
 "Colombia" = "Colombia";
 "Comoros" = "Comore";
@@ -496,6 +497,7 @@
 "Unable to identify printer." = "Incapace di identificare la stampante.";
 "Unable to lookup address." = "Non riesco a cercare l'indirizzo.";
 "Unable to use that driver." = "Non riesco a usare quel conducente.";
+"Unit, department, etc." = "Unit, department, etc.";
 "United Arab Emirates" = "Emirati Arabi Uniti";
 "United Kingdom" = "Regno Unito";
 "United Kingdom of Great Britain and Northern Ireland" = "Regno Unito di Gran Bretagna e Irlanda del Nord";

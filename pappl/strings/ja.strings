@@ -159,7 +159,9 @@
 "Certificate installed." = "証明書は取付けました。";
 "Certificate request created." = "証明書作成リクエスト";
 "Chad" = "チャド";
+"Change" = "Change";
 "Change Access Password" = "アクセスパスワードの変更";
+"Change Hostname" = "Change Hostname";
 "Change Log Level" = "ログレベルを変更する";
 "Change Network Settings" = "Change Network Settings";
 "Change Wi-Fi Network" = "Wi-Fiネットワークの変更";
@@ -168,7 +170,6 @@
 "Chile" = "チリ";
 "China" = "中国の";
 "Christmas Island" = "クリスマス島";
-"City/Locality" = "City/Locality";
 "Cocos (Keeling) Islands" = "ココス諸島(ケイリング)";
 "Colombia" = "コロンビア";
 "Comoros" = "コモロ";
@@ -496,6 +497,7 @@
 "Unable to identify printer." = "プリンターを識別できません。";
 "Unable to lookup address." = "アドレスを調べることができません。";
 "Unable to use that driver." = "そのドライバを使用できません。";
+"Unit, department, etc." = "Unit, department, etc.";
 "United Arab Emirates" = "アラブ首長国連邦";
 "United Kingdom" = "イギリス";
 "United Kingdom of Great Britain and Northern Ireland" = "イギリス・北アイルランド王国";

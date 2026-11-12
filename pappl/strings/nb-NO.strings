@@ -159,7 +159,9 @@
 "Certificate installed." = "Certificate installed.";
 "Certificate request created." = "Certificate request created.";
 "Chad" = "Chad";
+"Change" = "Change";
 "Change Access Password" = "Endre administratorpassord";
+"Change Hostname" = "Change Hostname";
 "Change Log Level" = "Endre loggføringsnivå";
 "Change Network Settings" = "Change Network Settings";
 "Change Wi-Fi Network" = "Endre Wi-Fi-nettverk";
@@ -168,7 +170,6 @@
 "Chile" = "Chile";
 "China" = "Kina";
 "Christmas Island" = "Christmas Island";
-"City/Locality" = "City/Locality";
 "Cocos (Keeling) Islands" = "Cocos (Keeling) Islands";
 "Colombia" = "Colombia";
 "Comoros" = "Comoros";
@@ -496,6 +497,7 @@
 "Unable to identify printer." = "Unable to identify printer.";
 "Unable to lookup address." = "Unable to lookup address.";
 "Unable to use that driver." = "Unable to use that driver.";
+"Unit, department, etc." = "Unit, department, etc.";
 "United Arab Emirates" = "United Arab Emirates";
 "United Kingdom" = "United Kingdom";
 "United Kingdom of Great Britain and Northern Ireland" = "United Kingdom of Great Britain and Northern Ireland";

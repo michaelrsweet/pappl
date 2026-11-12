@@ -1,4 +1,4 @@
-.TH pappl-printer 3 "pappl printer functions" "2026-09-26" "pappl printer functions"
+.TH pappl-printer 3 "pappl printer functions" "2026-11-11" "pappl printer functions"
 .SH NAME
 pappl-printer \- pappl printer functions
 .SH LIBRARY
@@ -1809,7 +1809,8 @@ void papplPrinterSetPrintGroup (
 .fi
 .PP
 This function sets the printer's authorization group.  If \fBNULL\fR, the group
-is cleared.
+is cleared and authentication is not required for printing.  The special
+group name "none" is reserved for authenticated printing from any group.
 .PP
 .IP 5
 Note: The authorization group is only used if the system is created with a

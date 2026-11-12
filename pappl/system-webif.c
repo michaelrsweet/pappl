@@ -1422,12 +1422,15 @@ _papplSystemWebSecurity(
 
       if ((group = cupsGetOption("print_group", (cups_len_t)num_form, form)) != NULL)
       {
-        if (strcmp(group, "") && (getgrnam_r(group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp))
+        if (strcmp(group, "no-authentication") && strcmp(group, "none") && (getgrnam_r(group, &grpbuf, buffer, sizeof(buffer), &grp) || !grp))
         {
           status = _PAPPL_LOC("Bad print group.");
 	}
 	else
 	{
+	  if (!strcmp(group, "no-authentication"))
+	    group = NULL;
+
 	  papplSystemSetDefaultPrintGroup(system, group);
 	  papplSystemIteratePrinters(system, (pappl_printer_cb_t)papplPrinterSetPrintGroup, (void *)group);
 	}
@@ -1474,7 +1477,7 @@ _papplSystemWebSecurity(
 
     papplClientHTMLPrintf(client,
 			  "</select></td></tr>\n"
-			  "              <tr><th><label for=\"print_group\">%s:</label></th><td><select name=\"print_group\"><option value=\"\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Print Group")), papplClientGetLocString(client, _PAPPL_LOC("None")));
+			  "              <tr><th><label for=\"print_group\">%s:</label></th><td><select name=\"print_group\"><option value=\"no-authentication\">%s</option><option value=\"none\">%s</option>", papplClientGetLocString(client, _PAPPL_LOC("Print Group")), papplClientGetLocString(client, _PAPPL_LOC("No Authentication")), papplClientGetLocString(client, _PAPPL_LOC("None")));
 
     setgrent();
     while ((grp = getgrent()) != NULL)

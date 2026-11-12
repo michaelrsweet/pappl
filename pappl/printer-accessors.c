@@ -1881,7 +1881,8 @@ papplPrinterSetOrganizationalUnit(
 // 'papplPrinterSetPrintGroup()' - Set the print authorization group, if any.
 //
 // This function sets the printer's authorization group.  If `NULL`, the group
-// is cleared.
+// is cleared and authentication is not required for printing.  The special
+// group name "none" is reserved for authenticated printing from any group.
 //
 // > Note: The authorization group is only used if the system is created with a
 // > named authorization service.

@@ -5235,7 +5235,8 @@ value is cleared.</p>
 </tbody></table>
 <h4 class="discussion">Discussion</h4>
 <p class="discussion">This function sets the printer's authorization group.  If <code>NULL</code>, the group
-is cleared.<br>
+is cleared and authentication is not required for printing.  The special
+group name &quot;none&quot; is reserved for authenticated printing from any group.<br>
 <br>
 </p><blockquote>
 Note: The authorization group is only used if the system is created with a

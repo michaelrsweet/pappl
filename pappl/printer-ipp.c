@@ -836,7 +836,26 @@ bool					// O - `true` on success, `false` on failure
 _papplPrinterIsAuthorized(
     pappl_client_t  *client)		// I - Client
 {
-  http_status_t code = _papplClientIsAuthorizedForGroup(client, true, client->printer->print_group, client->printer->print_gid);
+  http_status_t code;			// Authorization status
+
+
+  if (client->printer->print_group)
+  {
+    // Authorize against the print group...
+    code = _papplClientIsAuthorizedForGroup(client, true, client->printer->print_group, client->printer->print_gid);
+  }
+  else
+  {
+    // Allow unauthenticated access using requesting-user-name...
+    const char *requesting_user_name;	// "requesting-user-name" attribute
+
+    code = HTTP_STATUS_CONTINUE;
+
+    if ((requesting_user_name = ippGetString(ippFindAttribute(client->request, "requesting-user-name", IPP_TAG_NAME), 0, /*language*/NULL)) != NULL)
+      cupsCopyString(client->username, requesting_user_name, sizeof(client->username));
+    else
+      cupsCopyString(client->username, "anonymous", sizeof(client->username));
+  }
 
   if (code == HTTP_STATUS_CONTINUE && client->job && client->job->username && strcmp(client->username, client->job->username))
   {

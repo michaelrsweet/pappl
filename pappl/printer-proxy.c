@@ -114,7 +114,7 @@ _papplPrinterRunProxy(
   update_proxy_jobs(printer);
   _papplRWUnlock(printer);
 
-  while (!printer->proxy_terminate && !papplPrinterIsDeleted(printer) && papplSystemIsRunning(printer->system))
+  while (!printer->proxy_terminate && !papplPrinterIsDeleted(printer) && !papplSystemIsShutdown(printer->system))
   {
     // See if we have anything to do...
     if (sub_id > 0 && !update_jobs && !fetch_jobs && time(NULL) < next_wait_events)

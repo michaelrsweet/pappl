@@ -435,7 +435,7 @@ papplPrinterSetUSB(
     _papplRWUnlock(printer);
 
     // Start USB gadget if needed...
-    if (papplSystemIsRunning(printer->system) && papplSystemGetDefaultPrinterID(printer->system) == printer->printer_id && (printer->system->options & PAPPL_SOPTIONS_USB_PRINTER))
+    if (!papplSystemIsShutdown(printer->system) && papplSystemGetDefaultPrinterID(printer->system) == printer->printer_id && (printer->system->options & PAPPL_SOPTIONS_USB_PRINTER))
     {
       cups_thread_t	tid;		// Thread ID
 
@@ -1196,7 +1196,7 @@ run_ipp_usb_iface(
 
   papplLogPrinter(iface->printer, PAPPL_LOGLEVEL_INFO, "IPP-USB%d: Starting.", iface->number);
 
-  while (!papplPrinterIsDeleted(iface->printer) && papplSystemIsRunning(papplPrinterGetSystem(iface->printer)))
+  while (!papplPrinterIsDeleted(iface->printer) && !papplSystemIsShutdown(papplPrinterGetSystem(iface->printer)))
   {
     // Wait for data from the host...
     if ((bytes = read(iface->ipp_to_device, hostbuf, sizeof(hostbuf))) > 0)

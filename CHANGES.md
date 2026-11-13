@@ -7,8 +7,8 @@ v1.4.13 - YYYY-MM-DD
 - SECURITY-4.3: Fixed a bug in Release-Job for jobs without a document
   (GHSA-q2q8-6pq2-j2rp)
 - SECURITY-3.1: Fixed a multipart form data parsing bug (GHSA-r3w6-72jx-qfpx)
-- SECURITY-3.1: Fixed a race condition that allowed a job to be processed twice
-  (GHSA-9w48-3pcp-4vhf)
+- SECURITY-3.1: Fixed a race condition that allowed a job to be processed and
+  freed twice (GHSA-9w48-3pcp-4vhf)
 - Added `papplSystemSetHostNameCallback` function to provide an alternate way
   to record host name changes on the local system.
 - Updated the default "document-format-preferred" value to take into account

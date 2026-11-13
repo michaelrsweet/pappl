@@ -732,7 +732,7 @@ _papplSystemWebLogFile(
     value = httpGetField(client->http, HTTP_FIELD_RANGE);
 
     // If range exists, send log content from low to high
-    if (value && *value && (rangeptr = strstr(value, "bytes=")) != NULL)
+    if (value && *value && (rangeptr = (char *)strstr(value, "bytes=")) != NULL)
     {
       if ((low = strtol(rangeptr + 6, (char **)&rangeptr, 10)) < 0)
         low = 0;

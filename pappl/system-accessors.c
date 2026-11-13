@@ -2020,8 +2020,7 @@ _papplSystemSetHostNameNoLock(
     pappl_system_t *system,		// I - System
     const char     *value)		// I - Hostname or `NULL` for default
 {
-  char	temp[1024],			// Temporary hostname string
-	*ptr;				// Pointer in temporary hostname
+  char	temp[1024];			// Temporary hostname string
 
 
   if (system->is_listenhost)
@@ -2030,19 +2029,16 @@ _papplSystemSetHostNameNoLock(
   if (!value)
   {
     // Get the current hostname...
-    httpGetHostname(/*http*/NULL, temp, sizeof(temp));
-
-    if (!strchr(temp, '.') && system->dns_sd)
-    {
-      // No domain information, so try the mDNS hostname...
-      cupsDNSSDCopyHostName(system->dns_sd, temp, sizeof(temp));
-    }
+    if (gethostname(temp, sizeof(temp)) < 0)
+      cupsCopyString(temp, "localhost", sizeof(temp));
 
     if (!strchr(temp, '.'))
     {
-      // No domain information, so append .local to hostname...
-      ptr = temp + strlen(temp);
-      cupsCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+      // No domain information, try looking up the FQDN...
+      struct hostent *host;		// Host entry to get FQDN
+
+      if ((host = gethostbyname(temp)) != NULL && host->h_name)
+        cupsCopyString(temp, host->h_name, sizeof(temp));
     }
 
     value = temp;

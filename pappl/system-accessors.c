@@ -1,7 +1,7 @@
 //
 // System accessor functions for the Printer Application Framework
 //
-// Copyright © 2020-2025 by Michael R Sweet.
+// Copyright © 2020-2026 by Michael R Sweet.
 //
 // Licensed under Apache License v2.0.  See the file "LICENSE" for more
 // information.
@@ -1839,8 +1839,7 @@ _papplSystemSetHostNameNoLock(
     pappl_system_t *system,		// I - System
     const char     *value)		// I - Hostname or `NULL` for default
 {
-  char	temp[1024],			// Temporary hostname string
-	*ptr;				// Pointer in temporary hostname
+  char	temp[1024];			// Temporary hostname string
 
 
   if (system->is_listenhost)
@@ -1848,19 +1847,17 @@ _papplSystemSetHostNameNoLock(
 
   if (!value)
   {
-    httpGetHostname(NULL, temp, sizeof(temp));
+    // Get the current hostname...
+    if (gethostname(temp, sizeof(temp)) < 0)
+      papplCopyString(temp, "localhost", sizeof(temp));
 
     if (!strchr(temp, '.'))
     {
-      // No domain information, so get the mDNS hostname...
-      _papplDNSSDCopyHostName(temp, sizeof(temp));
-    }
+      // No domain information, try looking up the FQDN...
+      struct hostent *host;		// Host entry to get FQDN
 
-    if (!strchr(temp, '.'))
-    {
-      // Still no domain information, add ".local"...
-      ptr = temp + strlen(temp);
-      papplCopyString(ptr, ".local", sizeof(temp) - (size_t)(ptr - temp));
+      if ((host = gethostbyname(temp)) != NULL && host->h_name)
+        papplCopyString(temp, host->h_name, sizeof(temp));
     }
 
     value = temp;

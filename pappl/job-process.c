@@ -1176,7 +1176,7 @@ start_job(pappl_job_t *job)		// I - Job
   {
     papplLogJob(job, PAPPL_LOGLEVEL_DEBUG, "Waiting for device to become available.");
 
-    while (printer->device_in_use && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
+    while (printer->device_in_use && !printer->is_deleted && !job->is_canceled && !papplSystemIsShutdown(printer->system))
     {
       _papplRWUnlock(printer);
       sleep(1);
@@ -1184,13 +1184,11 @@ start_job(pappl_job_t *job)		// I - Job
     }
   }
 
-  while (!printer->device && !printer->is_deleted && !job->is_canceled && papplSystemIsRunning(printer->system))
+  while (!printer->device && !printer->is_deleted && !job->is_canceled && !papplSystemIsShutdown(printer->system))
   {
-//    papplLogPrinter(printer, PAPPL_LOGLEVEL_DEBUG, "Opening device for job %d.", job->job_id);
-
     printer->device = papplDeviceOpen(printer->device_uri, job->name, papplLogDevice, job->system);
 
-    if (!printer->device && !printer->is_deleted && !job->is_canceled)
+    if (!printer->device && !printer->is_deleted && !job->is_canceled && !papplSystemIsShutdown(printer->system))
     {
       // Log that the printer is unavailable then sleep for 5 seconds to retry.
       if (first_open)
@@ -1212,7 +1210,7 @@ start_job(pappl_job_t *job)		// I - Job
     }
   }
 
-  if (!papplSystemIsRunning(printer->system))
+  if (papplSystemIsShutdown(printer->system))
   {
     job->state = IPP_JSTATE_PENDING;
 

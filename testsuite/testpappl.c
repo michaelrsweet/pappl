@@ -1918,24 +1918,19 @@ test_api(pappl_system_t *system)	// I - System
     testEnd(true);
 
   // papplSystemGet/SetHostname
-  testBegin("api: papplSystemGetHostname");
+  testBegin("api: papplSystemGetHostName");
   if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
   {
     testEndMessage(false, "got NULL, expected '*.domain'");
     pass = false;
   }
-  else if (!strchr(get_str, '.'))
-  {
-    testEndMessage(false, "got '%s', expected '*.domain'", get_str);
-    pass = false;
-  }
   else
-    testEnd(true);
+    testEndMessage(true, "'%s'", get_str);
 
   for (i = 0; i < 10; i ++)
   {
-    snprintf(set_str, sizeof(set_str), "example%d.org", i);
-    testBegin("api: papplSystemGet/SetHostname('%s')", set_str);
+    snprintf(set_str, sizeof(set_str), "%d.example.org", i);
+    testBegin("api: papplSystemGet/SetHostName('%s')", set_str);
     papplSystemSetHostName(system, set_str);
     if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
     {
@@ -1958,13 +1953,8 @@ test_api(pappl_system_t *system)	// I - System
     testEndMessage(false, "got NULL, expected '*.domain'");
     pass = false;
   }
-  else if (!strchr(get_str, '.'))
-  {
-    testEndMessage(false, "got '%s', expected '*.domain'", get_str);
-    pass = false;
-  }
   else
-    testEnd(true);
+    testEndMessage(true, "'%s'", get_str);
 
   // papplSystemGet/SetLocation
   testBegin("api: papplSystemGetLocation");

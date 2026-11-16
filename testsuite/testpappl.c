@@ -2193,7 +2193,7 @@ test_api(pappl_system_t *system)	// I - System
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "%u.example.org", (unsigned)i);
-    _papplTestBegin("api: papplSystemGet/SetHostName('%s')", set_str);
+    _papplTestBegin("api: papplSystemSetHostName('%s')", set_str);
     papplSystemSetHostName(system, set_str);
     if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
     {
@@ -2209,7 +2209,7 @@ test_api(pappl_system_t *system)	// I - System
       _papplTestEnd(true);
   }
 
-  _papplTestBegin("api: papplSystemGet/SetHostName(NULL)");
+  _papplTestBegin("api: papplSystemSetHostName(NULL)");
   papplSystemSetHostName(system, NULL);
   if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
   {

@@ -2029,16 +2029,29 @@ _papplSystemSetHostNameNoLock(
   if (!value)
   {
     // Get the current hostname...
+    httpInitialize();
+
     if (gethostname(temp, sizeof(temp)) < 0)
       cupsCopyString(temp, "localhost", sizeof(temp));
 
     if (!strchr(temp, '.'))
     {
       // No domain information, try looking up the FQDN...
-      struct hostent *host;		// Host entry to get FQDN
+      struct addrinfo	hints,		// Lookup hints
+			*results;	// Lookup results
 
-      if ((host = gethostbyname(temp)) != NULL && host->h_name)
-        cupsCopyString(temp, host->h_name, sizeof(temp));
+      memset(&hints, 0, sizeof(hints));
+      hints.ai_family   = AF_UNSPEC;
+      hints.ai_socktype = SOCK_STREAM;
+      hints.ai_flags    = AI_CANONNAME;
+
+      if (!getaddrinfo(temp, NULL, &hints, &results))
+      {
+        if (results->ai_canonname)
+          cupsCopyString(temp, results->ai_canonname, sizeof(temp));
+
+        freeaddrinfo(results);
+      }
     }
 
     value = temp;

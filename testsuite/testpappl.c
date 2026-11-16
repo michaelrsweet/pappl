@@ -1930,7 +1930,7 @@ test_api(pappl_system_t *system)	// I - System
   for (i = 0; i < 10; i ++)
   {
     snprintf(set_str, sizeof(set_str), "%d.example.org", i);
-    testBegin("api: papplSystemGet/SetHostName('%s')", set_str);
+    testBegin("api: papplSystemSetHostName('%s')", set_str);
     papplSystemSetHostName(system, set_str);
     if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
     {
@@ -1946,7 +1946,7 @@ test_api(pappl_system_t *system)	// I - System
       testEnd(true);
   }
 
-  testBegin("api: papplSystemGet/SetHostName(NULL)");
+  testBegin("api: papplSystemSetHostName(NULL)");
   papplSystemSetHostName(system, NULL);
   if (!papplSystemGetHostName(system, get_str, sizeof(get_str)))
   {

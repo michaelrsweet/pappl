@@ -1286,7 +1286,7 @@ papplSystemCleanJobs(
     next_time = _papplPrinterCleanJobsNoLock(printer);
     _papplRWUnlock(printer);
 
-    if (next_time < clean_time)
+    if (next_time && next_time < clean_time)
       clean_time = next_time;
   }
 

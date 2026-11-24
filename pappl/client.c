@@ -194,6 +194,8 @@ _papplClientProcessHTTP(
 			hostname[HTTP_MAX_HOST];
 					// Hostname
   int			port;		// Port number
+  size_t		hostlen;	// Length of hostname
+  bool			host_is_ok;	// Hostname is ok?
   char			*ptr;		// Pointer into string
   _pappl_resource_t	*resource;	// Current resource
   char			system_host[HTTP_MAX_HOST];
@@ -285,15 +287,16 @@ _papplClientProcessHTTP(
   }
 
   papplCopyString(client->host_field, httpGetField(client->http, HTTP_FIELD_HOST), sizeof(client->host_field));
-  if ((ptr = strrchr(client->host_field, ':')) != NULL)
+  if ((ptr = strrchr(client->host_field, ':')) != NULL && !strchr(ptr, ']'))
   {
-    char *end;				// End of port number
+    long	host_port;		// Port number
+    char	*end;			// End of port number
 
     // Grab port number from Host: header...
     *ptr++ = '\0';
-    client->host_port = (int)strtol(ptr, &end, 10);
-
-    if (errno == ERANGE || *end)
+    if ((host_port = strtol(ptr, &end, 10)) > 0 && host_port <= 65535 && !*end)
+      client->host_port = (int)host_port;
+    else
       client->host_port = papplSystemGetHostPort(client->system);
   }
   else
@@ -302,10 +305,67 @@ _papplClientProcessHTTP(
     client->host_port = papplSystemGetHostPort(client->system);
   }
 
-  ptr = strstr(client->host_field, ".local");
-
-  if (!isdigit(client->host_field[0] & 255) && client->host_field[0] != '[' && strcmp(client->host_field, papplSystemGetHostName(client->system, system_host, sizeof(system_host))) && strcmp(client->host_field, "localhost") && (!ptr || (strcmp(ptr, ".local") && strcmp(ptr, ".local."))))
+  if ((hostlen = strlen(client->host_field)) == 0)
   {
+    papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad Host: header '%s'.", client->host_field);
+    papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
+    return (false);
+  }
+
+  if (!strcasecmp(client->host_field, "localhost") || !strcasecmp(client->host_field, "localhost.") || !strcmp(client->host_field, "127.0.0.1") || !strcmp(client->host_field, "[::1]"))
+  {
+    host_is_ok = httpAddrIsLocalhost(httpGetAddress(client->http));
+  }
+  else if (client->host_field[0] == '[' && client->host_field[hostlen - 1] == ']')
+  {
+    // IPv6 numeric address
+    host_is_ok = true;
+  }
+  else if (isdigit(client->host_field[0] & 255))
+  {
+    // Possible IPv4 numeric address
+    long	number;			// Current number
+    char	*nptr;			// Pointer into field
+
+    host_is_ok = false;
+
+    if ((number = strtol(client->host_field, &nptr, 10)) >= 0 && number <= 255 && nptr && *nptr == '.')
+    {
+      // NNN.
+      if ((number = strtol(nptr + 1, &nptr, 10)) >= 0 && number <= 255 && nptr && *nptr == '.')
+      {
+	// NNN.NNN.
+	if ((number = strtol(nptr + 1, &nptr, 10)) >= 0 && number <= 255 && nptr && *nptr == '.')
+	{
+	  // NNN.NNN.NNN.
+	  if ((number = strtol(nptr + 1, &nptr, 10)) >= 0 && number <= 255 && nptr && !*nptr)
+	  {
+	    // NNN.NNN.NNN.NNN
+	    host_is_ok = true;
+	  }
+	}
+      }
+    }
+  }
+  else if (hostlen > 6 && !strcasecmp(client->host_field + hostlen - 6, ".local"))
+  {
+    // NAME.local
+    host_is_ok = true;
+  }
+  else if (hostlen > 7 && !strcasecmp(client->host_field + hostlen - 7, ".local."))
+  {
+    // NAME.local.
+    host_is_ok = true;
+  }
+  else
+  {
+    // hostname...
+    host_is_ok = !strcasecmp(client->host_field, papplSystemGetHostName(client->system, system_host, sizeof(system_host)));
+  }
+
+  if (!host_is_ok)
+  {
+    // Not a valid hostname...
     papplLogClient(client, PAPPL_LOGLEVEL_ERROR, "Bad Host: header '%s'.", client->host_field);
     papplClientRespond(client, HTTP_STATUS_BAD_REQUEST, NULL, NULL, 0, 0);
     return (false);

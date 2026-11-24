@@ -14,6 +14,7 @@ v1.4.13 - YYYY-MM-DD
 - Updated the default "document-format-preferred" value to take into account
   the native driver format (Issue #445)
 - Updated to map a `NULL` print group to unauthenticated printing (Issue #450)
+- Updated Host: header validation to handle more cases.
 - Fixed `papplDeviceWrite` which could produce a 0-length write call that was
   problematic for some USB printers (Issue #434)
 - Fixed issues with password authentication in the web interface (Issue #435)

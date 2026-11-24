@@ -537,8 +537,12 @@ papplSystemRun(pappl_system_t *system)	// I - System
   pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);
 
   // Advertise the system via DNS-SD as needed...
+  _papplRWLockRead(system);
+
   if (system->dns_sd_name)
     _papplSystemRegisterDNSSDNoLock(system);
+
+  _papplRWUnlock(system);
 
   // Start up printers...
   pthread_rwlock_rdlock(&system->printers_rwlock);
@@ -547,8 +551,12 @@ papplSystemRun(pappl_system_t *system)	// I - System
     printer = (pappl_printer_t *)cupsArrayGetElement(system->printers, i);
 
     // Advertise via DNS-SD as needed...
+    _papplRWLockRead(printer);
+
     if (printer->dns_sd_name)
       _papplPrinterRegisterDNSSDNoLock(printer);
+
+    _papplRWUnlock(printer);
 
     // Start the raw socket listeners as needed...
     if ((system->options & PAPPL_SOPTIONS_RAW_SOCKET) && printer->num_raw_listeners > 0)

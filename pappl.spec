@@ -9,7 +9,7 @@
 
 Summary: Printer Application Framework (PAPPL)
 Name: pappl
-Version: 1.4.13
+Version: 1.4.14
 Release: 1
 License: Apache 2.0
 Group: Development/Libraries
@@ -18,7 +18,7 @@ Url: https://www.msweet.org/pappl
 Packager: John Doe <johndoe@example.com>
 Vendor: Michael R Sweet
 
-BuildRequires: avahi-devel, cups-devel, gnutls-devel, libjpeg-turbo-devel, libpng-devel, libusbx-devel, pam-devel, zlib-devel
+BuildRequires: avahi-devel, cups-devel, openssl-devel, libjpeg-turbo-devel, libpng-devel, libusbx-devel, pam-devel, zlib-devel
 Requires: cups-devel
 
 # Use buildroot so as not to disturb the version already installed

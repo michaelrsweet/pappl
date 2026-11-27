@@ -28,6 +28,7 @@ v1.4.13 - YYYY-MM-DD
 - Fixed a potential busy loop in `papplSystemRun` (Issue #449)
 - Fixed delayed shutdown while waiting for devices (Issue #451)
 - Fixed the default hostname assigned by `papplSystemSetHostName` (Issue #452)
+- Fixed a crash when running a server in the background on Windows (Issue #455)
 - Fixed a potential string overrun issue when loading .strings files.
 - Fixed non-mDNS hostname support.
 - Fixed a compatibility issue with older versions of Android.

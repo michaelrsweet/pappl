@@ -773,7 +773,7 @@ papplSystemRun(pappl_system_t *system)	// I - System
       for (i = 0; i < system->num_listeners; i ++)
 	system->listeners[i].events = POLLIN;
     }
-    else if (system->listeners[i].events)
+    else if (system->num_clients >= system->max_clients && system->listeners[i].events)
     {
       // Pause listening
       for (i = 0; i < system->num_listeners; i ++)

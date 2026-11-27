@@ -468,16 +468,18 @@ _papplMainloopConnect(
     };
 
 #if _WIN32
-  int status = (int)_spawnvpe(_P_NOWAIT, _papplMainloopPath, server_argv, environ);
+  // Inherit our environment; passing an explicit environment to _spawnvpe
+  // can crash in the UCRT when the OS environment has no "=X:" entries.
+  // _P_NOWAIT returns a process handle on success and -1 on error.
+  intptr_t status = _spawnvp(_P_NOWAIT, _papplMainloopPath, server_argv);
 
-  if (status != 0)
+  if (status == -1)
   {
-    char status_str[32];		// Status string
-
-    snprintf(status_str, sizeof(status_str), "%d", status);
-    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to start server: %s"), base_name, status_str);
+    _papplLocPrintf(stderr, _PAPPL_LOC("%s: Unable to start server: %s"), base_name, strerror(errno));
     return (NULL);
   }
+
+  CloseHandle((HANDLE)status);
 
 #else
     posix_spawnattr_init(&server_attrs);

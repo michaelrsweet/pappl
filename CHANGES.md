@@ -11,6 +11,7 @@ v1.4.13 - YYYY-MM-DD
   freed twice (GHSA-9w48-3pcp-4vhf)
 - Added `papplSystemSetHostNameCallback` function to provide an alternate way
   to record host name changes on the local system.
+- Added a HTTP timeout for in-progress requests.
 - Updated the default "document-format-preferred" value to take into account
   the native driver format (Issue #445)
 - Updated to map a `NULL` print group to unauthenticated printing (Issue #450)

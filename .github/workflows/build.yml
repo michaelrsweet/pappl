@@ -90,6 +90,7 @@ jobs:
           testsuite/testpappl.output/*
           testsuite/testpappl.spool/*
           testsuite/testpappl.state
+          /Library/Logs/CrashReporter/test*.ips
     - name: Run Clang Static Analyzer
       run: cd pappl && make "GHA_ERROR=::error::" clang
 

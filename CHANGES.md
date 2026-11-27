@@ -4,6 +4,8 @@ Changes in PAPPL
 v1.4.14 - YYYY-MM-DD
 --------------------
 
+- Fixed listener throttling (Issue #457)
+
 
 v1.4.13 - 2026-11-27
 --------------------

@@ -1,7 +1,7 @@
 Changes in PAPPL
 ================
 
-v1.4.13 - YYYY-MM-DD
+v1.4.13 - 2026-11-27
 --------------------
 
 - SECURITY-4.3: Fixed a bug in Release-Job for jobs without a document

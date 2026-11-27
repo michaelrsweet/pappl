@@ -81,6 +81,8 @@ _papplPrinterConnectProxyNoLock(
     return (NULL);
   }
 
+  httpSetTimeout(http, 60.0, /*cb*/NULL, /*cb_data*/NULL);
+
   papplLogPrinter(printer, PAPPL_LOGLEVEL_INFO, "Connected to Infrastructure Printer '%s'.", uri);
 
   // TODO: Set OAuth bearer (access) token, if present...

@@ -78,6 +78,8 @@ _papplClientCreate(
     return (NULL);
   }
 
+  httpSetTimeout(client->http, 15.0, /*cb*/NULL, /*cb_data*/NULL);
+
   httpGetHostname(client->http, client->hostname, sizeof(client->hostname));
 
   papplLogClient(client, PAPPL_LOGLEVEL_INFO, "Accepted connection from '%s'.", client->hostname);
